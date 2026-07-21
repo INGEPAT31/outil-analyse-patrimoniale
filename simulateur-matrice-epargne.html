@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrice d'épargne — Capital constitué / Effort requis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --navy:#1C2B3A; --navy2:#243347; --gold:#C9A84C;
+  --cream:#F7F5F0; --pearl:#EAE7E0; --text:#2C3E50; --muted:#6B7A8D;
+  --bd:#D8D3C8; --w:#FFFFFF;
+  --sh:0 2px 12px rgba(28,43,58,.08);
+  --bhead:#1F3864;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+
+header{background:var(--navy);padding:26px 48px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid var(--gold);gap:20px;flex-wrap:wrap;}
+.h-left h1{font-family:'Playfair Display',serif;font-size:25px;font-weight:700;color:#fff;line-height:1.2;}
+.h-left p{font-size:12px;color:rgba(255,255,255,.5);margin-top:5px;letter-spacing:.4px;}
+.h-back{font-size:11px;color:rgba(255,255,255,.55);text-decoration:none;letter-spacing:.5px;display:block;margin-bottom:9px;}
+.h-back:hover{color:var(--gold);}
+.h-badge{background:var(--gold);color:var(--navy);font-size:10.5px;font-weight:700;padding:5px 12px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;}
+
+.wrap{max-width:1280px;margin:0 auto;padding:26px 30px 70px;}
+
+.tools{display:flex;gap:2px;margin-bottom:20px;border:1px solid var(--bd);border-radius:6px;overflow:hidden;background:var(--w);box-shadow:var(--sh);}
+.tool{flex:1;padding:15px 20px;background:var(--w);border:none;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;transition:background .18s;border-bottom:3px solid transparent;}
+.tool:hover{background:var(--cream);}
+.tool.on{background:var(--cream);border-bottom-color:var(--gold);}
+.tool .tt{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:600;color:var(--muted);margin-bottom:3px;}
+.tool.on .tt{color:var(--navy);}
+.tool .td{font-size:11px;color:var(--muted);line-height:1.5;}
+
+.card{background:var(--w);border-radius:6px;box-shadow:var(--sh);border:1px solid var(--bd);overflow:hidden;margin-bottom:18px;}
+.card.gold{border-top:3px solid var(--gold);}
+.ch{padding:13px 17px;border-bottom:1px solid var(--pearl);display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.ch h2{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--navy);}
+.ch .sub{font-size:10.5px;color:var(--muted);margin-left:auto;}
+.cb{padding:16px 17px;}
+
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+label{display:block;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+input[type=number],input[type=text],select{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:4px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);background:var(--cream);transition:border-color .15s,box-shadow .15s;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15);background:var(--w);}
+.sf{position:relative;} .sf input{padding-right:40px;}
+.sf span.u{position:absolute;right:11px;top:33px;font-size:11px;color:var(--muted);pointer-events:none;}
+.hint{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5;}
+
+.tgg{display:flex;gap:5px;}
+.tg{flex:1;padding:7px 6px;border:1px solid var(--bd);border-radius:4px;background:var(--cream);color:var(--muted);font-family:'Inter',sans-serif;font-size:11.5px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;}
+.tg.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+.tg:hover:not(.on){border-color:var(--gold);}
+
+details.adv{border-top:1px solid var(--pearl);}
+details.adv summary{padding:11px 17px;font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);cursor:pointer;list-style:none;display:flex;align-items:center;gap:7px;}
+details.adv summary::-webkit-details-marker{display:none;}
+details.adv summary::before{content:'+';color:var(--gold);font-size:14px;font-weight:700;}
+details.adv[open] summary::before{content:'−';}
+details.adv summary:hover{color:var(--navy);}
+
+.tbl-head{padding:14px 18px;border-bottom:1px solid var(--pearl);display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.tbl-head h2{font-family:'Playfair Display',serif;font-size:17px;color:var(--navy);}
+.tbl-head .sub2{font-size:11px;color:var(--muted);margin-top:3px;}
+.modes{display:flex;gap:5px;}
+.mbtn{padding:6px 12px;border:1px solid var(--bd);border-radius:4px;background:var(--cream);color:var(--muted);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;}
+.mbtn.on{background:var(--bhead);color:#fff;border-color:var(--bhead);}
+
+.tscroll{overflow-x:auto;padding:18px;}
+table.mx{border-collapse:separate;border-spacing:3px;width:100%;min-width:780px;}
+table.mx th,table.mx td{text-align:center;font-size:14px;font-weight:700;padding:16px 8px;border-radius:2px;white-space:nowrap;}
+table.mx thead th{background:#EFEFEF;color:var(--text);border:1px solid #D9D9D9;}
+table.mx thead th.corner{background:var(--bhead);color:#fff;padding:0;width:200px;height:80px;border:none;}
+.corner-in{position:relative;width:100%;height:80px;
+  background:linear-gradient(to top right,transparent calc(50% - .6px),rgba(255,255,255,.85) calc(50% - .6px),rgba(255,255,255,.85) calc(50% + .6px),transparent calc(50% + .6px));}
+.c-tr{position:absolute;top:9px;right:11px;text-align:right;font-size:11px;font-weight:600;line-height:1.25;}
+.c-bl{position:absolute;bottom:9px;left:11px;text-align:left;font-size:11px;font-weight:600;line-height:1.25;}
+table.mx tbody th{background:#F2F2F2;color:var(--text);border:1px solid #D9D9D9;width:200px;}
+table.mx tbody th .rsub{display:block;font-size:9.5px;font-weight:500;color:var(--muted);margin-top:3px;}
+td.cell{cursor:pointer;border:1px solid rgba(255,255,255,.6);transition:transform .12s,box-shadow .12s;}
+td.cell:hover{transform:scale(1.035);box-shadow:0 3px 12px rgba(28,43,58,.22);position:relative;z-index:2;}
+td.cell.sel{outline:2px solid var(--gold);outline-offset:-2px;}
+td.cell .sub{display:block;font-size:9.5px;font-weight:500;opacity:.74;margin-top:3px;}
+table.mx.clean td.cell .sub,table.mx.clean tbody th .rsub{display:none;}
+table.mx.clean td.cell,table.mx.clean tbody th,table.mx.clean thead th:not(.corner){padding:22px 8px;}
+.free-row input{width:130px;padding:5px 7px;font-size:13px;font-weight:700;text-align:center;border-radius:3px;background:#fff;border:1px solid var(--bd);}
+.free-row .lbl{font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.4px;text-transform:uppercase;}
+
+.legend{display:flex;align-items:center;gap:10px;padding:0 18px 16px;font-size:10.5px;color:var(--muted);flex-wrap:wrap;}
+.ramp{display:flex;height:11px;border-radius:2px;overflow:hidden;width:180px;border:1px solid var(--bd);}
+.ramp i{flex:1;}
+
+.detail{display:grid;grid-template-columns:1.05fr 1fr;}
+.dl{padding:18px;border-right:1px solid var(--pearl);}
+.dr{padding:18px;}
+.dtitle{font-family:'Playfair Display',serif;font-size:16px;color:var(--navy);margin-bottom:2px;}
+.dsub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.kr{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--pearl);font-size:12px;gap:12px;}
+.kr:last-of-type{border-bottom:none;}
+.kl{color:var(--muted);font-size:11.5px;}
+.kv{font-weight:700;font-size:13.5px;text-align:right;}
+.kv.hl{color:var(--bhead);font-size:16px;font-family:'Playfair Display',serif;}
+.kv.gain{color:#1E7B4C;}
+.bar{height:9px;border-radius:5px;background:var(--pearl);overflow:hidden;margin:13px 0 6px;display:flex;}
+.barleg{display:flex;gap:16px;font-size:10.5px;color:var(--muted);}
+.barleg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;}
+.cw{position:relative;height:255px;}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 18px;}
+.btn{background:var(--navy);color:#fff;border:none;padding:9px 16px;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;border-radius:4px;cursor:pointer;transition:background .18s;}
+.btn:hover{background:var(--navy2);}
+.btn.ghost{background:none;color:var(--navy);border:1px solid var(--bd);}
+.btn.ghost:hover{background:var(--cream);border-color:var(--gold);}
+
+.note{background:#FFFBEF;border:1px solid #F0D89A;border-radius:4px;padding:11px 13px;font-size:11px;line-height:1.65;color:#6B5B2E;}
+.note strong{color:#4A3F1C;}
+.foot-note{font-size:11px;color:var(--muted);line-height:1.75;}
+.foot-note strong{color:var(--text);}
+
+footer{border-top:1px solid var(--bd);padding:18px 30px;text-align:center;font-size:10.5px;color:var(--muted);}
+
+@media print{
+  header,.no-print,footer{display:none!important;}
+  body{background:#fff;} .wrap{padding:0;max-width:none;}
+  .card{box-shadow:none;break-inside:avoid;}
+  table.mx th,table.mx td{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+@media(max-width:900px){
+  header{padding:20px;} .wrap{padding:18px 14px 50px;}
+  .tools{flex-direction:column;} .grid4,.grid3{grid-template-columns:1fr 1fr;}
+  .detail{grid-template-columns:1fr;} .dl{border-right:none;border-bottom:1px solid var(--pearl);}
+}
+@media(max-width:560px){.grid4,.grid3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header class="no-print">
+  <div class="h-left">
+    <a class="h-back" href="index.html">← Retour aux outils</a>
+    <h1>Matrice d'épargne</h1>
+    <p>Capitalisation d'un effort d'épargne mensuel — lecture directe et inverse</p>
+  </div>
+  <div class="h-badge">Usage professionnel</div>
+</header>
+
+<div class="wrap">
+
+  <div class="tools no-print">
+    <button class="tool on" data-tool="direct">
+      <div class="tt">Capital constitué</div>
+      <div class="td">« Avec 1 500 € par mois, où suis-je dans 15 ans ? »</div>
+    </button>
+    <button class="tool" data-tool="inverse">
+      <div class="tt">Effort d'épargne requis</div>
+      <div class="td">« Pour viser 500 000 €, combien verser chaque mois ? »</div>
+    </button>
+  </div>
+
+  <div class="card gold no-print">
+    <div class="ch"><h2>Paramètres de la projection</h2><span class="sub">Recalcul automatique</span></div>
+    <div class="cb">
+      <div class="grid4">
+        <div class="sf">
+          <label for="duree">Durée de l'épargne</label>
+          <input type="number" id="duree" value="15" min="1" max="60" step="1">
+          <span class="u">ans</span>
+        </div>
+        <div class="sf">
+          <label for="capital0">Capital initial</label>
+          <input type="number" id="capital0" value="0" min="0" step="1000">
+          <span class="u">€</span>
+        </div>
+        <div>
+          <label>Moment du versement</label>
+          <div class="tgg">
+            <button class="tg on" data-g="timing" data-v="debut">Début de mois</button>
+            <button class="tg" data-g="timing" data-v="fin">Fin de mois</button>
+          </div>
+        </div>
+        <div>
+          <label>Conversion du taux annuel</label>
+          <div class="tgg">
+            <button class="tg on" data-g="conv" data-v="act">Actuarielle</button>
+            <button class="tg" data-g="conv" data-v="prop">Proportionnelle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <details class="adv">
+      <summary>Hypothèses avancées</summary>
+      <div class="cb" style="padding-top:4px">
+        <div class="grid3">
+          <div class="sf">
+            <label for="index">Indexation annuelle des versements</label>
+            <input type="number" id="index" value="0" min="0" max="10" step="0.5">
+            <span class="u">%/an</span>
+          </div>
+          <div class="sf">
+            <label for="infl">Inflation — affichage en euros constants</label>
+            <input type="number" id="infl" value="0" min="0" max="10" step="0.1">
+            <span class="u">%/an</span>
+          </div>
+          <div>
+            <label for="rates">Rendements nets affichés (colonnes)</label>
+            <input type="text" id="rates" value="2 ; 3 ; 4 ; 5 ; 6">
+            <div class="hint">Séparés par « ; » — 3 à 6 colonnes.</div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:14px">
+          <strong>Conversion du taux.</strong> Le calcul retenu par défaut est actuariel : le taux mensuel vaut (1+t)<sup>1/12</sup>−1, de sorte qu'un support annoncé à 6 % produise exactement 6 % sur douze mois. La convention proportionnelle (t/12), courante dans les tableaux bancaires, revient à appliquer 6,17 % effectifs et majore le capital d'environ 2 % sur quinze ans à 6 %. Elle reste disponible pour retrouver les chiffres d'un document existant.
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="tbl-head">
+      <div>
+        <h2 id="ttitle"></h2>
+        <div class="sub2" id="tsub"></div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div class="modes no-print" id="modes"></div>
+        <button class="mbtn no-print" id="btn-clean">Masquer le détail</button>
+      </div>
+    </div>
+    <div class="tscroll">
+      <table class="mx" id="mxtable">
+        <thead><tr id="thead-row">
+          <th class="corner"><div class="corner-in">
+            <div class="c-tr">Rentabilité nette<br>du capital <sup>[2]</sup></div>
+            <div class="c-bl" id="cornerbl">Épargne mensuelle <sup>[1]</sup></div>
+          </div></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <span>Échelle</span><span class="ramp" id="ramp"></span><span id="legtxt"></span>
+      <span style="margin-left:auto" class="no-print">Cliquez une cellule pour en détailler la mécanique.</span>
+    </div>
+    <div class="actions no-print">
+      <button class="btn" onclick="window.print()">Imprimer / PDF</button>
+      <button class="btn ghost" id="btn-csv">Exporter en CSV</button>
+      <button class="btn ghost" id="btn-copy">Copier le tableau</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="detail">
+      <div class="dl">
+        <div class="dtitle" id="dtitle"></div>
+        <div class="dsub" id="dsub"></div>
+        <div class="kr"><span class="kl" id="l-pmt">Versement mensuel</span><span class="kv" id="d-pmt">—</span></div>
+        <div class="kr"><span class="kl">Capital initial</span><span class="kv" id="d-c0">—</span></div>
+        <div class="kr"><span class="kl">Total des versements</span><span class="kv" id="d-vers">—</span></div>
+        <div class="kr"><span class="kl">Intérêts capitalisés</span><span class="kv gain" id="d-int">—</span></div>
+        <div class="kr"><span class="kl">Capital au terme</span><span class="kv hl" id="d-cap">—</span></div>
+        <div class="kr"><span class="kl">Multiple de l'effort d'épargne</span><span class="kv" id="d-mult">—</span></div>
+        <div class="kr"><span class="kl">Retrait mensuel à 4 % du capital par an</span><span class="kv" id="d-rente">—</span></div>
+        <div class="bar"><div id="bar1" style="background:#8FAEDA"></div><div id="bar2" style="background:#1F4E79"></div></div>
+        <div class="barleg">
+          <span><i style="background:#8FAEDA"></i>Effort d'épargne</span>
+          <span><i style="background:#1F4E79"></i>Effet de la capitalisation</span>
+        </div>
+      </div>
+      <div class="dr"><div class="cw"><canvas id="chart"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="card"><div class="cb foot-note">
+    <strong>[1]</strong> Versements mensuels constants, sauf indexation, supposés effectués sans interruption sur toute la durée.<br>
+    <strong>[2]</strong> Rendement net annuel réputé constant, acquis après frais de gestion et frais sur versements. Il s'entend <em>avant</em> prélèvements sociaux et fiscalité propres au support. Aucune volatilité n'est modélisée : une performance moyenne identique obtenue par des rendements irréguliers ne produit pas le même capital. Simulation à caractère indicatif, sans valeur contractuelle.
+  </div></div>
+
+</div>
+
+<footer>Outils patrimoniaux · Simulation à titre indicatif</footer>
+
+<script>
+const F0=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
+const eur=v=>F0.format(Math.round(v))+' €';
+const pctf=v=>v.toFixed(1).replace('.',',')+' %';
+const num=v=>String(v).replace('.',',');
+const RAMP=['#F2F6FC','#E1EAF7','#CBDAF0','#AFC6E6','#8FAEDA','#6C93C9','#4A78B4','#2E5E9C','#1F4E79'];
+document.getElementById('ramp').innerHTML=RAMP.map(c=>'<i style="background:'+c+'"></i>').join('');
+
+const EPARGNE=[500,1000,1250,1500,2000,2500];
+const OBJECTIFS=[100000,250000,500000,750000,1000000];
+const MODES={direct:[['capital','Capital'],['interets','Intérêts'],['part',"Part d'intérêts"]],
+             inverse:[['mensualite','Mensualité'],['effort','Effort total'],['part',"Part d'intérêts"]]};
+
+const state={tool:'direct',timing:'debut',conv:'act',mode:'capital',
+             sel:{r:3,c:0},freeE:3000,freeO:1500000,clean:false};
+let chart=null,G=null,RATES=[],ROWS=[];
+
+/* ================= MOTEUR ================= */
+function opts(){
+  const y=Math.max(1,parseFloat(document.getElementById('duree').value)||15);
+  return{years:y,n:Math.round(y*12),
+    P0:Math.max(0,parseFloat(document.getElementById('capital0').value)||0),
+    timing:state.timing,conv:state.conv,
+    g:(parseFloat(document.getElementById('index').value)||0)/100,
+    infl:(parseFloat(document.getElementById('infl').value)||0)/100};
+}
+function project(pmt,annual,o){
+  const i=o.conv==='act'?Math.pow(1+annual,1/12)-1:annual/12;
+  let bal=o.P0,pay=pmt,vers=0;
+  const yr=[o.P0],cum=[o.P0];
+  for(let m=1;m<=o.n;m++){
+    if(o.timing==='debut'){bal+=pay;vers+=pay;bal*=(1+i);}
+    else{bal*=(1+i);bal+=pay;vers+=pay;}
+    if(m%12===0){pay*=(1+o.g);yr.push(bal);cum.push(o.P0+vers);}
+  }
+  if(o.n%12!==0){yr.push(bal);cum.push(o.P0+vers);}
+  const d=k=>Math.pow(1+o.infl,Math.min(k,o.years));
+  const defl=Math.pow(1+o.infl,o.years);
+  return{pmt:pmt,cap:bal/defl,vers:vers,invest:o.P0+vers,int:bal/defl-o.P0-vers,
+         yearly:yr.map((v,k)=>v/d(k)),cum:cum.map((v,k)=>v/d(k)),atteint:false};
+}
+/* le capital final est affine en pmt : inversion exacte, sans itération */
+function solve(target,annual,o){
+  const base=project(0,annual,o).cap;
+  const unit=project(1,annual,o).cap-base;
+  const pmt=Math.max(0,(target-base)/unit);
+  const r=project(pmt,annual,o);
+  r.target=target;r.atteint=(target-base)<=0;
+  return r;
+}
+function getRates(){
+  let r=document.getElementById('rates').value.split(/[;,]/)
+        .map(s=>parseFloat(s.replace(',','.'))).filter(v=>!isNaN(v)&&v>=0&&v<=25);
+  if(r.length<3)r=[2,3,4,5,6];
+  return r.slice(0,6);
+}
+function metric(res){
+  switch(state.mode){
+    case 'capital':return res.cap;
+    case 'interets':return res.int;
+    case 'mensualite':return res.pmt;
+    case 'effort':return res.invest;
+    default:return res.cap>0?res.int/res.cap*100:0;
+  }
+}
+
+/* ================= RENDU ================= */
+function render(){
+  const o=opts();RATES=getRates();
+  const inv=state.tool==='inverse';
+  ROWS=inv?OBJECTIFS.concat([Math.max(1000001,state.freeO)])
+          :EPARGNE.concat([Math.max(2501,state.freeE)]);
+  G=ROWS.map(v=>RATES.map(t=>inv?solve(v,t/100,o):project(v,t/100,o)));
+
+  const vals=[];G.forEach(r=>r.forEach(c=>vals.push(metric(c))));
+  const mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+
+  const mc=document.getElementById('modes');
+  if(mc.dataset.tool!==state.tool){
+    mc.dataset.tool=state.tool;mc.innerHTML='';
+    MODES[state.tool].forEach(function(m){
+      const b=document.createElement('button');b.className='mbtn';b.textContent=m[1];
+      b.onclick=function(){state.mode=m[0];render();};mc.appendChild(b);});
+  }
+  Array.prototype.forEach.call(mc.children,(b,i)=>b.classList.toggle('on',MODES[state.tool][i][0]===state.mode));
+
+  const hr=document.getElementById('thead-row');
+  hr.querySelectorAll('th:not(.corner)').forEach(e=>e.remove());
+  RATES.forEach(t=>{const th=document.createElement('th');th.textContent=num(t)+' %';hr.appendChild(th);});
+  document.getElementById('cornerbl').innerHTML=(inv?'Objectif de capital':'Épargne mensuelle')+' <sup>[1]</sup>';
+
+  document.getElementById('mxtable').classList.toggle('clean',state.clean);
+  const bc=document.getElementById('btn-clean');
+  bc.textContent=state.clean?'Afficher le détail':'Masquer le détail';
+  bc.classList.toggle('on',state.clean);
+
+  const tb=document.getElementById('tbody');tb.innerHTML='';
+  ROWS.forEach((v,ri)=>{
+    const tr=document.createElement('tr'),th=document.createElement('th');
+    if(ri===ROWS.length-1){
+      th.className='free-row';
+      th.innerHTML='<span class="lbl">'+(inv?'Objectif libre':'Montant libre')+'</span>'+
+        '<input type="number" id="freeval" min="'+(inv?1000001:2501)+'" step="'+(inv?50000:100)+'" value="'+v+'"> €';
+    }else{
+      th.innerHTML=eur(v)+(inv
+        ?'<span class="rsub">'+(o.infl>0?"en euros d'aujourd'hui":'au terme')+'</span>'
+        :'<span class="rsub">'+eur(v*12*o.years)+' versés</span>');
+    }
+    tr.appendChild(th);
+    RATES.forEach((t,ci)=>{
+      const res=G[ri][ci],val=metric(res);
+      const k=mx>mn?Math.round((val-mn)/(mx-mn)*8):4;
+      const td=document.createElement('td');
+      td.className='cell'+(state.sel.r===ri&&state.sel.c===ci?' sel':'');
+      td.style.background=RAMP[k];td.style.color=k>=6?'#fff':'#1A2A3A';
+      let main,sub;
+      if(state.mode==='part'){main=pctf(res.cap>0?res.int/res.cap*100:0);sub=eur(res.cap);}
+      else if(state.mode==='mensualite'){main=res.atteint?'—':eur(res.pmt);
+        sub=res.atteint?'objectif déjà couvert':eur(res.int)+" d'intérêts";}
+      else if(state.mode==='effort'){main=eur(res.invest);sub=eur(res.pmt)+' / mois';}
+      else if(state.mode==='capital'){main=eur(res.cap);sub='dont '+eur(res.int)+" d'intérêts";}
+      else{main=eur(res.int);sub='sur '+eur(res.cap);}
+      td.innerHTML=main+'<span class="sub">'+sub+'</span>';
+      td.onclick=function(){state.sel={r:ri,c:ci};render();};
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  const fi=document.getElementById('freeval');
+  if(fi)fi.onchange=function(e){const x=parseFloat(e.target.value)||0;
+    if(inv)state.freeO=Math.max(1000001,x);else state.freeE=Math.max(2501,x);render();};
+
+  const L={capital:'Capital constitué',interets:'Intérêts capitalisés',
+           part:"Part des intérêts dans le capital",mensualite:"Effort d'épargne mensuel requis",
+           effort:"Effort d'épargne total requis"}[state.mode];
+  document.getElementById('ttitle').textContent=L+(inv?" pour atteindre l'objectif en ":' au terme de ')+num(o.years)+' ans';
+  document.getElementById('tsub').textContent=
+    'Versements en '+(state.timing==='debut'?'début':'fin')+' de mois · conversion '+
+    (state.conv==='act'?'actuarielle (1+t)^(1/12)−1':'proportionnelle t/12')+
+    (o.P0>0?' · capital initial '+eur(o.P0):'')+(o.g>0?' · versements indexés '+pctf(o.g*100):'')+
+    (o.infl>0?' · euros constants, inflation '+pctf(o.infl*100):'');
+  document.getElementById('legtxt').textContent='de '+(state.mode==='part'?pctf(mn):eur(mn))+
+    ' à '+(state.mode==='part'?pctf(mx):eur(mx));
+
+  detail(o);
+}
+
+function detail(o){
+  if(!G[state.sel.r]||!G[state.sel.r][state.sel.c])state.sel={r:0,c:0};
+  const res=G[state.sel.r][state.sel.c],t=RATES[state.sel.c],v=ROWS[state.sel.r];
+  const inv=state.tool==='inverse';
+  document.getElementById('dtitle').textContent=inv
+    ?'Objectif '+eur(v)+' à '+num(t)+' % net'
+    :eur(v)+' par mois à '+num(t)+' % net';
+  document.getElementById('dsub').textContent='Sur '+num(o.years)+' ans, soit '+o.n+' versements mensuels';
+  document.getElementById('l-pmt').textContent=inv?'Versement mensuel requis':'Versement mensuel';
+  document.getElementById('d-pmt').textContent=res.atteint?'Aucun — capital initial suffisant':eur(res.pmt)+' / mois';
+  document.getElementById('d-c0').textContent=eur(o.P0);
+  document.getElementById('d-vers').textContent=eur(res.vers);
+  document.getElementById('d-int').textContent='+ '+eur(res.int);
+  document.getElementById('d-cap').textContent=eur(res.cap);
+  document.getElementById('d-mult').textContent=res.invest>0?num((res.cap/res.invest).toFixed(2))+' ×':'—';
+  document.getElementById('d-rente').textContent=eur(res.cap*0.04/12)+' / mois';
+  const p=Math.max(0,Math.min(100,res.cap>0?res.invest/res.cap*100:0));
+  document.getElementById('bar1').style.width=p+'%';
+  document.getElementById('bar2').style.width=(100-p)+'%';
+
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById('chart'),{type:'line',
+    data:{labels:res.yearly.map((_,k)=>k),datasets:[
+      {label:'Capital',data:res.yearly,borderColor:'#1F4E79',backgroundColor:'rgba(31,78,121,.12)',fill:true,tension:.25,pointRadius:0,borderWidth:2.5},
+      {label:'Cumul versé',data:res.cum,borderColor:'#8FAEDA',borderDash:[5,4],fill:false,pointRadius:0,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},
+      plugins:{legend:{labels:{font:{family:'Inter',size:11},boxWidth:12}},
+        tooltip:{callbacks:{title:i=>'Année '+i[0].label,label:i=>i.dataset.label+' : '+eur(i.parsed.y)}}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Inter',size:10}}},
+              y:{grid:{color:'#EAE7E0'},ticks:{font:{family:'Inter',size:10},callback:v=>F0.format(v)+' €'}}}}});
+}
+
+/* ================= EXPORT ================= */
+function tableText(sep){
+  const inv=state.tool==='inverse';
+  const head=[(inv?'Objectif de capital':'Épargne mensuelle')+' \\ Rendement net']
+    .concat(RATES.map(t=>num(t)+' %'));
+  const lines=[head.join(sep)];
+  ROWS.forEach((v,ri)=>lines.push([v].concat(G[ri].map(r=>Math.round(metric(r)))).join(sep)));
+  return lines.join('\n')+'\n';
+}
+document.getElementById('btn-clean').onclick=function(){state.clean=!state.clean;render();};
+document.getElementById('btn-csv').onclick=function(){
+  const b=new Blob(['\ufeff'+tableText(';')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='matrice-epargne-'+state.tool+'.csv';a.click();};
+document.getElementById('btn-copy').onclick=function(e){
+  const b=e.target,txt=b.textContent;
+  navigator.clipboard.writeText(tableText('\t')).then(function(){
+    b.textContent='Copié';setTimeout(function(){b.textContent=txt;},1400);});};
+
+/* ================= INTERACTIONS ================= */
+document.querySelectorAll('.tool').forEach(b=>b.onclick=function(){
+  document.querySelectorAll('.tool').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');state.tool=b.dataset.tool;
+  state.mode=MODES[state.tool][0][0];state.sel={r:2,c:2};render();});
+document.querySelectorAll('.tg').forEach(b=>b.onclick=function(){
+  document.querySelectorAll('.tg[data-g="'+b.dataset.g+'"]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');state[b.dataset.g]=b.dataset.v;render();});
+['duree','capital0','index','infl','rates'].forEach(id=>
+  document.getElementById(id).addEventListener('input',render));
+
+render();
+</script>
+</body>
+</html>
