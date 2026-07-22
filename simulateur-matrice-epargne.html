@@ -81,6 +81,8 @@ table.mx thead th.corner{background:var(--bhead);color:#fff;padding:0;width:200p
 .c-tr{position:absolute;top:9px;right:11px;text-align:right;font-size:11px;font-weight:600;line-height:1.25;}
 .c-bl{position:absolute;bottom:9px;left:11px;text-align:left;font-size:11px;font-weight:600;line-height:1.25;}
 table.mx tbody th{background:#F2F2F2;color:var(--text);border:1px solid #D9D9D9;width:200px;}
+table.mx tbody th.socle-row{background:#EDEDE8;color:#5A6674;font-size:13px;}
+table.mx tbody th.socle-row .lbl{font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.4px;text-transform:uppercase;}
 table.mx tbody th .rsub{display:block;font-size:9.5px;font-weight:500;color:var(--muted);margin-top:3px;}
 td.cell{cursor:pointer;border:1px solid rgba(255,255,255,.6);transition:transform .12s,box-shadow .12s;}
 td.cell:hover{transform:scale(1.035);box-shadow:0 3px 12px rgba(28,43,58,.22);position:relative;z-index:2;}
@@ -271,7 +273,14 @@ footer{border-top:1px solid var(--bd);padding:18px 30px;text-align:center;font-s
           <span><i style="background:#1F4E79"></i>Effet de la capitalisation</span>
         </div>
       </div>
-      <div class="dr"><div class="cw"><canvas id="chart"></canvas></div></div>
+      <div class="dr">
+        <div class="cw"><canvas id="chart"></canvas></div>
+        <div class="barleg" style="margin-top:12px;justify-content:center">
+          <span><i style="background:#7E9CC9"></i>Cumul versé</span>
+          <span><i style="background:rgba(30,123,76,.45);border:1px solid #1E7B4C"></i>Intérêts générés</span>
+          <span><i style="background:#1F4E79"></i>Capital atteint</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -298,8 +307,8 @@ const MODES={direct:[['capital','Capital'],['interets','Intérêts'],['part',"Pa
              inverse:[['mensualite','Mensualité'],['effort','Effort total'],['part',"Part d'intérêts"]]};
 
 const state={tool:'direct',timing:'debut',conv:'act',mode:'capital',
-             sel:{r:3,c:0},freeE:3000,freeO:1500000,clean:false};
-let chart=null,G=null,RATES=[],ROWS=[];
+             sel:{r:3,c:0},freeE:3000,freeO:1500000,freeOSet:false,selFree:false,clean:false};
+let chart=null,G=null,RATES=[],ROWS=[],TYPES=[];
 
 /* ================= MOTEUR ================= */
 function opts(){
@@ -334,6 +343,42 @@ function solve(target,annual,o){
   r.target=target;r.atteint=(target-base)<=0;
   return r;
 }
+/* arrondi à un palier lisible (25 k, 50 k, 100 k...) */
+function nice(v){
+  const mag=Math.pow(10,Math.floor(Math.log10(Math.max(v,1))));
+  const step=mag/10;
+  return Math.max(step,Math.ceil(v/step)*step);
+}
+/* lignes du tableau : en mode inverse, l'échelle d'objectifs part du capital initial */
+function buildRows(o,inv){
+  if(!inv)return{vals:EPARGNE.concat([Math.max(2501,state.freeE)]),
+                 types:['obj','obj','obj','obj','obj','obj','free']};
+  let objs,head=[],types=[];
+  if(o.P0<=0){objs=OBJECTIFS.slice();}
+  else{
+    const tmax=Math.max.apply(null,RATES)/100;
+    const socle=project(0,tmax,o).cap;               // ce que le capital initial produit seul
+    const base=Math.max(socle,o.P0);
+    objs=[];
+    [1.1,1.35,1.75,2.25,3].forEach(function(k){
+      const v=nice(base*k);
+      if(objs.indexOf(v)===-1&&v>base)objs.push(v);
+    });
+    while(objs.length<5)objs.push(nice(objs[objs.length-1]*1.35));
+    head=[o.P0];types=['socle'];
+  }
+  // objectif libre : valeur par défaut au-dessus de l'échelle tant qu'il n'a pas été modifié
+  const last=objs[objs.length-1];
+  if(!state.freeOSet)state.freeO=nice(last*1.5);
+  const free=Math.max(1,state.freeO);
+  // insertion à sa place dans l'ordre croissant
+  const list=objs.filter(function(v){return v!==free;})
+                 .map(function(v){return{v:v,t:'obj'};});
+  list.push({v:free,t:'free'});
+  list.sort(function(a,b){return a.v-b.v;});
+  return{vals:head.concat(list.map(function(x){return x.v;})),
+         types:types.concat(list.map(function(x){return x.t;}))};
+}
 function getRates(){
   let r=document.getElementById('rates').value.split(/[;,]/)
         .map(s=>parseFloat(s.replace(',','.'))).filter(v=>!isNaN(v)&&v>=0&&v<=25);
@@ -354,11 +399,12 @@ function metric(res){
 function render(){
   const o=opts();RATES=getRates();
   const inv=state.tool==='inverse';
-  ROWS=inv?OBJECTIFS.concat([Math.max(1000001,state.freeO)])
-          :EPARGNE.concat([Math.max(2501,state.freeE)]);
-  G=ROWS.map(v=>RATES.map(t=>inv?solve(v,t/100,o):project(v,t/100,o)));
+  const build=buildRows(o,inv);ROWS=build.vals;TYPES=build.types;
+  G=ROWS.map((v,ri)=>RATES.map(t=>
+      TYPES[ri]==='socle'?project(0,t/100,o):(inv?solve(v,t/100,o):project(v,t/100,o))));
 
-  const vals=[];G.forEach(r=>r.forEach(c=>vals.push(metric(c))));
+  if(state.selFree){state.sel.r=TYPES.indexOf('free');state.selFree=false;}
+  const vals=[];G.forEach((r,ri)=>{if(TYPES[ri]!=='socle')r.forEach(c=>vals.push(metric(c)));});
   const mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
 
   const mc=document.getElementById('modes');
@@ -383,10 +429,15 @@ function render(){
   const tb=document.getElementById('tbody');tb.innerHTML='';
   ROWS.forEach((v,ri)=>{
     const tr=document.createElement('tr'),th=document.createElement('th');
-    if(ri===ROWS.length-1){
+    if(TYPES[ri]==='free'){
       th.className='free-row';
       th.innerHTML='<span class="lbl">'+(inv?'Objectif libre':'Montant libre')+'</span>'+
-        '<input type="number" id="freeval" min="'+(inv?1000001:2501)+'" step="'+(inv?50000:100)+'" value="'+v+'"> €';
+        '<input type="number" id="freeval" min="'+(inv?1000:2501)+
+        '" step="'+(inv?25000:100)+'" value="'+v+'"> €';
+    }else if(TYPES[ri]==='socle'){
+      th.className='socle-row';
+      th.innerHTML='<span class="lbl">Capital initial</span>'+eur(v)+
+        '<span class="rsub">placé seul, sans versement</span>';
     }else{
       th.innerHTML=eur(v)+(inv
         ?'<span class="rsub">'+(o.infl>0?"en euros d'aujourd'hui":'au terme')+'</span>'
@@ -398,6 +449,12 @@ function render(){
       const k=mx>mn?Math.round((val-mn)/(mx-mn)*8):4;
       const td=document.createElement('td');
       td.className='cell'+(state.sel.r===ri&&state.sel.c===ci?' sel':'');
+      if(TYPES[ri]==='socle'){
+        td.style.background='#F0F0EC';td.style.color='#5A6674';
+        td.innerHTML=eur(res.cap)+'<span class="sub">socle sans versement</span>';
+        td.onclick=function(){state.sel={r:ri,c:ci};render();};
+        tr.appendChild(td);return;
+      }
       td.style.background=RAMP[k];td.style.color=k>=6?'#fff':'#1A2A3A';
       let main,sub;
       if(state.mode==='part'){main=pctf(res.cap>0?res.int/res.cap*100:0);sub=eur(res.cap);}
@@ -414,7 +471,8 @@ function render(){
   });
   const fi=document.getElementById('freeval');
   if(fi)fi.onchange=function(e){const x=parseFloat(e.target.value)||0;
-    if(inv)state.freeO=Math.max(1000001,x);else state.freeE=Math.max(2501,x);render();};
+    if(inv){state.freeO=Math.max(1000,x);state.freeOSet=true;state.selFree=true;}
+    else state.freeE=Math.max(2501,x);render();};
 
   const L={capital:'Capital constitué',interets:'Intérêts capitalisés',
            part:"Part des intérêts dans le capital",mensualite:"Effort d'épargne mensuel requis",
@@ -435,12 +493,15 @@ function detail(o){
   if(!G[state.sel.r]||!G[state.sel.r][state.sel.c])state.sel={r:0,c:0};
   const res=G[state.sel.r][state.sel.c],t=RATES[state.sel.c],v=ROWS[state.sel.r];
   const inv=state.tool==='inverse';
-  document.getElementById('dtitle').textContent=inv
-    ?'Objectif '+eur(v)+' à '+num(t)+' % net'
-    :eur(v)+' par mois à '+num(t)+' % net';
+  const socle=TYPES[state.sel.r]==='socle';
+  document.getElementById('dtitle').textContent=socle
+    ?'Capital initial de '+eur(o.P0)+' placé seul à '+num(t)+' % net'
+    :(inv?'Objectif '+eur(v)+' à '+num(t)+' % net'
+         :eur(v)+' par mois à '+num(t)+' % net');
   document.getElementById('dsub').textContent='Sur '+num(o.years)+' ans, soit '+o.n+' versements mensuels';
   document.getElementById('l-pmt').textContent=inv?'Versement mensuel requis':'Versement mensuel';
-  document.getElementById('d-pmt').textContent=res.atteint?'Aucun — capital initial suffisant':eur(res.pmt)+' / mois';
+  document.getElementById('d-pmt').textContent=
+    socle?'Aucun versement':(res.atteint?'Aucun — capital initial suffisant':eur(res.pmt)+' / mois');
   document.getElementById('d-c0').textContent=eur(o.P0);
   document.getElementById('d-vers').textContent=eur(res.vers);
   document.getElementById('d-int').textContent='+ '+eur(res.int);
@@ -454,11 +515,18 @@ function detail(o){
   if(chart)chart.destroy();
   chart=new Chart(document.getElementById('chart'),{type:'line',
     data:{labels:res.yearly.map((_,k)=>k),datasets:[
-      {label:'Capital',data:res.yearly,borderColor:'#1F4E79',backgroundColor:'rgba(31,78,121,.12)',fill:true,tension:.25,pointRadius:0,borderWidth:2.5},
-      {label:'Cumul versé',data:res.cum,borderColor:'#8FAEDA',borderDash:[5,4],fill:false,pointRadius:0,borderWidth:2}]},
+      {label:'Capital atteint',data:res.yearly,borderColor:'#1F4E79',borderWidth:2.5,
+       pointRadius:0,tension:.25,order:1,
+       fill:{target:1,above:'rgba(30,123,76,.22)',below:'rgba(190,60,60,.14)'}},
+      {label:'Cumul versé',data:res.cum,borderColor:'#7E9CC9',borderWidth:2,borderDash:[5,4],
+       pointRadius:0,tension:.05,order:2,fill:{target:'origin',above:'rgba(143,174,218,.30)'}}]},
     options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},
-      plugins:{legend:{labels:{font:{family:'Inter',size:11},boxWidth:12}},
-        tooltip:{callbacks:{title:i=>'Année '+i[0].label,label:i=>i.dataset.label+' : '+eur(i.parsed.y)}}},
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{title:i=>'Année '+i[0].label,
+          label:i=>i.dataset.label+' : '+eur(i.parsed.y),
+          afterBody:function(i){const k=i[0].dataIndex;
+            return 'Intérêts générés : '+eur(res.yearly[k]-res.cum[k]);}}}},
       scales:{x:{grid:{display:false},ticks:{font:{family:'Inter',size:10}}},
               y:{grid:{color:'#EAE7E0'},ticks:{font:{family:'Inter',size:10},callback:v=>F0.format(v)+' €'}}}}});
 }
@@ -469,7 +537,8 @@ function tableText(sep){
   const head=[(inv?'Objectif de capital':'Épargne mensuelle')+' \\ Rendement net']
     .concat(RATES.map(t=>num(t)+' %'));
   const lines=[head.join(sep)];
-  ROWS.forEach((v,ri)=>lines.push([v].concat(G[ri].map(r=>Math.round(metric(r)))).join(sep)));
+  ROWS.forEach((v,ri)=>lines.push([TYPES[ri]==='socle'?'Capital initial '+v:v]
+    .concat(G[ri].map(r=>Math.round(TYPES[ri]==='socle'?r.cap:metric(r)))).join(sep)));
   return lines.join('\n')+'\n';
 }
 document.getElementById('btn-clean').onclick=function(){state.clean=!state.clean;render();};
