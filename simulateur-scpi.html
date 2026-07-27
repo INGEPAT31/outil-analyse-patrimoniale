@@ -6,7 +6,7 @@
 <title>Simulateur SCPI — Nue-Propriété vs Pleine Propriété</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Sora:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
 :root {
   --navy:#1C2B3A; --navy2:#243347; --gold:#C9A84C;
   --cream:#F7F5F0; --pearl:#EAE7E0; --text:#2C3E50; --muted:#6B7A8D;
@@ -15,14 +15,48 @@
   --bd:#D8D3C8; --w:#FFFFFF;
   --post-bg:#FFFBEF; --post-bd:#F0D89A;
   --sh:0 2px 12px rgba(28,43,58,.08);
+  --hero:#132995; --hero-pale:#AFC0FF;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
 
-header{background:var(--navy);padding:26px 48px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid var(--gold);}
-.h-left h1{font-family:'Playfair Display',serif;font-size:25px;font-weight:700;color:#fff;line-height:1.2;}
-.h-left p{font-size:12px;color:rgba(255,255,255,.5);margin-top:5px;letter-spacing:.4px;}
-.h-badge{background:var(--gold);color:var(--navy);font-size:10.5px;font-weight:700;padding:5px 12px;border-radius:2px;letter-spacing:1px;text-transform:uppercase;}
+header{background:var(--hero);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;}
+.h-eyebrow{font-family:'Sora',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--hero-pale);margin-bottom:12px;}
+.h-back{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.5px;display:block;margin-bottom:14px;}
+.h-back:hover{color:var(--hero-pale);}
+.h-left h1{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.3px;}
+.h-left p{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:7px;letter-spacing:.2px;max-width:460px;}
+.h-logo{
+  position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:0;
+  transform:translateY(-50%);
+  transition:transform 1.15s cubic-bezier(.22,.61,.36,1);
+  -webkit-user-select:none;user-select:none;
+}
+.h-logo::before,.h-logo::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;}
+.h-logo::before{
+  background:var(--logo) center/contain no-repeat;
+  opacity:.19;transition:opacity .6s ease;
+}
+.h-logo::after{
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%);
+  background-size:300% 100%;background-position:-150% 0;
+  -webkit-mask:var(--logo) center/contain no-repeat;
+  mask:var(--logo) center/contain no-repeat;
+  opacity:0;
+}
+.h-logo:hover{transform:translateY(-50%) rotate(360deg);}
+.h-logo:hover::before{opacity:.34;}
+.h-logo:hover::after{animation:logo-sheen 1.15s ease-out;}
+@keyframes logo-sheen{
+  0%{opacity:0;background-position:-150% 0;}
+  12%{opacity:1;}
+  100%{opacity:0;background-position:150% 0;}
+}
+@media(prefers-reduced-motion:reduce){
+  .h-logo{transition:none;}
+  .h-logo:hover{transform:translateY(-50%);}
+  .h-logo:hover::after{animation:none;}
+}
 
 .wrap{max-width:1280px;margin:0 auto;padding:34px 30px;}
 
@@ -70,14 +104,14 @@ input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 
 .fisc-r span{color:#C0392B;}
 
 /* BTN CALC */
-.btn-calc{width:100%;background:var(--navy);color:#fff;border:none;padding:13px 22px;font-family:'Playfair Display',serif;font-size:16px;font-weight:600;border-radius:4px;cursor:pointer;letter-spacing:.3px;transition:background .2s;margin-bottom:30px;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 16px rgba(28,43,58,.25);}
-.btn-calc:hover{background:var(--navy2);}
+.btn-calc{width:100%;background:var(--hero);color:#fff;border:none;padding:13px 22px;font-family:'Playfair Display',serif;font-size:16px;font-weight:600;border-radius:4px;cursor:pointer;letter-spacing:.3px;transition:background .2s;margin-bottom:30px;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 16px rgba(19,41,149,.3);}
+.btn-calc:hover{background:#0f2277;}
 
 /* RESULTS */
 #results{display:none;}
-.rh{text-align:center;margin-bottom:26px;}
-.rh h2{font-family:'Playfair Display',serif;font-size:23px;color:var(--navy);margin-bottom:4px;}
-.rh p{font-size:11.5px;color:var(--muted);}
+.rh{background:var(--hero);border-radius:6px;padding:18px 22px;text-align:center;margin-bottom:26px;box-shadow:0 4px 16px rgba(19,41,149,.18);}
+.rh h2{font-family:'Sora',sans-serif;font-size:21px;font-weight:700;color:#fff;margin-bottom:5px;letter-spacing:-.2px;}
+.rh p{font-size:11.5px;color:rgba(255,255,255,.72);}
 
 /* WINNER */
 .win{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:6px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;border-left:4px solid var(--gold);box-shadow:0 4px 24px rgba(28,43,58,.15);}
@@ -120,8 +154,8 @@ input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 
 .tc-h h3{font-family:'Playfair Display',serif;font-size:15px;color:var(--navy);}
 .tc-h p{font-size:10.5px;color:var(--muted);margin-top:2px;}
 table{width:100%;border-collapse:collapse;}
-thead{background:var(--navy);}
-thead th{padding:9px 13px;text-align:right;font-size:10px;font-weight:500;color:rgba(255,255,255,.7);letter-spacing:.5px;text-transform:uppercase;}
+thead{background:var(--hero);}
+thead th{padding:9px 13px;text-align:right;font-size:10px;font-weight:500;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase;}
 thead th:first-child{text-align:left;}
 .th-np{color:#7EC8E3;} .th-pp{color:#7ED4A0;}
 tbody tr{border-bottom:1px solid var(--pearl);transition:background .1s;}
@@ -134,22 +168,25 @@ tbody td{padding:8px 13px;font-size:11.5px;text-align:right;}
 tbody td:first-child{text-align:left;color:var(--muted);font-size:11px;}
 .tnp{color:var(--np);} .tpp{color:var(--pp);} .tred{color:#C0392B;} .tb{font-weight:700;}
 
-.disc{background:var(--w);border:1px solid var(--bd);border-left:4px solid var(--gold);border-radius:4px;padding:13px 16px;font-size:10.5px;color:var(--muted);line-height:1.7;margin-bottom:18px;}
-.disc strong{color:var(--text);display:block;margin-bottom:2px;font-size:11px;}
+.disc{background:var(--hero);border:1px solid var(--hero);border-left:4px solid var(--hero-pale);border-radius:4px;padding:13px 16px;font-size:10.5px;color:rgba(255,255,255,.78);line-height:1.7;margin-bottom:18px;}
+.disc strong{color:#fff;display:block;margin-bottom:2px;font-size:11px;}
 
-footer{background:var(--navy);text-align:center;padding:16px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.5px;}
-footer span{color:var(--gold);}
+footer{background:var(--hero);text-align:center;padding:16px;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.5px;}
+footer span{color:var(--hero-pale);}
+footer .loca-credit{display:block;font-style:italic;font-size:9.5px;margin-top:5px;color:rgba(255,255,255,.3);letter-spacing:.2px;}
 
 @media(max-width:860px){.g3,.g2{grid-template-columns:1fr;}header{padding:16px 18px;flex-direction:column;align-items:flex-start;gap:9px;}.wrap{padding:18px 13px;}}
 </style>
 </head>
 <body>
 <header>
-  <div class="h-left">
+  <span class="h-logo" style="--logo:url('data:image/png;base64,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')" aria-hidden="true"></span>
+  <div class="h-left" style="position:relative;z-index:1;">
+    <a class="h-back" href="index.html">← Retour aux outils</a>
+    <div class="h-eyebrow">Ingénierie patrimoniale · SCPI</div>
     <h1>Simulateur SCPI — Comparaison Patrimoniale</h1>
     <p>Nue-Propriété &nbsp;·&nbsp; Pleine Propriété &nbsp;·&nbsp; Investissement mensuel &nbsp;·&nbsp; Analyse fiscale long terme</p>
   </div>
-  <div class="h-badge">Audit Patrimonial</div>
 </header>
 
 <div class="wrap">
@@ -160,8 +197,19 @@ footer span{color:var(--gold);}
     <div class="ch"><div class="ci ci-go">⚙️</div><div><h2>Paramètres généraux</h2><div class="sub">Communs aux deux scénarios</div></div></div>
     <div class="cb">
       <div class="f">
+        <label>Mode d'investissement</label>
+        <div class="tgg">
+          <button class="tg on" id="tog-mens" onclick="setMode('mensuel')">Versement mensuel</button>
+          <button class="tg" id="tog-uniq" onclick="setMode('unique')">Versement unique</button>
+        </div>
+      </div>
+      <div class="f" id="f-mensuel">
         <label>Versement mensuel (€)</label>
-        <div class="sf"><input type="number" id="mensuel" value="500" min="1"><span>€/mois</span></div>
+        <div class="sf"><input type="number" id="mensuel" value="500" min="0" step="50"><span>€/mois</span></div>
+      </div>
+      <div class="f" id="f-unique" style="display:none">
+        <label>Montant investi en une fois (€)</label>
+        <div class="sf"><input type="number" id="montantUnique" value="100000" min="0" step="1000"><span>€</span></div>
       </div>
       <div class="f">
         <label>Durée du démembrement (objectif NP)</label>
@@ -186,12 +234,32 @@ footer span{color:var(--gold);}
         </select>
       </div>
       <div class="f">
-        <label>Taux de distribution annuel (TD/VL)</label>
+        <label>Taux de distribution annuel (TD)</label>
         <div class="sf"><input type="number" id="td" value="5.5" min="0" max="20" step="0.1"><span>%</span></div>
+      </div>
+      <div class="ib ib-go" style="margin-top:-2px">
+        <strong>ℹ️ Base du TD :</strong> conformément à la convention de place (ASPIM), le taux de distribution s'applique au <strong>prix de souscription</strong>, et non au capital net de frais. Les revenus PP et NP sont donc calculés sur la même base.
       </div>
       <div class="f">
         <label>Revalorisation annuelle de la part</label>
         <div class="sf"><input type="number" id="revalo" value="1.0" min="-5" max="10" step="0.1"><span>%/an</span></div>
+      </div>
+      <div class="f">
+        <label>Replacement des revenus perçus</label>
+        <div class="sf"><input type="number" id="replacement" value="0" min="0" max="10" step="0.1"><span>%/an</span></div>
+      </div>
+      <div class="ib ib-go" id="repl-info">
+        <strong>💡 0 % = revenus consommés.</strong> Hypothèse prudente : les revenus encaissés sont dépensés et ne produisent rien. Saisissez un taux si le client les replace (livret, fonds euros, réinvestissement en parts). <strong>Ce taux sert à la fois au calcul du gain et au TRI</strong>, pour que les deux indicateurs reposent sur la même hypothèse.
+      </div>
+      <div class="f">
+        <label>Valorisation du capital en fin de simulation</label>
+        <div class="tgg">
+          <button class="tg on" id="tog-retrait" onclick="setSortie('retrait')">Valeur de retrait</button>
+          <button class="tg" id="tog-souscr" onclick="setSortie('souscription')">Valeur de souscription</button>
+        </div>
+      </div>
+      <div class="ib ib-go" id="sortie-info">
+        <strong>💡 Valeur de retrait :</strong> le capital final est valorisé au prix effectivement récupéré en cas de revente (prix de souscription diminué de la commission), <strong>pour les deux scénarios</strong>. C'est l'hypothèse prudente et symétrique. Basculez sur « valeur de souscription » pour raisonner à prix de part affiché, sans frais de sortie.
       </div>
     </div>
   </div>
@@ -277,6 +345,8 @@ footer span{color:var(--gold);}
     <p id="res-sub">—</p>
   </div>
 
+  <div class="ib ib-go" id="avert-lecture" style="display:none;margin-bottom:20px"></div>
+
   <div class="win">
     <div>
       <div class="wl">Scénario le plus performant sur toute la période</div>
@@ -344,7 +414,9 @@ footer span{color:var(--gold);}
 </div>
 </div>
 
-<footer>Simulateur Patrimonial SCPI &nbsp;·&nbsp; <span>Usage professionnel exclusif</span> &nbsp;·&nbsp; Clés de démembrement : MeilleureSCPI.com 2026 — 107 SCPI analysées</footer>
+<footer>Simulateur Patrimonial SCPI &nbsp;·&nbsp; <span>Usage professionnel exclusif</span> &nbsp;·&nbsp; Clés de démembrement : MeilleureSCPI.com 2026 — 107 SCPI analysées
+<span class="loca-credit">Ce simulateur a été établi par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</span>
+</footer>
 
 <script>
 // ══════════════════════════════════════════
@@ -362,7 +434,26 @@ function cleForDuree(d) {
 }
 
 let regime = 'reel';
+let investMode = 'mensuel';
+let sortieMode = 'retrait';
 let cMain=null, cRev=null;
+
+function setMode(m){
+  investMode = m;
+  document.getElementById('tog-mens').classList.toggle('on', m==='mensuel');
+  document.getElementById('tog-uniq').classList.toggle('on', m==='unique');
+  document.getElementById('f-mensuel').style.display = m==='mensuel' ? '' : 'none';
+  document.getElementById('f-unique').style.display  = m==='unique'  ? '' : 'none';
+}
+
+function setSortie(s){
+  sortieMode = s;
+  document.getElementById('tog-retrait').classList.toggle('on', s==='retrait');
+  document.getElementById('tog-souscr').classList.toggle('on', s==='souscription');
+  document.getElementById('sortie-info').innerHTML = (s==='retrait')
+    ? "<strong>💡 Valeur de retrait :</strong> le capital final est valorisé au prix effectivement récupéré en cas de revente (prix de souscription diminué de la commission), <strong>pour les deux scénarios</strong>. C'est l'hypothèse prudente et symétrique."
+    : "<strong>💡 Valeur de souscription :</strong> le capital final est valorisé au prix de part affiché, sans décompte de la commission de souscription. À utiliser pour raisonner en valeur de patrimoine déclarée plutôt qu'en valeur de cession.";
+}
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', () => {
@@ -419,250 +510,279 @@ function updateFiscalite() {
 
 // ══════════════════════════════════════════
 // SIMULATION PRINCIPALE
-// Tout en euros investis — pas de notion de prix/part
+// Modèle en « parts » exprimées en équivalent prix de souscription.
+//   - PP : 1 € investi  →  1 € de prix de souscription (la commission est
+//          incluse dans le prix de souscription, elle ne réduit pas le nombre de parts)
+//   - NP : 1 € investi  →  1/clé € de prix de souscription
+// Le taux de distribution (convention ASPIM) s'applique au prix de souscription :
+// la base de revenu est donc identique et symétrique entre les deux scénarios.
+// La commission n'est matérialisée qu'à la revente (valeur de retrait).
 // ══════════════════════════════════════════
+
+// Clé applicable à une durée restante quelconque (continuité jusqu'à 100 % à l'échéance)
+function cleRestante(r) {
+  if (r <= 0) return 1;
+  if (r < 3)  return 1 - (1 - CLE[3]/100) * (r/3); // raccord linéaire entre 3 ans et l'échéance
+  return cleForDuree(r);
+}
+
 function calculer() {
-  const mensuel   = parseFloat(document.getElementById('mensuel').value)||500;
   const duree     = parseInt(document.getElementById('duree').value);
   const postDuree = parseInt(document.getElementById('postDuree').value);
   const tdAn      = parseFloat(document.getElementById('td').value)/100;
   const revalo    = parseFloat(document.getElementById('revalo').value)/100;
   const fraisPP   = parseFloat(document.getElementById('fraisPP').value)/100;
   const tauxFisc  = getTauxFisc();
+  const replacement = (parseFloat(document.getElementById('replacement').value) || 0)/100;
   const totalMois = duree * 12;
   const horizon   = duree + postDuree;
 
-  // ──────────────────────────────────────────
-  // NUE-PROPRIÉTÉ
-  // Chaque versement mensuel m (0-indexé) :
-  //   durée restante = duree - m/12
-  //   clé = cleForDuree(durée restante)
-  //   valeur PP équivalente = mensuel / cle
-  //   (1 euro investi en NP "achète" 1/cle euro de PP future)
-  // ──────────────────────────────────────────
-  let lotNP = []; // { mois, investissement, valeurPP_base }
-  let totalInvestNP = 0;
+  // Coefficient de sortie : valeur de retrait = prix de souscription − commission
+  const coefSortie = (sortieMode === 'retrait') ? (1 - fraisPP) : 1;
 
-  for (let m = 0; m < totalMois; m++) {
-    const drRaw = duree - m/12;
-    const dr = Math.max(3, drRaw);
-    const cle = cleForDuree(dr);
-    const valPP_base = mensuel / cle; // valeur PP représentée par cet investissement (en valeur de départ)
-    lotNP.push({ mois: m, invest: mensuel, valPP_base, cle });
-    totalInvestNP += mensuel;
+  // ──────────────────────────────────────────
+  // CONSTRUCTION DES LOTS
+  // lot = { mois, invest, parts }  — parts en équivalent prix de souscription
+  // ──────────────────────────────────────────
+  let lotNP = [], lotPP = [], totalInvest = 0, montantSaisi = 0;
+
+  if (investMode === 'unique') {
+    montantSaisi = parseFloat(document.getElementById('montantUnique').value) || 0;
+    const k = getCleBase();
+    lotNP.push({ mois:0, invest:montantSaisi, parts:montantSaisi/k, dureeRest:duree, cle:k });
+    lotPP.push({ mois:0, invest:montantSaisi, parts:montantSaisi });
+    totalInvest = montantSaisi;
+  } else {
+    montantSaisi = parseFloat(document.getElementById('mensuel').value) || 0;
+    const manuel = parseFloat(document.getElementById('cleManuelle').value);
+    for (let m = 0; m < totalMois; m++) {
+      const dr = Math.max(3, duree - m/12);
+      // Si l'utilisateur force une clé, elle s'applique à tous les versements
+      const k = (!isNaN(manuel) && manuel > 0) ? manuel/100 : cleForDuree(dr);
+      lotNP.push({ mois:m, invest:montantSaisi, parts:montantSaisi/k, dureeRest:duree - m/12, cle:k });
+      lotPP.push({ mois:m, invest:montantSaisi, parts:montantSaisi });
+      totalInvest += montantSaisi;
+    }
   }
 
-  // Valeur PP totale représentée (à la valeur de départ, avant revalorisation)
-  const valPP_base_totale_NP = lotNP.reduce((s,l) => s+l.valPP_base, 0);
+  if (totalInvest <= 0) { alert("Merci de saisir un montant d'investissement supérieur à 0."); return; }
 
-  // ──────────────────────────────────────────
-  // PLEINE PROPRIÉTÉ
-  // Chaque versement mensuel subit les frais de souscription.
-  // Les revenus sont CUMULATIFS : chaque lot acheté au mois m
-  // génère des revenus dès le mois m+1 sur toute la durée restante.
-  // On calcule un capital acquis progressivement mois par mois.
-  // ──────────────────────────────────────────
-  let totalInvestPP = 0;
-  // Pour chaque mois d'acquisition, on mémorise le capital net placé
-  let lotsPP = []; // { mois, capitalNet } — capital effectif après frais, à valeur de départ
-  for (let m = 0; m < totalMois; m++) {
-    totalInvestPP += mensuel;
-    lotsPP.push({ mois: m, capitalNet: mensuel / (1+fraisPP) });
-  }
-  // Capital total net PP (base de revalorisation, valeur initiale)
-  const valPP_base_totale_PP = lotsPP.reduce((s,l) => s+l.capitalNet, 0);
+  const partsNP = lotNP.reduce((s,l) => s+l.parts, 0);
+  const partsPP = lotPP.reduce((s,l) => s+l.parts, 0);
 
   // ──────────────────────────────────────────
   // SIMULATION ANNUELLE
+  // Chaque lot est revalorisé DEPUIS SA DATE D'ACHAT (symétrique NP / PP).
   // ──────────────────────────────────────────
-  // Coefficient de revalorisation à l'année y
-  const R = y => Math.pow(1+revalo, y);
+  const val = (l, y) => l.parts * Math.pow(1+revalo, y - l.mois/12); // valeur prix de souscription
+  const detention = (l, y) => Math.min(1, Math.max(0, y - l.mois/12)); // fraction d'année détenue
 
-  // Pour la NP : la valeur PP reconstituée à l'année y (pendant le démembrement)
-  // est une reconstitution progressive de chaque lot.
-  // Pendant la phase de démembrement, on ne peut pas céder simplement, mais on
-  // estime la valeur de marché par la reconstitution linéaire de la décote.
-  // Après l'échéance : capital = valPP_base_totale_NP * R(y)
-
-  // Pour la PP : capital = valPP_base_totale_PP * R(y) à tout moment
-  //              revenus = capital_annee_y * tdAn chaque année
-
-  let revNetCumulNP = 0, revNetCumulPP = 0;
-  let fiscCumulPP = 0, revBrutCumulPP = 0;
+  let revNetCumulNP = 0, revNetCumulPP = 0;   // somme simple des revenus nets perçus
+  let pocheNP = 0, pochePP = 0;               // revenus perçus + intérêts de replacement
+  let fiscCumulPP = 0, revBrutCumulPP = 0, fiscCumulNP = 0, revBrutCumulNP = 0;
   const rows = [];
 
-  // Revenu NP post-démembrement : sur le capital reconstitué, soumis aux mêmes règles fiscales
-  // La base de revenu NP = valPP_base_totale_NP * R(y) * tdAn
-
   for (let y = 1; y <= horizon; y++) {
-    const ry = R(y);
-    const enDem = y <= duree;
-    const isEch = y === duree;
 
-    // ── NP ──
-    let capNP, revNetNP_an = 0;
-    if (enDem) {
-      // Valeur de marché estimée : reconstitution progressive de chaque lot
-      // Lot acheté au mois m : progression = (duree - durée_restante_au_mois_m - (duree - y)) / duree_restante_au_mois_m
-      // Simplifié : à l'année y, fraction écoulée pour ce lot = y / dr_initial
-      let valMarche = 0;
-      lotNP.filter(l => l.mois < y*12).forEach(l => {
-        const dr0 = Math.max(3, duree - l.mois/12);
-        const yDepuis = y - l.mois/12;
-        const frac = Math.min(1, yDepuis / dr0);
-        // valeur interpolée : de (invest) à (valPP_base * R(y))
-        const valCible = l.valPP_base * ry;
-        const valAchat = l.invest;
-        valMarche += valAchat + frac * (valCible - valAchat);
-      });
-      capNP = valMarche;
-      revNetNP_an = 0;
-    } else {
-      // Pleine propriété totalement reconstituée
-      capNP = valPP_base_totale_NP * ry;
-      const revBrutNP = capNP * tdAn;
-      const fiscNP = revBrutNP * tauxFisc;
-      revNetNP_an = revBrutNP - fiscNP;
-    }
-    revNetCumulNP += revNetNP_an;
-
-    // ── PP ──
-    // Capital PP à l'année y = somme des lots acquis jusqu'à fin de la phase d'achat (duree ans),
-    // chacun revalorisé depuis sa date d'achat.
-    // Pendant la phase d'acquisition (y <= duree) : seuls les lots du mois 0 à mois min(y*12-1, totalMois-1)
-    // sont détenus. Après : tous les lots sont détenus.
-    // Les revenus PP sont calculés sur le capital effectivement détenu à chaque année.
-    let capPP = 0;
-    const moisMax = Math.min(y * 12, totalMois); // lots acquis jusqu'à cette année
-    lotsPP.slice(0, moisMax).forEach(l => {
-      // Chaque lot est revalorisé depuis son mois d'achat jusqu'à l'année y
-      const anneesDetenu = y - l.mois / 12;
-      capPP += l.capitalNet * Math.pow(1 + revalo, anneesDetenu);
+    // ── NUE-PROPRIÉTÉ ──
+    // Pendant le démembrement : valeur de marché = valeur PP × clé de la durée restante
+    // Après l'échéance : pleine propriété reconstituée
+    let capNP = 0, baseRevNP = 0;
+    lotNP.forEach(l => {
+      if (y - l.mois/12 <= 0) return;              // lot pas encore souscrit
+      const restant = l.dureeRest - (y - l.mois/12); // durée de démembrement restante
+      const vPP = val(l, y);
+      capNP += vPP * cleRestante(restant) * coefSortie;
+      // Revenus : uniquement sur la fraction de l'année postérieure à la reconstitution
+      const dateRecon = l.mois/12 + l.dureeRest;
+      const fracPP = Math.min(1, Math.max(0, y - dateRecon));
+      baseRevNP += vPP * fracPP;
     });
-    const revBrutPP = capPP * tdAn;
-    const fiscPP_an = revBrutPP * tauxFisc;
+    const revBrutNP   = baseRevNP * tdAn;
+    const fiscNP_an   = revBrutNP * tauxFisc;
+    const revNetNP_an = revBrutNP - fiscNP_an;
+    revNetCumulNP += revNetNP_an; fiscCumulNP += fiscNP_an; revBrutCumulNP += revBrutNP;
+    pocheNP = pocheNP * (1 + replacement) + revNetNP_an;
+
+    // ── PLEINE PROPRIÉTÉ ──
+    let capPP = 0, baseRevPP = 0;
+    lotPP.forEach(l => {
+      if (y - l.mois/12 <= 0) return;
+      const vPP = val(l, y);
+      capPP     += vPP * coefSortie;
+      baseRevPP += vPP * detention(l, y);
+    });
+    const revBrutPP   = baseRevPP * tdAn;
+    const fiscPP_an   = revBrutPP * tauxFisc;
     const revNetPP_an = revBrutPP - fiscPP_an;
-    revNetCumulPP += revNetPP_an;
-    fiscCumulPP += fiscPP_an;
-    revBrutCumulPP += revBrutPP;
+    revNetCumulPP += revNetPP_an; fiscCumulPP += fiscPP_an; revBrutCumulPP += revBrutPP;
+    pochePP = pochePP * (1 + replacement) + revNetPP_an;
 
-    // Patrimoine net = capital + revenus nets cumulés - total investi
-    const patrimoineNP = capNP + revNetCumulNP - totalInvestNP;
-    const patrimoinePP = capPP + revNetCumulPP - totalInvestPP;
+    // ── PATRIMOINE NET ──
+    // Capital + poche de revenus (replacés au taux retenu) − capital RÉELLEMENT investi à date
+    const investCumul = lotNP.reduce((s,l) => s + (l.mois/12 < y ? l.invest : 0), 0);
+    const patrimoineNP = capNP + pocheNP - investCumul;
+    const patrimoinePP = capPP + pochePP - investCumul;
 
-    rows.push({y, enDem, isEch, capNP, revNetNP_an, revNetCumulNP, patrimoineNP,
-               capPP, revBrutPP, fiscPP_an, revNetPP_an, revNetCumulPP, patrimoinePP,
+    rows.push({y, enDem:y<=duree, isEch:y===duree, investCumul,
+               capNP, revNetNP_an, revNetCumulNP, pocheNP, patrimoineNP,
+               capPP, revBrutPP, fiscPP_an, revNetPP_an, revNetCumulPP, pochePP, patrimoinePP,
                ecart: patrimoineNP - patrimoinePP});
   }
 
   const last = rows[rows.length-1];
 
-  // ── TRI MENSUEL (Newton-Raphson) ──
-  // On construit un tableau de flux MENSUELS sur tout l'horizon :
-  //   - Sorties : −mensuel chaque mois pendant la phase d'acquisition (mois 0 à totalMois-1)
-  //   - Entrées : revenus nets reçus chaque année (répartis sur 12 mois) + capital final au dernier mois
-  // Le TRI mensuel est ensuite annualisé : TRI_an = (1 + TRI_mois)^12 − 1
-  function triMensuel(lotsAchat, rowsAn, capitalFinal) {
+  // ── TRI MENSUEL (Newton-Raphson + repli par bissection) ──
+  function triMensuel(lots, revenusAnnuels, capitalFinal) {
     const horizonMois = horizon * 12;
-    // Tableau flux mensuels, indexé de 0 à horizonMois
     const flux = new Array(horizonMois + 1).fill(0);
-    // Sorties mensuelles d'acquisition
-    lotsAchat.forEach(l => { flux[l.mois] -= l.invest; });
-    // Entrées : revenus annuels répartis uniformément sur les 12 mois de l'année
-    rowsAn.forEach((r, i) => {
-      const revNet = r.revNetNP_an !== undefined ? r.revNetNP_an : r.revNetPP_an;
-      const moisDebut = i * 12 + 1; // mois 1..12 de l'année i+1
+    lots.forEach(l => { flux[l.mois] -= l.invest; });
+    revenusAnnuels.forEach((rev, i) => {
+      const moisDebut = i * 12 + 1;
       for (let m = 0; m < 12; m++) {
         const idx = moisDebut + m;
-        if (idx <= horizonMois) flux[idx] += revNet / 12;
+        if (idx <= horizonMois) flux[idx] += rev / 12;
       }
     });
-    // Capital final au dernier mois
     flux[horizonMois] += capitalFinal;
 
-    // Newton-Raphson sur taux mensuel
-    let rm = 0.004; // ~5%/an de départ
-    for (let it = 0; it < 300; it++) {
-      let npv = 0, dnpv = 0;
-      flux.forEach((f, t) => {
+    const npv = rm => flux.reduce((s,f,t) => f === 0 ? s : s + f/Math.pow(1+rm, t), 0);
+
+    // Newton-Raphson
+    let rm = 0.004, ok = false;
+    for (let it = 0; it < 200; it++) {
+      let v = 0, d = 0;
+      flux.forEach((f,t) => {
         if (f === 0) return;
-        const d = Math.pow(1 + rm, t);
-        npv  += f / d;
-        dnpv -= t * f / (d * (1 + rm));
+        const den = Math.pow(1+rm, t);
+        v += f/den; d -= t*f/(den*(1+rm));
       });
-      if (Math.abs(dnpv) < 1e-14) break;
-      const nr = rm - npv / dnpv;
-      if (Math.abs(nr - rm) < 1e-10) { rm = nr; break; }
-      rm = Math.max(-0.999, nr); // garde-fou
+      if (Math.abs(d) < 1e-14) break;
+      const nr = rm - v/d;
+      if (!isFinite(nr) || nr <= -0.999) break;
+      if (Math.abs(nr - rm) < 1e-12) { rm = nr; ok = true; break; }
+      rm = nr;
     }
-    return (Math.pow(1 + rm, 12) - 1) * 100; // annualisation
+    // Repli : bissection sur un intervalle large si Newton n'a pas convergé proprement
+    if (!ok || !isFinite(rm) || Math.abs(npv(rm)) > 1e-4) {
+      let lo = -0.05, hi = 0.05; // −45 %/an à +80 %/an environ
+      if (npv(lo) * npv(hi) < 0) {
+        for (let i = 0; i < 200; i++) {
+          const mid = (lo+hi)/2;
+          if (npv(lo) * npv(mid) <= 0) hi = mid; else lo = mid;
+        }
+        rm = (lo+hi)/2;
+      }
+    }
+    return (Math.pow(1 + rm, 12) - 1) * 100;
   }
 
-  // Lots d'acquisition NP et PP avec leur montant de sortie
-  const lotsAchatNP = lotNP.map(l => ({ mois: l.mois, invest: l.invest }));
-  const lotsAchatPP = lotsPP.map(l => ({ mois: l.mois, invest: mensuel })); // mensuel brut sorti
+  // ── TRI MODIFIÉ (MIRR) ──
+  // Utilise EXACTEMENT le même taux de replacement que le calcul du gain.
+  // À 0 %, il mesure le rendement sans aucune hypothèse de remploi : les revenus
+  // sont encaissés et conservés tels quels. C'est la lecture la plus prudente.
+  function triModifie(lots, revenusAnnuels, capitalFinal) {
+    const n  = horizon * 12;
+    const rm = Math.pow(1 + replacement, 1/12) - 1;
+    const flux = new Array(n + 1).fill(0);
+    lots.forEach(l => { flux[l.mois] -= l.invest; });
+    revenusAnnuels.forEach((rev, i) => {
+      const moisDebut = i * 12 + 1;
+      for (let m = 0; m < 12; m++) {
+        const idx = moisDebut + m;
+        if (idx <= n) flux[idx] += rev / 12;
+      }
+    });
+    flux[n] += capitalFinal;
+    let fv = 0, pv = 0;
+    flux.forEach((f, t) => {
+      if (f > 0) fv += f * Math.pow(1 + rm, n - t);
+      else if (f < 0) pv += -f / Math.pow(1 + rm, t);
+    });
+    if (pv <= 0 || fv <= 0) return NaN;
+    return (Math.pow(Math.pow(fv/pv, 1/n), 12) - 1) * 100;
+  }
 
-  // Rows avec le bon champ revenu selon le scénario
-  const rowsNP = rows.map(r => ({ revNetNP_an: r.revNetNP_an }));
-  const rowsPP = rows.map(r => ({ revNetNP_an: r.revNetPP_an }));
-
-  const triNP = triMensuel(lotsAchatNP, rowsNP, last.capNP);
-  const triPP = triMensuel(lotsAchatPP, rowsPP, last.capPP);
+  const triNP = triMensuel(lotNP, rows.map(r=>r.revNetNP_an), last.capNP);
+  const triPP = triMensuel(lotPP, rows.map(r=>r.revNetPP_an), last.capPP);
+  const mriNP = triModifie(lotNP, rows.map(r=>r.revNetNP_an), last.capNP);
+  const mriPP = triModifie(lotPP, rows.map(r=>r.revNetPP_an), last.capPP);
 
   const npWins = last.patrimoineNP > last.patrimoinePP;
 
   // ══ RENDU ══
   document.getElementById('results').style.display='block';
+  const libMode = investMode === 'unique'
+    ? `${E(montantSaisi)} en versement unique`
+    : `${E(montantSaisi)}/mois pendant ${duree} ans`;
+  const libSortie = sortieMode === 'retrait' ? 'valeur de retrait' : 'valeur de souscription';
   document.getElementById('res-sub').textContent =
-    `${E(mensuel)}/mois · Démembrement ${duree} ans + ${postDuree} ans post-reconstitution · TD ${(tdAn*100).toFixed(1)}% · Revalorisation ${(revalo*100).toFixed(1)}%/an`;
+    `${libMode} · Démembrement ${duree} ans + ${postDuree} ans post-reconstitution · TD ${(tdAn*100).toFixed(1)}% · Revalorisation ${(revalo*100).toFixed(1)}%/an · Sortie en ${libSortie} · Replacement des revenus ${(replacement*100).toFixed(1)}%`;
+
+  // Avertissement de lecture lorsque les revenus ne sont pas replacés
+  const avert = document.getElementById('avert-lecture');
+  if (avert) {
+    avert.style.display = 'block';
+    avert.innerHTML = (replacement === 0)
+      ? `<strong>📖 Lecture — revenus consommés (replacement 0 %) :</strong> le « gain patrimonial net » additionne le capital encore détenu et les revenus déjà perçus, qui ont pu être dépensés. Pour un client qui consomme ses revenus, <strong>le patrimoine réellement détenu en fin de période est la seule ligne « Capital détenu à la fin »</strong> : ${E(last.capNP)} en NP contre ${E(last.capPP)} en PP. La ligne « gain » mesure alors le total des euros perçus, pas un patrimoine.`
+      : `<strong>📖 Lecture — revenus replacés à ${(replacement*100).toFixed(1)} % :</strong> les revenus perçus sont supposés replacés à ce taux jusqu'à la fin de la simulation. Le « gain patrimonial net » correspond donc bien à un patrimoine effectivement détenu. Le TRI affiché repose sur la même hypothèse.`;
+  }
 
   // Winner
   document.getElementById('wt').textContent = npWins ? '🏗️ Nue-Propriété' : '🏢 Pleine Propriété';
   document.getElementById('wd').textContent = npWins
     ? `Gain supérieur de ${E(Math.abs(last.patrimoineNP-last.patrimoinePP))} — grâce à l'effet volume de la décote et à l'absence de fiscalité pendant ${duree} ans`
     : `Gain supérieur de ${E(Math.abs(last.patrimoinePP-last.patrimoineNP))} — grâce aux revenus nets cumulés sur toute la période`;
-  document.getElementById('wb').textContent = `TRI : ${npWins?triNP.toFixed(2):triPP.toFixed(2)}%/an`;
+  document.getElementById('wb').textContent = `TRI (replacement ${(replacement*100).toFixed(1)} %) : ${npWins?mriNP.toFixed(2):mriPP.toFixed(2)} %/an`;
 
   // KPI NP
-  const pmpNP = totalInvestNP / valPP_base_totale_NP * 100; // clé moyenne pondérée
-  const decote = 100 - pmpNP;
+  const cleMoy = totalInvest / partsNP * 100;   // clé moyenne pondérée
+  const decote = 100 - cleMoy;
+  const libPhase = investMode === 'unique' ? 'Investissement initial' : `Investissement (phase d'acquisition — ${duree} ans)`;
   document.getElementById('kpi-np').innerHTML = `
-    <div class="ks">Investissement (phase d'acquisition — ${duree} ans)</div>
-    <div class="kr"><span class="kl">Budget total investi</span><span class="kv cnp">${E(totalInvestNP)}</span></div>
-    <div class="kr"><span class="kl">Valeur PP représentée à l'échéance (avant revalo.)</span><span class="kv cnp">${E(valPP_base_totale_NP)}</span></div>
-    <div class="kr"><span class="kl">Clé moyenne pondérée (NP/PP)</span><span class="kv cnp">${pmpNP.toFixed(1)}%</span></div>
+    <div class="ks">${libPhase}</div>
+    <div class="kr"><span class="kl">Budget total investi</span><span class="kv cnp">${E(totalInvest)}</span></div>
+    <div class="kr"><span class="kl">Valeur PP représentée (prix de souscription)</span><span class="kv cnp">${E(partsNP)}</span></div>
+    <div class="kr"><span class="kl">Clé moyenne pondérée (NP/PP)</span><span class="kv cnp">${cleMoy.toFixed(1)}%</span></div>
     <div class="kr"><span class="kl">Décote moyenne obtenue</span><span class="kv grn">+${decote.toFixed(1)}% de valeur PP supplémentaire</span></div>
     <div class="ks">Phase démembrement (${duree} ans)</div>
     <div class="kr"><span class="kl">Revenus perçus</span><span class="kv red">0 €</span></div>
     <div class="kr"><span class="kl">Fiscalité sur revenus</span><span class="kv">0 €</span></div>
-    <div class="kr"><span class="kl">Capital reconstitué à l'échéance</span><span class="kv cnp">${E(rows[duree-1].capNP)}</span></div>
+    <div class="kr"><span class="kl">Capital à l'échéance du démembrement</span><span class="kv cnp">${E(rows[duree-1].capNP)}</span></div>
     <div class="ks">Phase post-reconstitution (${postDuree} ans)</div>
-    <div class="kr"><span class="kl">Revenus nets cumulés</span><span class="kv cnp">${E(last.revNetCumulNP)}</span></div>
-    <div class="kr"><span class="kl">Capital final (valeur de la PP)</span><span class="kv cnp">${E(last.capNP)}</span></div>
+    <div class="kr"><span class="kl">Revenus bruts cumulés</span><span class="kv cnp">${E(revBrutCumulNP)}</span></div>
+    <div class="kr"><span class="kl">Fiscalité totale payée</span><span class="kv red">${E(fiscCumulNP)}</span></div>
+    <div class="kr"><span class="kl">Revenus nets cumulés (avant replacement)</span><span class="kv cnp">${E(last.revNetCumulNP)}</span></div>
     <div class="ks">Bilan global (${horizon} ans)</div>
+    <div class="kr"><span class="kl">Capital détenu à la fin</span><span class="kv cnp">${E(last.capNP)}</span></div>
+    <div class="kr"><span class="kl">Revenus perçus sur la période${replacement>0?' (replacés)':''}</span><span class="kv cnp">${E(last.pocheNP)}</span></div>
     <div class="kr"><span class="kl">Gain patrimonial net</span><span class="kv hl">${E(last.patrimoineNP)}</span></div>
-    <div class="kr"><span class="kl">Performance / budget investi</span><span class="kv cnp">+${(last.patrimoineNP/totalInvestNP*100).toFixed(1)}%</span></div>
-    <div class="kr"><span class="kl">TRI global annualisé</span><span class="kv cnp">${triNP.toFixed(2)}%/an</span></div>
+    <div class="kr"><span class="kl">Performance / budget investi</span><span class="kv cnp">${last.patrimoineNP>=0?'+':''}${(last.patrimoineNP/totalInvest*100).toFixed(1)}%</span></div>
+    <div class="kr"><span class="kl">TRI annualisé (replacement ${(replacement*100).toFixed(1)} %)</span><span class="kv cnp">${mriNP.toFixed(2)}%/an</span></div>
+    <div class="kr" style="opacity:.62"><span class="kl" style="font-size:10px">TRI classique — pour mémoire<br><em style="font-size:9px">suppose un replacement au TRI lui-même</em></span><span class="kv" style="font-size:11px">${triNP.toFixed(2)}%/an</span></div>
   `;
 
   // KPI PP
   const regLbl = regime==='zero'?'Sans fiscalité (simulation brute)':regime==='micro'?'Micro-foncier (abat. 30%)':'Régime réel';
   const tmiVal = parseInt(document.getElementById('tmi').value);
+  const commission = sortieMode === 'retrait' ? partsPP * fraisPP : 0;
   document.getElementById('kpi-pp').innerHTML = `
-    <div class="ks">Investissement (phase d'acquisition — ${duree} ans)</div>
-    <div class="kr"><span class="kl">Budget total investi (frais inclus)</span><span class="kv cpp">${E(totalInvestPP)}</span></div>
-    <div class="kr"><span class="kl">Capital effectivement placé (net de frais)</span><span class="kv cpp">${E(valPP_base_totale_PP)}</span></div>
-    <div class="kr"><span class="kl">Frais de souscription payés</span><span class="kv red">${E(totalInvestPP - valPP_base_totale_PP)}</span></div>
+    <div class="ks">${libPhase}</div>
+    <div class="kr"><span class="kl">Budget total investi</span><span class="kv cpp">${E(totalInvest)}</span></div>
+    <div class="kr"><span class="kl">Valeur PP détenue (prix de souscription)</span><span class="kv cpp">${E(partsPP)}</span></div>
+    <div class="kr"><span class="kl">Commission de souscription incluse</span><span class="kv red">${E(commission)}${sortieMode==='retrait'?'':' (non décomptée)'}</span></div>
     <div class="kr"><span class="kl">Régime fiscal</span><span class="kv">${regLbl} — TMI ${tmiVal}%</span></div>
     <div class="ks">Revenus — toute la période (${horizon} ans)</div>
     <div class="kr"><span class="kl">Revenus bruts cumulés</span><span class="kv cpp">${E(revBrutCumulPP)}</span></div>
     <div class="kr"><span class="kl">Fiscalité totale payée</span><span class="kv red">${E(fiscCumulPP)}</span></div>
-    <div class="kr"><span class="kl">Revenus nets cumulés</span><span class="kv cpp">${E(last.revNetCumulPP)}</span></div>
+    <div class="kr"><span class="kl">Revenus nets cumulés (avant replacement)</span><span class="kv cpp">${E(last.revNetCumulPP)}</span></div>
     <div class="ks">Bilan global (${horizon} ans)</div>
-    <div class="kr"><span class="kl">Capital final</span><span class="kv cpp">${E(last.capPP)}</span></div>
+    <div class="kr"><span class="kl">Capital détenu à la fin (${libSortie})</span><span class="kv cpp">${E(last.capPP)}</span></div>
+    <div class="kr"><span class="kl">Revenus perçus sur la période${replacement>0?' (replacés)':''}</span><span class="kv cpp">${E(last.pochePP)}</span></div>
     <div class="kr"><span class="kl">Gain patrimonial net</span><span class="kv hl">${E(last.patrimoinePP)}</span></div>
-    <div class="kr"><span class="kl">Performance / budget investi</span><span class="kv cpp">+${(last.patrimoinePP/totalInvestPP*100).toFixed(1)}%</span></div>
-    <div class="kr"><span class="kl">TRI global annualisé</span><span class="kv cpp">${triPP.toFixed(2)}%/an</span></div>
+    <div class="kr"><span class="kl">Performance / budget investi</span><span class="kv cpp">${last.patrimoinePP>=0?'+':''}${(last.patrimoinePP/totalInvest*100).toFixed(1)}%</span></div>
+    <div class="kr"><span class="kl">TRI annualisé (replacement ${(replacement*100).toFixed(1)} %)</span><span class="kv cpp">${mriPP.toFixed(2)}%/an</span></div>
+    <div class="kr" style="opacity:.62"><span class="kl" style="font-size:10px">TRI classique — pour mémoire<br><em style="font-size:9px">suppose un replacement au TRI lui-même</em></span><span class="kv" style="font-size:11px">${triPP.toFixed(2)}%/an</span></div>
   `;
 
   // ── CHARTS ──
@@ -673,29 +793,27 @@ function calculer() {
   const rNP = [0,...rows.map(r=>r.revNetNP_an)];
   const rPP = [0,...rows.map(r=>r.revNetPP_an)];
 
-  // Plugin zones de fond
   const zones = {
     id:'zones',
     beforeDraw(chart){
       const{ctx,chartArea:{left,right,top,bottom},scales:{x}}=chart;
       const x0=x.getPixelForValue(0), xD=x.getPixelForValue(duree), xF=x.getPixelForValue(horizon);
       ctx.save();
-      ctx.fillStyle='rgba(28,107,138,0.05)';
+      ctx.fillStyle='rgba(19,41,149,0.045)';
       ctx.fillRect(x0,top,xD-x0,bottom-top);
       ctx.fillStyle='rgba(201,168,76,0.06)';
       ctx.fillRect(xD,top,xF-xD,bottom-top);
-      ctx.strokeStyle='rgba(201,168,76,0.7)';
+      ctx.strokeStyle='rgba(19,41,149,0.55)';
       ctx.lineWidth=2; ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.moveTo(xD,top);ctx.lineTo(xD,bottom);ctx.stroke();
-      // label reconstitution
-      ctx.fillStyle='rgba(180,140,40,0.85)';
+      ctx.fillStyle='rgba(19,41,149,0.85)';
       ctx.font='bold 10px Inter';
       ctx.fillText('Reconstitution PP',xD+5,top+14);
       ctx.restore();
     }
   };
 
-  const opts = (yFmt) => ({
+  const opts = () => ({
     responsive:true, maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     plugins:{
@@ -730,7 +848,8 @@ function calculer() {
   const tb = document.getElementById('tBody');
   tb.innerHTML='';
   const sep1=document.createElement('tr'); sep1.className='sep-dem';
-  sep1.innerHTML=`<td colspan="11">🏗️ Phase de démembrement — investissement mensuel progressif (${duree} ans) — Aucun revenu NP</td>`;
+  const libAcq = investMode === 'unique' ? 'investissement initial unique' : `investissement mensuel progressif (${duree} ans)`;
+  sep1.innerHTML=`<td colspan="11">🏗️ Phase de démembrement — ${libAcq} — Aucun revenu NP</td>`;
   tb.appendChild(sep1);
 
   rows.forEach(r => {
