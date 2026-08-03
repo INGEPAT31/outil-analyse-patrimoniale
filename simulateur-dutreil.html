@@ -1084,66 +1084,73 @@ function afficher(cfg,R,Rsans,RsansRed){
 
   const synth=`<div class="synth-wrap"><table class="synth-table"><thead><tr><th class="row-header">Poste</th>${th}<th class="th-total">Total</th></tr></thead><tbody>${tbody}</tbody></table></div>`;
 
-  /* ── Sensibilité à la quote-part de titres transmise ── */
+  /* ── Sensibilité à la quote-part de titres transmise ──
+     Construite sous forme de modèle de données, exploité à la fois
+     pour le rendu HTML et pour l'export PNG. */
   const qts=[0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1];
   const scen=qts.map(x=>moteur(Object.assign({},cfg,{valeur:cfg.valeur*x})));
-  const qCell=(i,inner,cls)=>`<td class="${cls||''}${qts[i]===1?' col-ref':''}">${inner}</td>`;
-  const qRow=(label,fn,cls,neg,sub)=>{
-    const tds=scen.map((S,i)=>{
-      const v=fn(S.totaux,S);
-      const disp=(v===undefined||v===null||Math.abs(v)<0.5)?'<span class="zero">—</span>':(neg?'− ':'')+fmt(v);
-      return qCell(i,disp,cls);
-    }).join('');
-    return `<tr><td class="row-label${sub?' sub-label':''}">${label}</td>${tds}</tr>`;
-  };
-  const qRowTxt=(label,fn,cls)=>`<tr><td class="row-label">${label}</td>${scen.map((S,i)=>qCell(i,fn(S.totaux,S),cls)).join('')}</tr>`;
-  const qRowStrong=(label,fn)=>{
-    const tds=scen.map((S,i)=>qCell(i,fmt(fn(S.totaux)),'')).join('');
-    return `<tr class="total-synth"><td class="row-label">${label}</td>${tds}</tr>`;
-  };
-  const qCat=l=>`<tr><td class="row-label category" colspan="${qts.length+1}">${l}</td></tr>`;
+  const qData=[];
+  const qCat=l=>qData.push({type:'cat',label:l});
+  const qNum=(label,fn,o)=>{o=o||{};qData.push({type:o.strong?'strong':'row',label,sub:o.sub,cls:o.cls,
+    cells:scen.map(S=>{const v=fn(S.totaux,S);
+      return (v===undefined||v===null||Math.abs(v)<0.5)?(o.strong?fmt(0):'—'):(o.neg?'− ':'')+fmt(v);})});};
+  const qTxt=(label,fn)=>qData.push({type:'row',label,cells:scen.map(S=>fn(S.totaux,S))});
 
-  let qb='';
-  qb+=qCat('1 · Valorisation');
-  qb+=qRow('Valeur vénale en pleine propriété',t=>t.vPP);
+  qCat('1 · Valorisation');
+  qNum('Valeur vénale en pleine propriété',t=>t.vPP);
   if(cfg.decote>0){
-    qb+=qRow(`Décote pour illiquidité (${fmtPct(cfg.decote*100,1)})`,t=>t.vPP-t.vActe,'green',true,true);
-    qb+=qRow('Valeur retenue à l\'acte',t=>t.vActe);
+    qNum(`Décote pour illiquidité (${fmtPct(cfg.decote*100,1)})`,t=>t.vPP-t.vActe,{cls:'green',neg:true,sub:true});
+    qNum('Valeur retenue à l\'acte',t=>t.vActe);
   }
-  if(cfg.typeD==='NP')qb+=qRow('Valeur de la nue-propriété transmise',t=>t.vTrans);
-  qb+=qCat('2 · Régime Dutreil — art. 787 B CGI');
+  if(cfg.typeD==='NP')qNum('Valeur de la nue-propriété transmise',t=>t.vTrans);
+  qCat('2 · Régime Dutreil — art. 787 B CGI');
   if(cfg.dutreil&&cfg.quoteElig>0){
-    qb+=qRow('Fraction éligible',t=>t.partElig);
-    qb+=qRow('Exonération de 75 %',t=>t.exoDutreil,'green',true);
-    if(cfg.quoteElig<1)qb+=qRow('Fraction non éligible',t=>t.partNonElig);
+    qNum('Fraction éligible',t=>t.partElig);
+    qNum('Exonération de 75 %',t=>t.exoDutreil,{cls:'green',neg:true});
+    if(cfg.quoteElig<1)qNum('Fraction non éligible',t=>t.partNonElig);
   }else{
-    qb+=`<tr><td class="row-label">Exonération partielle</td><td colspan="${qts.length}" style="text-align:left;color:var(--text-muted);font-style:italic;">Régime Dutreil non appliqué</td></tr>`;
+    qData.push({type:'note',label:'Exonération partielle',note:'Régime Dutreil non appliqué'});
   }
-  qb+=qRow('Assiette taxable avant abattement',t=>t.assiette);
-  qb+=qCat('3 · Abattements');
-  qb+=qRow('Abattement personnel utilisé',t=>t.abattPersoUtil,'green',true);
-  if(T.abattHandUtil>0)qb+=qRow('Abattement handicap utilisé',t=>t.abattHandUtil,'green',true);
-  qb+=qRowStrong('Base taxable',t=>t.baseTax);
-  qb+=qCat('4 · Droits de mutation à titre gratuit');
-  qb+=qRow('Droits bruts (barème art. 777 CGI)',t=>t.droitsBruts);
-  if(T.reduction>0)qb+=qRow('Réduction de 50 % (art. 790 CGI)',t=>t.reduction,'green',true);
-  qb+=qRowStrong('Droits nets dus',t=>t.droitsNets);
-  qb+=qCat('5 · Frais d\'acte');
-  qb+=qRow('Émoluments TTC et débours',t=>t.frais,'frais-row');
-  if(T.honoraires>0)qb+=qRow('Honoraires d\'accompagnement',t=>t.honoraires,'frais-row');
-  qb+=qCat('6 · Coût global');
-  qb+=qRowTxt('Pression fiscale',t=>t.vPP>0?fmtPct((t.droitsNets/t.vPP)*100,2):'—');
-  qb+=qRowStrong('Coût total de la transmission',t=>t.coutTotal);
-  qb+=qRowTxt('Coût rapporté à la valeur transmise',t=>t.vTrans>0?fmtPct((t.coutTotal/t.vTrans)*100,2):'—');
-  qb+=qRowTxt('Taux marginal atteint',(t,S)=>{
+  qNum('Assiette taxable avant abattement',t=>t.assiette);
+  qCat('3 · Abattements');
+  qNum('Abattement personnel utilisé',t=>t.abattPersoUtil,{cls:'green',neg:true});
+  if(T.abattHandUtil>0)qNum('Abattement handicap utilisé',t=>t.abattHandUtil,{cls:'green',neg:true});
+  qNum('Base taxable',t=>t.baseTax,{strong:true});
+  qCat('4 · Droits de mutation à titre gratuit');
+  qNum('Droits bruts (barème art. 777 CGI)',t=>t.droitsBruts);
+  if(T.reduction>0)qNum('Réduction de 50 % (art. 790 CGI)',t=>t.reduction,{cls:'green',neg:true});
+  qNum('Droits nets dus',t=>t.droitsNets,{strong:true});
+  qCat('5 · Frais d\'acte');
+  qNum('Émoluments TTC et débours',t=>t.frais,{cls:'frais-row'});
+  if(T.honoraires>0)qNum('Honoraires d\'accompagnement',t=>t.honoraires,{cls:'frais-row'});
+  qCat('6 · Coût global');
+  qTxt('Pression fiscale',t=>t.vPP>0?fmtPct((t.droitsNets/t.vPP)*100,2):'—');
+  qNum('Coût total de la transmission',t=>t.coutTotal,{strong:true});
+  qTxt('Coût rapporté à la valeur transmise',t=>t.vTrans>0?fmtPct((t.coutTotal/t.vTrans)*100,2):'—');
+  qTxt('Taux marginal atteint',(t,S)=>{
     const k=S.colKeys.find(x=>S.cols[x].baseTax>0);
-    if(!k)return '<span class="zero">—</span>';
+    if(!k)return '—';
     const c=S.cols[k],b=c.prevTaxBase+c.baseTax;
     const tr=BAREMES_DMTG[c.baremeKey].find(x=>b<=x.max)||BAREMES_DMTG[c.baremeKey].slice(-1)[0];
     return fmtPct(tr.taux*100,0);
   });
 
-  const qHead=qts.map(x=>`<th class="${x===1?'th-ref':''}">${fmtPct(x*100,0)}</th>`).join('');
+  const qHeads=qts.map(x=>fmtPct(x*100,0));
+  /* Mémorisé pour l'export image */
+  window.__qTable={
+    head:qHeads,rows:qData,refIndex:qts.length-1,
+    titre:'Sensibilité à la quote-part de titres transmise',
+    sous:`${cfg.socNom} — ${fmt(cfg.valeur)} en pleine propriété à 100 %${cfg.typeD==='NP'?' · donation en nue-propriété':''}${cfg.dutreil?' · Dutreil sur '+fmtPct(cfg.quoteElig*100,0)+' de la valeur':' · sans régime Dutreil'}`
+  };
+
+  let qb='';
+  for(const r of qData){
+    if(r.type==='cat'){qb+=`<tr><td class="row-label category" colspan="${qts.length+1}">${r.label}</td></tr>`;continue;}
+    if(r.type==='note'){qb+=`<tr><td class="row-label">${r.label}</td><td colspan="${qts.length}" style="text-align:left;color:var(--text-muted);font-style:italic;">${r.note}</td></tr>`;continue;}
+    const tds=r.cells.map((v,i)=>`<td class="${r.cls||''}${i===qts.length-1?' col-ref':''}">${v==='—'?'<span class="zero">—</span>':v}</td>`).join('');
+    qb+=`<tr class="${r.type==='strong'?'total-synth':''}"><td class="row-label${r.sub?' sub-label':''}">${r.label}</td>${tds}</tr>`;
+  }
+  const qHead=qHeads.map((h,i)=>`<th class="${i===qHeads.length-1?'th-ref':''}">${h}</th>`).join('');
   const quoteTable=`<div class="synth-wrap"><table class="synth-table compact"><thead><tr><th class="row-header">Poste</th>${qHead}</tr></thead><tbody>${qb}</tbody></table></div>`;
 
   /* ── Détail émoluments ── */
@@ -1193,7 +1200,14 @@ function afficher(cfg,R,Rsans,RsansRed){
   </div>
   <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:0 0 10px 4px;">Détail de la liquidation, par couple donateur / donataire</div>
   ${synth}
-  <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:1.75rem 0 10px 4px;">Sensibilité à la quote-part de titres transmise</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:1.75rem 0 10px 4px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);">Sensibilité à la quote-part de titres transmise</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="qExport('download')">⬇ Télécharger en PNG</button>
+      <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="qExport('copy')">⧉ Copier l'image</button>
+      <span id="q-flash" style="font-size:11.5px;color:var(--green);opacity:0;transition:opacity .2s;"></span>
+    </div>
+  </div>
   ${quoteTable}
   <div class="info-box" style="margin-top:12px;">
     Chaque colonne rejoue la liquidation complète sur une fraction de la valeur saisie : la colonne <strong>100 %</strong> correspond au scénario retenu ci-dessus (${fmt(cfg.valeur)}), les autres en sont des sous-multiples. Répartition entre donataires, qualité, abattements, rappel fiscal et quote-part éligible au 787 B sont inchangés d'une colonne à l'autre.<br><br>
@@ -1219,6 +1233,158 @@ function afficher(cfg,R,Rsans,RsansRed){
 function toggleDetail(panelId,chevId){
   const p=document.getElementById(panelId),c=document.getElementById(chevId);
   const o=p.classList.toggle('open');c.classList.toggle('open',o);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPORT IMAGE DU TABLEAU DE SENSIBILITÉ
+   Rendu directement sur canvas plutôt que par capture du DOM :
+   le tableau est restitué en entier, quelle que soit la largeur
+   affichée à l'écran, et en résolution double.
+   ═══════════════════════════════════════════════════════════ */
+const QPX={
+  ech:2, fs:12, rowH:26, headH:32, marge:14, padX:11,
+  navy:'#1a4f8c', navyDark:'#12396b', navyRef:'#0a2d5e',
+  border:'#e0e0de', labelBg:'#f9f9f7', catBg:'#eceae4',
+  refBg:'#eef2fa', strongBg:'#e6f0fb', strongRefBg:'#d8e6f7',
+  fraisBg:'#fdf6ee', fraisRefBg:'#f4e7d2',
+  texte:'#0b0b0a', gris:'#898781', vert:'#0f6e56'
+};
+function qFont(g,poids,taille){g.font=(poids||400)+' '+(taille||QPX.fs)+'px Inter, Helvetica, Arial, sans-serif';}
+
+function qCanvas(){
+  const D=window.__qTable;
+  if(!D)return null;
+  const n=D.head.length;
+
+  /* Mesures sur un canvas d'appoint */
+  const mc=document.createElement('canvas').getContext('2d');
+  qFont(mc,600,QPX.fs);
+  let labelW=0;
+  D.rows.forEach(r=>{labelW=Math.max(labelW,mc.measureText(r.label).width);});
+  labelW=Math.ceil(labelW)+QPX.padX*2+8;
+  let valW=0;
+  D.head.forEach(h=>{valW=Math.max(valW,mc.measureText(h).width);});
+  D.rows.forEach(r=>(r.cells||[]).forEach(v=>{valW=Math.max(valW,mc.measureText(v).width);}));
+  valW=Math.ceil(valW)+QPX.padX*2;
+  const tableW=labelW+valW*n;
+  const W=Math.ceil(tableW);
+  const titleH=QPX.marge;
+  const H=titleH+QPX.headH+D.rows.length*QPX.rowH+QPX.marge;
+
+  const c=document.createElement('canvas');
+  c.width=W*QPX.ech;c.height=H*QPX.ech;
+  const g=c.getContext('2d');
+  g.scale(QPX.ech,QPX.ech);
+  g.textBaseline='middle';
+
+  g.fillStyle='#ffffff';g.fillRect(0,0,W,H);
+
+  const x0=0;
+  const colX=i=>x0+labelW+valW*i;
+
+  /* En-tête */
+  let y=titleH;
+  g.fillStyle=QPX.navyDark;g.fillRect(x0,y,labelW,QPX.headH);
+  for(let i=0;i<n;i++){
+    g.fillStyle=(i===D.refIndex)?QPX.navyRef:QPX.navy;
+    g.fillRect(colX(i),y,valW,QPX.headH);
+  }
+  qFont(g,600,11);g.fillStyle='#ffffff';
+  g.textAlign='left';g.fillText('Poste',x0+QPX.padX,y+QPX.headH/2);
+  g.textAlign='right';
+  for(let i=0;i<n;i++)g.fillText(D.head[i],colX(i)+valW-QPX.padX,y+QPX.headH/2);
+  y+=QPX.headH;
+
+  /* Lignes */
+  for(const r of D.rows){
+    const my=y+QPX.rowH/2;
+    if(r.type==='cat'){
+      g.fillStyle=QPX.catBg;g.fillRect(x0,y,tableW,QPX.rowH);
+      qFont(g,700,10);g.fillStyle=QPX.texte;g.textAlign='left';
+      g.fillText(r.label.toUpperCase(),x0+QPX.padX,my);
+    }else if(r.type==='note'){
+      g.fillStyle=QPX.labelBg;g.fillRect(x0,y,labelW,QPX.rowH);
+      g.fillStyle='#ffffff';g.fillRect(x0+labelW,y,valW*n,QPX.rowH);
+      qFont(g,400,11.5);g.fillStyle=QPX.gris;g.textAlign='left';
+      g.fillText(r.label,x0+QPX.padX,my);
+      g.fillText(r.note,x0+labelW+QPX.padX,my);
+    }else{
+      const fort=r.type==='strong', frais=r.cls==='frais-row';
+      g.fillStyle=fort?QPX.strongBg:QPX.labelBg;g.fillRect(x0,y,labelW,QPX.rowH);
+      for(let i=0;i<n;i++){
+        const ref=(i===D.refIndex);
+        g.fillStyle=fort?(ref?QPX.strongRefBg:QPX.strongBg)
+                   :frais?(ref?QPX.fraisRefBg:QPX.fraisBg)
+                   :(ref?QPX.refBg:'#ffffff');
+        g.fillRect(colX(i),y,valW,QPX.rowH);
+      }
+      qFont(g,fort?700:400,11.5);
+      g.fillStyle=fort?QPX.navy:(r.sub?QPX.gris:'#52514e');
+      g.textAlign='left';
+      g.fillText(r.label,x0+QPX.padX+(r.sub?10:0),my);
+      g.textAlign='right';
+      for(let i=0;i<n;i++){
+        const v=r.cells[i],ref=(i===D.refIndex);
+        qFont(g,fort?700:(ref?600:400),11.5);
+        g.fillStyle=v==='—'?'#cccccc':(fort?QPX.navy:(r.cls==='green'?QPX.vert:QPX.texte));
+        g.fillText(v,colX(i)+valW-QPX.padX,my);
+      }
+    }
+    y+=QPX.rowH;
+  }
+
+  /* Filets */
+  g.strokeStyle=QPX.border;g.lineWidth=1;
+  const top=titleH;
+  for(let i=0;i<=n;i++){
+    const x=Math.round(x0+labelW+valW*i)+0.5;
+    g.beginPath();g.moveTo(x,top);g.lineTo(x,y);g.stroke();
+  }
+  let yy=top+QPX.headH;
+  g.beginPath();g.moveTo(x0,Math.round(yy)+0.5);g.lineTo(x0+tableW,Math.round(yy)+0.5);g.stroke();
+  for(let i=0;i<D.rows.length;i++){
+    yy+=QPX.rowH;
+    g.beginPath();g.moveTo(x0,Math.round(yy)+0.5);g.lineTo(x0+tableW,Math.round(yy)+0.5);g.stroke();
+  }
+  g.strokeRect(Math.round(x0)+0.5,Math.round(top)+0.5,tableW-1,y-top-1);
+
+  return c;
+}
+
+function qFlash(msg,erreur){
+  const el=document.getElementById('q-flash');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.color=erreur?'#b91c1c':'var(--green)';
+  el.style.opacity='1';
+  clearTimeout(window.__qFlashT);
+  window.__qFlashT=setTimeout(()=>{el.style.opacity='0';},3200);
+}
+
+async function qExport(mode){
+  if(!window.__qTable){qFlash('Lancez d\'abord le calcul',true);return;}
+  try{if(document.fonts&&document.fonts.ready)await document.fonts.ready;}catch(e){}
+  const c=qCanvas();
+  if(!c){qFlash('Rendu impossible',true);return;}
+  c.toBlob(async blob=>{
+    if(!blob){qFlash('Rendu impossible',true);return;}
+    if(mode==='download'){
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='sensibilite-quote-part-dutreil.png';
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+      qFlash('Image téléchargée');
+    }else{
+      try{
+        if(!navigator.clipboard||!window.ClipboardItem)throw new Error('non supporté');
+        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+        qFlash('Tableau copié — collez-le où vous voulez');
+      }catch(e){
+        qFlash('Copie refusée par le navigateur — utilisez le téléchargement',true);
+      }
+    }
+  },'image/png');
 }
 
 /* ═══════════════════════════════════════════════════════════
