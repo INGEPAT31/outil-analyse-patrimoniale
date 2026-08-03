@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulateur de transmission Dutreil — Ingénierie patrimoniale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:wght@500&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#f4f3f0;--surface:#fff;--surface-alt:#f9f9f7;
+      --border:rgba(0,0,0,.10);--border-strong:rgba(0,0,0,.18);
+      --text:#0b0b0a;--text-sec:#52514e;--text-muted:#898781;
+      --accent:#1a4f8c;--accent-light:#e6f0fb;--accent-mid:#2a78d6;
+      --green:#0f6e56;--green-light:#e1f5ee;
+      --amber:#854f0b;--amber-light:#faeeda;
+      --violet:#3c3489;--violet-light:#eeedfe;
+      --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+      --hero:#132995;--hero-pale:#AFC0FF;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 4rem;}
+    .container{max-width:980px;margin:0 auto;padding:2rem 1rem 0;}
+    header{background:var(--hero);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;margin-bottom:2rem;}
+    header .h-back{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.5px;display:block;margin-bottom:14px;}
+    header .h-back:hover{color:var(--hero-pale);}
+    header .h-eyebrow{font-family:'Sora',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--hero-pale);margin-bottom:12px;}
+    header h1{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.3px;}
+    header p{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:7px;line-height:1.6;max-width:560px;}
+    .h-logo{position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:0;transform:translateY(-50%);transition:transform 1.15s cubic-bezier(.22,.61,.36,1);-webkit-user-select:none;user-select:none;}
+    .h-logo::before,.h-logo::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;}
+    .h-logo::before{background:var(--logo) center/contain no-repeat;opacity:.19;transition:opacity .6s ease;}
+    .h-logo::after{background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%);background-size:300% 100%;background-position:-150% 0;-webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;opacity:0;}
+    .h-logo:hover{transform:translateY(-50%) rotate(360deg);}
+    .h-logo:hover::before{opacity:.34;}
+    .h-logo:hover::after{animation:logo-sheen 1.15s ease-out;}
+    @keyframes logo-sheen{0%{opacity:0;background-position:-150% 0;}12%{opacity:1;}100%{opacity:0;background-position:150% 0;}}
+    @media(prefers-reduced-motion:reduce){.h-logo{transition:none;}.h-logo:hover{transform:translateY(-50%);}.h-logo:hover::after{animation:none;}}
+
+    .main-nav{display:flex;background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.5rem;}
+    .main-nav-btn{flex:1;padding:16px 12px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text-sec);background:transparent;border:none;cursor:pointer;transition:all .15s;border-bottom:3px solid transparent;}
+    .main-nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-light);font-weight:600;}
+    .main-nav-btn:not(.active):hover{background:var(--surface-alt);}
+    .page{display:none;}.page.active{display:block;}
+    .card{background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem;}
+    .card-title{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;display:flex;align-items:center;gap:7px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group.full{grid-column:1/-1;}
+    label{font-size:12px;font-weight:500;color:var(--text-sec);letter-spacing:.01em;}
+    input[type="number"],input[type="text"],select{height:42px;padding:0 12px;font-size:15px;font-family:'Inter',sans-serif;color:var(--text);background:var(--surface-alt);border:1px solid var(--border-strong);border-radius:var(--radius);outline:none;transition:border-color .15s,box-shadow .15s;width:100%;-moz-appearance:textfield;}
+    input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+    input:focus,select:focus{border-color:var(--accent-mid);box-shadow:0 0 0 3px rgba(42,120,214,.12);background:#fff;}
+    .toggle-group{display:flex;border:1px solid var(--border-strong);border-radius:var(--radius);overflow:hidden;height:42px;}
+    .toggle-btn{flex:1;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text-sec);background:var(--surface-alt);border:none;cursor:pointer;transition:all .15s;}
+    .toggle-btn.active{background:var(--accent);color:#fff;}
+    .toggle-btn:not(.active):hover{background:#eee;}
+    .hint-box{padding:10px 14px;background:var(--accent-light);border-left:3px solid var(--accent-mid);border-radius:0 6px 6px 0;font-size:13px;color:var(--accent);margin-top:10px;line-height:1.5;}
+    .hint-box strong{font-weight:600;}
+    .info-box{padding:10px 14px;background:var(--amber-light);border-left:3px solid #c08000;border-radius:0 6px 6px 0;font-size:12.5px;color:var(--amber);margin-top:12px;line-height:1.6;}
+    .info-box strong{font-weight:600;}
+    .warn-box{padding:10px 14px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:0 6px 6px 0;font-size:12.5px;color:#991b1b;margin-top:12px;line-height:1.6;}
+    .warn-box strong{font-weight:600;}
+    .ok-box{padding:10px 14px;background:var(--green-light);border-left:3px solid var(--green);border-radius:0 6px 6px 0;font-size:12.5px;color:var(--green);margin-top:12px;line-height:1.6;}
+    .ok-box strong{font-weight:600;}
+
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border:none;transition:all .15s;}
+    .btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#15407a;}
+    .btn-secondary{background:var(--surface-alt);color:var(--text-sec);border:1px solid var(--border-strong);}.btn-secondary:hover{background:#eee;}
+    .btn-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;font-size:12px;padding:6px 10px;}.btn-danger:hover{background:#fee2e2;}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+
+    .donor-block{background:var(--surface-alt);border-radius:10px;border:1px solid var(--border);padding:1rem 1.25rem;margin-bottom:10px;}
+    .donor-block:last-child{margin-bottom:0;}
+    .donor-block-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+    .children-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;width:100%;}
+    .child-row{display:block;width:100%;}
+    .donor-checkboxes{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
+    .donor-check-label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sec);cursor:pointer;}
+    .donor-check-label input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+    .opt-line{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--text-sec);cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1.3;}
+    .opt-line input[type="checkbox"]{width:15px;height:15px;accent-color:#4c3fa8;cursor:pointer;flex-shrink:0;margin:0;}
+    .opt-line:hover{color:var(--text);}
+    .tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--text-muted);color:var(--text-muted);font-size:9.5px;font-weight:700;font-style:normal;line-height:1;cursor:help;flex-shrink:0;transition:all .15s;}
+    .tip:hover,.tip:focus{background:var(--accent);border-color:var(--accent);color:#fff;outline:none;}
+    .tip .tip-box{display:none;position:absolute;left:-8px;bottom:calc(100% + 9px);width:340px;background:#1f2937;color:#e5e7eb;font-size:11.5px;font-weight:400;font-style:normal;line-height:1.55;letter-spacing:0;text-align:left;text-transform:none;white-space:normal;padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.24);z-index:60;}
+    .tip .tip-box strong{color:#fff;font-weight:600;}
+    .tip .tip-box a{color:#93c5fd;}
+    .tip .tip-box::after{content:'';position:absolute;top:100%;left:13px;border:6px solid transparent;border-top-color:#1f2937;}
+    .tip:hover .tip-box,.tip:focus .tip-box{display:block;}
+
+    /* Résultats */
+    .result-card{background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.25rem;}
+    .total-header{text-align:center;padding:1.75rem 1.5rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#f8f8f6 0%,#fff 100%);}
+    .total-eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+    .total-amount{font-family:'Lora',Georgia,serif;font-size:44px;font-weight:500;color:var(--accent);line-height:1.1;}
+    .total-sub{font-size:13px;color:var(--text-muted);margin-top:6px;line-height:1.6;}
+    .tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.03em;margin-left:6px;}
+    .tag-np{background:var(--accent-light);color:var(--accent);}
+    .tag-pp{background:var(--green-light);color:var(--green);}
+    .tag-dut{background:#f3e8ff;color:#6b21a8;}
+    .tag-red{background:var(--amber-light);color:var(--amber);}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+    .kpi{background:var(--surface);padding:1rem 1.1rem;}
+    .kpi-label{font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px;line-height:1.3;}
+    .kpi-val{font-family:'Lora',Georgia,serif;font-size:21px;color:var(--text);line-height:1.15;}
+    .kpi-val.green{color:var(--green);}
+    .kpi-val.accent{color:var(--accent);}
+    .kpi-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+    .chart-section{display:grid;grid-template-columns:210px 1fr;gap:1.5rem;padding:1.5rem;align-items:center;}
+    .pie-wrap{position:relative;width:210px;height:210px;}
+    .legend{display:flex;flex-direction:column;gap:9px;}
+    .legend-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--surface-alt);border:.5px solid var(--border);}
+    .legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+    .legend-label{font-size:12px;color:var(--text-sec);flex:1;line-height:1.3;}
+    .legend-val{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;}
+    .legend-pct{font-size:11px;color:var(--text-muted);margin-left:4px;}
+    .bar-wrap{padding:1.25rem 1.5rem 1.5rem;border-top:1px solid var(--border);}
+    .bar-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;}
+    .bar-canvas{position:relative;height:190px;}
+    .detail-toggle{display:flex;align-items:center;gap:8px;padding:.9rem 1.5rem;font-size:13px;font-weight:500;color:var(--accent-mid);cursor:pointer;border-top:1px solid var(--border);user-select:none;transition:background .1s;}
+    .detail-toggle:hover{background:var(--surface-alt);}
+    .chevron{width:16px;height:16px;border-right:2px solid var(--accent-mid);border-bottom:2px solid var(--accent-mid);transform:rotate(45deg);transition:transform .2s;margin-bottom:2px;}
+    .chevron.open{transform:rotate(-135deg);margin-bottom:-2px;}
+    .detail-panel{display:none;}.detail-panel.open{display:block;}
+    .section-header{padding:7px 1.5rem;background:var(--surface-alt);border-top:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;}
+    table{width:100%;border-collapse:collapse;}
+    thead th{padding:8px 1.5rem;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;background:var(--surface-alt);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+    tbody td{padding:9px 1.5rem;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr.sub td{color:var(--text-sec);padding-left:2.5rem;font-size:12.5px;}
+    tbody tr.subtotal td{font-weight:600;background:#fafafa;}
+    tbody tr.total-row td{font-weight:700;background:var(--accent-light);color:var(--accent);font-size:14px;}
+    .right{text-align:right;}
+    .bareme-note{padding:10px 1.5rem;background:var(--amber-light);border-top:1px solid var(--border);font-size:12px;color:var(--amber);line-height:1.6;}
+    .parts-note{padding:10px 1.5rem;background:var(--violet-light);border-top:1px solid var(--border);font-size:12px;color:var(--violet);line-height:1.6;}
+    .parts-note strong{font-weight:600;}
+    .empty-state{text-align:center;padding:3rem 2rem;color:var(--text-muted);font-size:14px;line-height:1.6;}
+    .empty-icon{font-size:40px;margin-bottom:12px;opacity:.3;}
+
+    /* Tableau synthèse */
+    .synth-wrap{overflow-x:auto;margin-bottom:1.25rem;border-radius:10px;border:.5px solid var(--border);box-shadow:var(--shadow);background:var(--surface);}
+    .synth-table{width:100%;border-collapse:collapse;min-width:420px;font-size:12px;}
+    .synth-table th{padding:9px 11px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;text-align:center;border:1px solid rgba(255,255,255,.15);white-space:nowrap;}
+    .synth-table th.row-header{background:#12396b;text-align:left;min-width:230px;}
+    .synth-table th.th-total{background:#0a2d5e;}
+    .synth-table td{padding:7px 11px;border:1px solid var(--border);text-align:right;color:var(--text);vertical-align:middle;white-space:nowrap;}
+    .synth-table td.row-label{text-align:left;color:var(--text-sec);background:var(--surface-alt);white-space:normal;font-size:12px;}
+    .synth-table td.row-label.category{font-weight:700;color:var(--text);background:#eceae4;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:5px 11px;}
+    .synth-table td.row-label.sub-label{padding-left:20px;font-size:11.5px;color:var(--text-muted);}
+    .synth-table.compact th{padding:8px 9px;font-size:11px;}
+    .synth-table.compact td{padding:6px 9px;font-size:11.5px;}
+    .synth-table.compact td.row-label{min-width:250px;}
+    .synth-table th.th-ref{background:#0a2d5e;}
+    .synth-table td.col-ref{background:#eef2fa;font-weight:600;}
+    .synth-table tr.total-synth td.col-ref{background:#d8e6f7;}
+    .synth-table tr.total-synth td{font-weight:700;background:var(--accent-light);color:var(--accent);}
+    .synth-table tr.total-synth td.row-label{color:var(--accent);}
+    .synth-table td.zero{color:#ccc;}
+    .synth-table td.green{color:var(--green);font-weight:500;}
+    .synth-table td.total-col{background:#eef2fa;font-weight:600;color:var(--accent);}
+    .synth-table td.frais-row{background:#fdf6ee;}
+    .synth-table td.frais-row.col-ref{background:#f4e7d2;}
+
+    /* Matrice de sensibilité */
+    .matrix-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:420px;}
+    .matrix-table th{padding:9px 12px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;text-align:center;border:1px solid rgba(255,255,255,.15);white-space:nowrap;}
+    .matrix-table th.row-header{background:#12396b;text-align:left;}
+    .matrix-table td{padding:8px 12px;border:1px solid var(--border);text-align:right;white-space:nowrap;}
+    .matrix-table td.row-label{text-align:left;background:var(--surface-alt);color:var(--text-sec);font-weight:500;}
+    .matrix-table tr.hl td{background:var(--accent-light);color:var(--accent);font-weight:700;}
+    .matrix-table tr.hl td.row-label{background:#d8e6f7;}
+
+    .footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border);line-height:1.9;}
+    .footer .loca-credit{font-style:italic;font-size:10.5px;margin-top:6px;color:#b5922a;letter-spacing:0.01em;}
+    @media(max-width:640px){
+      .form-grid,.form-grid-3{grid-template-columns:1fr;}
+      .chart-section{grid-template-columns:1fr;}
+      .pie-wrap{width:190px;height:190px;margin:0 auto;}
+      .total-amount{font-size:34px;}
+      .main-nav{flex-direction:column;}
+      header{padding:28px 20px 32px;}
+      .h-logo{display:none;}
+    }
+    @media print{
+      header{background:#fff !important;color:#000 !important;}
+      .main-nav,.btn,.detail-toggle{display:none !important;}
+      .detail-panel{display:block !important;}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <span class="h-logo" style="--logo:url('data:image/png;base64,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')" aria-hidden="true"></span>
+  <div style="position:relative;z-index:1;">
+    <a class="h-back" href="index.html">← Retour aux outils</a>
+    <div class="h-eyebrow">Ingénierie patrimoniale · Transmission d'entreprise</div>
+    <h1>Simulateur de transmission Dutreil</h1>
+    <p>Liquidation des droits et des frais d'acte sur une donation de parts ou d'actions sous régime de faveur — exonération de 75 %, quote-part éligible, démembrement, décote d'illiquidité et réduction de droits de l'article 790 CGI.</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="main-nav">
+    <button class="main-nav-btn active" id="nav-transmission" onclick="showPage('transmission',this)">🏛️ Coût de la transmission</button>
+    <button class="main-nav-btn" id="nav-capacite" onclick="showPage('capacite',this)">🎯 Capacité de transmission</button>
+  </div>
+
+  <!-- ══════════════ PAGE 1 ══════════════ -->
+  <div class="page active" id="page-transmission">
+
+    <div class="card">
+      <div class="card-title">Donateur(s)</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Nombre de donateurs</label>
+        <div class="toggle-group" style="max-width:300px;">
+          <button class="toggle-btn active" id="d-1" onclick="setDonateurs(1)">1 donateur</button>
+          <button class="toggle-btn" id="d-2" onclick="setDonateurs(2)">2 donateurs</button>
+        </div>
+      </div>
+      <div id="donateurs-form"></div>
+      <div id="quotes-donateurs"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Titres transmis</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Dénomination de la société</label>
+          <input type="text" id="soc-nom" placeholder="Ex : HOLDING MARTIN SAS">
+        </div>
+        <div class="form-group">
+          <label>Valeur vénale des titres transmis, en pleine propriété (€)</label>
+          <input type="number" id="valeur" placeholder="Ex : 2 000 000" min="0" step="10000" value="2000000" oninput="majApercu()">
+        </div>
+        <div class="form-group">
+          <label>Honoraires d'accompagnement (€)
+            <span class="tip" tabindex="0" style="margin-left:4px;vertical-align:middle;">i<span class="tip-box">
+              <strong>Coût d'ingénierie du dispositif</strong><br>
+              Rédaction de l'engagement collectif et des engagements individuels, audit d'éligibilité de l'actif social, mise en conformité statutaire, rescrit le cas échéant.<br><br>
+              Montant forfaitaire, réputé indépendant de la quote-part transmise : il est repris tel quel dans toutes les colonnes du tableau de sensibilité.<br><br>
+              Saisissez 0 pour l'exclure du coût global.
+            </span></span>
+          </label>
+          <input type="number" id="honoraires" value="2500" min="0" step="500">
+        </div>
+        <div class="form-group">
+          <label>Type de donation</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="t-pp" onclick="setTypeD('PP')">Pleine propriété</button>
+            <button class="toggle-btn" id="t-np" onclick="setTypeD('NP')">Nue-propriété</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Répartition entre les donataires</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="r-egal" onclick="setRep('egal')">Égale</button>
+            <button class="toggle-btn" id="r-libre" onclick="setRep('libre')">Libre (%)</button>
+          </div>
+        </div>
+      </div>
+      <div id="rep-wrap" style="display:none;margin-top:12px;"></div>
+      <div id="np-hint"></div>
+      <div id="np-warn" style="display:none;">
+        <div class="warn-box"><strong>Donation en nue-propriété — deux points de vigilance.</strong><br>
+        1. <strong>Perte de la réduction de 50 %</strong> (art. 790 CGI) : la doctrine exclut du champ de la réduction toute transmission portant sur un démembrement de propriété.<br>
+        2. <strong>Art. 787 B, i CGI</strong> : les statuts doivent limiter les pouvoirs de l'usufruitier aux seules décisions concernant l'affectation des bénéfices, à défaut de quoi l'exonération est refusée.</div>
+      </div>
+
+      <div style="margin-top:16px;background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px 14px;">
+        <label class="opt-line" for="decote-chk">
+          <input type="checkbox" id="decote-chk" onchange="toggleDecote()">
+          <span style="font-size:12.5px;color:#1e4d7b;"><strong>Appliquer une décote pour illiquidité</strong></span>
+        </label>
+        <span class="tip" tabindex="0" style="margin-left:5px;vertical-align:middle;">i<span class="tip-box">
+          <strong>Décote d'illiquidité</strong><br>
+          Abattement usuellement admis pour tenir compte de la difficulté à céder des titres non cotés (clauses d'agrément, absence de marché, gouvernance).<br><br>
+          <strong>Point de vigilance :</strong> le cumul avec l'exonération Dutreil est possible mais expose à un contrôle renforcé de la valorisation. La décote doit être documentée (rapport d'évaluation, statuts, pacte d'associés). Une décote de minorité est difficile à soutenir sur un bloc de contrôle.
+        </span></span>
+        <div id="decote-input" style="display:none;align-items:center;gap:8px;margin-top:10px;">
+          <label style="font-size:12px;color:#1e4d7b;font-weight:500;">Taux de décote :</label>
+          <input type="number" id="decote-taux" value="10" min="0" max="90" step="0.5" style="width:90px;height:34px;padding:0 8px;font-size:13px;border:1px solid #d8b4fe;border-radius:6px;background:#fff;" oninput="majApercu()">
+          <span style="font-size:12px;color:#1e4d7b;">%</span>
+        </div>
+      </div>
+      <div id="apercu-valeur"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Régime Dutreil — art. 787 B CGI</div>
+      <label class="opt-line" for="dut-chk" style="margin-bottom:12px;">
+        <input type="checkbox" id="dut-chk" checked onchange="toggleDutreil()">
+        <span style="font-size:13px;"><strong>Appliquer l'exonération partielle de 75 %</strong></span>
+      </label>
+      <div id="dut-params">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Quote-part de la valeur éligible à l'exonération (%)
+              <span class="tip" tabindex="0" style="margin-left:4px;vertical-align:middle;">i<span class="tip-box">
+                <strong>Deux causes possibles d'inéligibilité partielle</strong><br><br>
+                1. <strong>Titres hors engagement</strong> : seule une fraction des titres transmis est couverte par l'engagement collectif de conservation.<br><br>
+                2. <strong>Exclusion d'assiette par actifs (LF 2026)</strong> : la loi n° 2026-103 du 19 février 2026 exclut de l'assiette exonérée certains actifs sociaux limitativement énumérés lorsqu'ils ne sont pas exclusivement affectés à l'activité éligible — biens de chasse ou de pêche, véhicules de tourisme, yachts et bateaux de plaisance, aéronefs, bijoux, métaux précieux, objets d'art, de collection ou d'antiquité, chevaux de course ou de concours, vins et alcools, logements et résidences.<br><br>
+                Ne figurent pas dans cette liste, et restent donc dans le champ : disponibilités, valeurs mobilières, participations, immeubles de bureaux, actifs numériques.<br><br>
+                Condition d'affectation : 3 ans avant la transmission (ou depuis l'acquisition si &lt; 3 ans) et jusqu'au terme de l'engagement individuel.
+              </span></span>
+            </label>
+            <input type="number" id="quote-elig" value="100" min="0" max="100" step="0.01" oninput="majApercu()">
+          </div>
+          <div class="form-group full">
+            <label>Réduction de droits de 50 % — art. 790 CGI</label>
+            <select id="red790">
+              <option value="auto">Automatique (PP + donateur de moins de 70 ans)</option>
+              <option value="oui">Forcer l'application</option>
+              <option value="non">Écarter</option>
+            </select>
+          </div>
+        </div>
+        <div id="red790-hint"></div>
+      </div>
+      <div class="info-box">
+        <strong>Engagements de conservation depuis la LF 2026.</strong> Engagement collectif de 2 ans minimum, puis engagement individuel porté de 4 à <strong>6 ans</strong> par l'article 8 de la loi n° 2026-103 du 19 février 2026 — soit une durée totale de conservation de <strong>8 ans</strong>. Une fonction de direction doit être exercée dans les conditions du 787 B.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Donataire(s)</div>
+      <div id="children-list" class="children-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="addChild()">+ Ajouter un donataire</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.25rem;">
+      <button class="btn btn-primary" onclick="calculer()" style="width:100%;justify-content:center;padding:14px;font-size:14px;">Calculer la transmission</button>
+    </div>
+    <div id="result-zone"></div>
+  </div>
+
+  <!-- ══════════════ PAGE 2 ══════════════ -->
+  <div class="page" id="page-capacite">
+    <div class="card">
+      <div class="card-title">Objectif</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <div class="toggle-group" style="max-width:520px;">
+            <button class="toggle-btn active" id="o-franchise" onclick="setObjectif('franchise')">Transmettre en franchise totale de droits</button>
+            <button class="toggle-btn" id="o-plafond" onclick="setObjectif('plafond')">Plafonner les droits à un montant</button>
+          </div>
+        </div>
+        <div class="form-group full" id="plafond-wrap" style="display:none;">
+          <label>Enveloppe de droits acceptée, par couple donateur / donataire (&euro;)</label>
+          <input type="number" id="cap-plafond" value="50000" min="0" step="1000" oninput="calcCapacite()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Donateur(s)</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Nombre de donateurs</label>
+        <div class="toggle-group" style="max-width:300px;">
+          <button class="toggle-btn active" id="cd-1" onclick="setCapDonateurs(1)">1 donateur</button>
+          <button class="toggle-btn" id="cd-2" onclick="setCapDonateurs(2)">2 donateurs</button>
+        </div>
+      </div>
+      <div id="cap-donateurs-form"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Titres et r&eacute;gime</div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label>Type de donation</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="c-pp" onclick="setCapType('PP')">Pleine propri&eacute;t&eacute;</button>
+            <button class="toggle-btn" id="c-np" onclick="setCapType('NP')">Nue-propri&eacute;t&eacute;</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>R&eacute;gime Dutreil</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="c-dut-oui" onclick="setCapDutreil(true)">Appliqu&eacute;</button>
+            <button class="toggle-btn" id="c-dut-non" onclick="setCapDutreil(false)">&Eacute;cart&eacute;</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Quote-part &eacute;ligible Dutreil (%)</label>
+          <input type="number" id="cap-elig" value="100" min="0" max="100" step="0.01" oninput="calcCapacite()">
+        </div>
+        <div class="form-group">
+          <label>D&eacute;cote pour illiquidit&eacute; (%)</label>
+          <input type="number" id="cap-decote" value="0" min="0" max="90" step="0.5" oninput="calcCapacite()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Donataire(s)</div>
+      <div id="cap-children-list" class="children-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="capAddChild()">+ Ajouter un donataire</button>
+      </div>
+    </div>
+
+    <div id="cap-hint"></div>
+    <div id="cap-result-zone"></div>
+  </div>
+
+  <div class="footer">
+    Simulateur à titre indicatif — les montants réels dépendent de l'acte, de la valorisation retenue et de la situation particulière du dossier.<br>
+    Exonération partielle art. 787 B CGI · Réduction de droits art. 790 CGI · Barèmes DMTG art. 777 CGI · Abattements art. 779, 790 B/D/E/F CGI · Rappel fiscal art. 784 CGI · Clés de démembrement art. 669 CGI · Émoluments notariaux art. A444-67 1° C. com. (arrêté du 28 février 2024) · Loi n° 2026-103 du 19 février 2026, art. 8.<br>
+    <strong>Document réservé à l'usage professionnel interne.</strong>
+    <div class="loca-credit">Ce simulateur a été établi par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   BARÈMES ET CONSTANTES
+   ═══════════════════════════════════════════════════════════ */
+const BAREME_669=[
+  {maxAge:20,usufruit:90,np:10},{maxAge:30,usufruit:80,np:20},
+  {maxAge:40,usufruit:70,np:30},{maxAge:50,usufruit:60,np:40},
+  {maxAge:60,usufruit:50,np:50},{maxAge:70,usufruit:40,np:60},
+  {maxAge:80,usufruit:30,np:70},{maxAge:90,usufruit:20,np:80},
+  {maxAge:200,usufruit:10,np:90}
+];
+/* Parts sociales : barème général art. A444-67 1° C. com. — identique à l'immobilier */
+const BAREME_EMOL_STD=[
+  {label:'0 à 6 500 €',min:0,max:6500,taux:0.04837},
+  {label:'6 500 à 17 000 €',min:6500,max:17000,taux:0.01995},
+  {label:'17 000 à 60 000 €',min:17000,max:60000,taux:0.01330},
+  {label:'> 60 000 €',min:60000,max:Infinity,taux:0.00998}
+];
+const BAREMES_DMTG={
+  directe:[{max:8072,taux:0.05},{max:12109,taux:0.10},{max:15932,taux:0.15},{max:552324,taux:0.20},{max:902838,taux:0.30},{max:1805677,taux:0.40},{max:Infinity,taux:0.45}],
+  conjoint:[{max:8072,taux:0.05},{max:15932,taux:0.10},{max:31865,taux:0.15},{max:552324,taux:0.20},{max:902838,taux:0.30},{max:1805677,taux:0.40},{max:Infinity,taux:0.45}],
+  frere:[{max:24430,taux:0.35},{max:Infinity,taux:0.45}],
+  forfait55:[{max:Infinity,taux:0.55}],
+  forfait60:[{max:Infinity,taux:0.60}]
+};
+const LIENS={
+  enfant:      {label:"Enfant / ascendant",           court:"Enfant",          abatt:100000, bareme:'directe',  ref:"art. 779 I CGI"},
+  petitenfant: {label:"Petit-enfant",                 court:"Petit-enfant",    abatt:31865,  bareme:'directe',  ref:"art. 790 B CGI"},
+  arrierepetit:{label:"Arrière-petit-enfant",         court:"AP-enfant",       abatt:5310,   bareme:'directe',  ref:"art. 790 D CGI"},
+  conjoint:    {label:"Conjoint / partenaire de PACS",court:"Conjoint/PACS",   abatt:80724,  bareme:'conjoint', ref:"art. 790 E/F CGI"},
+  frere:       {label:"Frère / sœur",                 court:"Frère/sœur",      abatt:15932,  bareme:'frere',    ref:"art. 779 IV CGI"},
+  neveu:       {label:"Neveu / nièce",                court:"Neveu/nièce",     abatt:7967,   bareme:'forfait55',ref:"art. 779 V CGI"},
+  parent4:     {label:"Parent jusqu'au 4e degré",     court:"Parent 4e degré", abatt:0,      bareme:'forfait55',ref:"art. 777 CGI"},
+  tiers:       {label:"Autre / non parent",           court:"Tiers",           abatt:0,      bareme:'forfait60',ref:"art. 777 CGI"}
+};
+const ABATT_HANDICAP=159325;
+const TAUX_DUTREIL=0.75;
+const TAUX_RED790=0.50;
+const AGE_RED790=70;
+const DEBOURS=300;
+const TVA=0.20;
+const EMOL_PLANCHER=90;
+
+/* ═══════════════════════════════════════════════════════════
+   FONCTIONS DE BASE
+   ═══════════════════════════════════════════════════════════ */
+function getNP(age){for(let b of BAREME_669)if(age<=b.maxAge)return b;return BAREME_669[BAREME_669.length-1];}
+function fmt(n){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Math.round(n));}
+function fmtD(n){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
+function fmtPct(n,d){return (n).toFixed(d===undefined?2:d).replace('.',',')+' %';}
+
+function calcEmoluments(assiette){
+  let em=0,details=[];
+  for(let t of BAREME_EMOL_STD){
+    if(assiette<=t.min)break;
+    const base=Math.min(assiette,t.max)-t.min,montant=base*t.taux;
+    em+=montant;details.push({label:'Tranche '+t.label,taux:(t.taux*100).toFixed(3)+' %',base,montant});
+  }
+  return{em,details};
+}
+/* Art. R. 444-9 C. com. : plancher de 90 €. Le plafond de 10 % ne vise que les mutations immobilières. */
+function emolPlafonne(assiette){
+  const r=calcEmoluments(assiette);let em=r.em,ajust=null;
+  if(assiette>0&&em<EMOL_PLANCHER){em=EMOL_PLANCHER;ajust='plancher 90 € (art. R. 444-9)';}
+  return{em,details:r.details,ajust};
+}
+function calcDMTGFull(base,baremeKey){
+  if(base<=0)return 0;let droits=0,prev=0;
+  const bar=BAREMES_DMTG[baremeKey||'directe'];
+  for(let t of bar){if(base<=prev)break;droits+=(Math.min(base,t.max)-prev)*t.taux;prev=t.max;}
+  return droits;
+}
+/* Art. 784 CGI : les tranches repartent au-dessus de la base taxable antérieure */
+function calcDMTGIncremental(newBase,prevBase,baremeKey){
+  return Math.max(0,calcDMTGFull(prevBase+newBase,baremeKey)-calcDMTGFull(prevBase,baremeKey));
+}
+/* Inversion algébrique exacte du barème progressif :
+   retourne la base taxable B telle que DMTG(prevBase+B) - DMTG(prevBase) = cible */
+function inverseDMTG(cible,prevBase,baremeKey){
+  if(cible<=0)return 0;
+  const bar=BAREMES_DMTG[baremeKey||'directe'];
+  let x=prevBase,cum=0;
+  for(let t of bar){
+    if(x>=t.max)continue;
+    const span=t.max-x;
+    const amount=span*t.taux;
+    if(cum+amount>=cible-1e-9)return x+(cible-cum)/t.taux-prevBase;
+    cum+=amount;x=t.max;
+  }
+  return Infinity;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOTEUR — liquidation d'une transmission
+   cfg = {
+     donors:[{name,age,quote}],           quote = quote-part du donateur dans les titres (0-1)
+     children:[{name,lien,handicap,ant:{di:montant}}],
+     reps:[part de chaque donataire (0-1)],
+     valeur, decote (0-1), typeD:'PP'|'NP',
+     dutreil:bool, quoteElig (0-1), red790:'auto'|'oui'|'non', honoraires
+   }
+   ═══════════════════════════════════════════════════════════ */
+function moteur(cfg){
+  const nD=cfg.donors.length,nC=cfg.children.length;
+  const colKeys=[];
+  for(let di=0;di<nD;di++)for(let ci=0;ci<nC;ci++)colKeys.push(di+'_'+ci);
+
+  /* État par couple donateur/donataire */
+  const st={};
+  for(const key of colKeys){
+    const di=+key.split('_')[0],ci=+key.split('_')[1];
+    const child=cfg.children[ci];
+    const lien=LIENS[child.lien]||LIENS.enfant;
+    const abattPerso=lien.abatt, abattHand=child.handicap?ABATT_HANDICAP:0;
+    const ant=(child.ant&&child.ant[di])||0;
+    const persoConso=Math.min(ant,abattPerso);
+    const handConso=Math.min(Math.max(0,ant-abattPerso),abattHand);
+    st[key]={
+      lienKey:child.lien,baremeKey:lien.bareme,
+      abattPersoInit:abattPerso,abattHandInit:abattHand,
+      abattRestant:abattPerso-persoConso,
+      abattHandRestant:abattHand-handConso,
+      prevTaxBase:Math.max(0,ant-abattPerso-abattHand),
+      antVal:ant
+    };
+  }
+
+  const q=cfg.dutreil?Math.max(0,Math.min(1,cfg.quoteElig)):0;
+  const dec=Math.max(0,Math.min(0.99,cfg.decote||0));
+  const cols={};
+  let donorActeTotal={};
+  for(let di=0;di<nD;di++)donorActeTotal[di]=0;
+
+  for(let di=0;di<nD;di++){
+    const donor=cfg.donors[di];
+    const u=cfg.typeD==='NP'?getNP(donor.age).np/100:1;
+    const npPct=cfg.typeD==='NP'?getNP(donor.age).np:100;
+    /* Réduction art. 790 CGI : donation en PP + donateur < 70 ans + conditions 787 B réunies */
+    let red790=false;
+    if(cfg.red790==='oui')red790=cfg.dutreil&&q>0;
+    else if(cfg.red790==='non')red790=false;
+    else red790=cfg.dutreil&&q>0&&cfg.typeD==='PP'&&donor.age>0&&donor.age<AGE_RED790;
+
+    for(let ci=0;ci<nC;ci++){
+      const key=di+'_'+ci, rep=cfg.reps[ci]||0;
+      const vPP=cfg.valeur*donor.quote*rep;           // valeur vénale PP revenant à ce couple
+      const vActe=vPP*(1-dec);                        // valeur retenue à l'acte (assiette émoluments)
+      donorActeTotal[di]+=vActe;
+      const vTrans=vActe*u;                           // valeur transmise (PP ou NP art. 669)
+
+      const partElig=vTrans*q;
+      const partNonElig=vTrans*(1-q);
+      const exoDutreil=partElig*TAUX_DUTREIL;
+      const eligTaxable=partElig-exoDutreil;          // = partElig * 25 %
+      const assiette=partNonElig+eligTaxable;
+
+      const s=st[key];
+      const abattPersoDispo=s.abattRestant, abattHandDispo=s.abattHandRestant;
+
+      /* Consommation des abattements */
+      const abattPersoUtil=Math.min(assiette,abattPersoDispo);
+      const apresPerso=Math.max(0,assiette-abattPersoDispo);
+      const abattHandUtil=Math.min(apresPerso,abattHandDispo);
+      const baseTax=Math.max(0,apresPerso-abattHandDispo);
+
+      /* Ventilation au prorata de la base nette taxable — hypothèse neutre */
+      let baseElig=0,baseNonElig=0;
+      if(baseTax>0){
+        const w=assiette>0?eligTaxable/assiette:0;
+        baseElig=baseTax*w;
+        baseNonElig=baseTax*(1-w);
+      }
+
+      const droitsBruts=calcDMTGIncremental(baseTax,s.prevTaxBase,s.baremeKey);
+      const partReduite=baseTax>0?baseElig/baseTax:0;
+      const reduction=red790?droitsBruts*partReduite*TAUX_RED790:0;
+      const droitsNets=droitsBruts-reduction;
+
+      cols[key]={
+        di,ci,donorName:donor.name,childName:cfg.children[ci].name,
+        lienKey:cfg.children[ci].lien,baremeKey:s.baremeKey,
+        vPP,decote:dec,vActe,npPct,u,vTrans,
+        quoteElig:q,partElig,partNonElig,exoDutreil,eligTaxable,assiette,
+        antVal:s.antVal,prevTaxBase:s.prevTaxBase,
+        abattPersoDispo,abattPersoUtil,abattHandDispo,abattHandUtil,
+        baseTax,baseElig,baseNonElig,
+        droitsBruts,red790,partReduite,reduction,droitsNets,
+        abattPersoRestantApres:Math.max(0,abattPersoDispo-assiette),
+        abattHandRestantApres:Math.max(0,abattHandDispo-apresPerso)
+      };
+
+      s.abattRestant=Math.max(0,abattPersoDispo-assiette);
+      s.abattHandRestant=Math.max(0,abattHandDispo-apresPerso);
+      s.prevTaxBase+=baseTax;
+    }
+  }
+
+  /* Émoluments : par donateur, sur la totalité de la valeur retenue à l'acte */
+  const donorEmol={};
+  let emolHT=0,emolTVA=0,emolTTC=0;
+  for(let di=0;di<nD;di++){
+    const r=emolPlafonne(donorActeTotal[di]);
+    const tva=r.em*TVA;
+    donorEmol[di]={assiette:donorActeTotal[di],ht:r.em,tva,ttc:r.em+tva,details:r.details,ajust:r.ajust,debours:DEBOURS/nD};
+    emolHT+=r.em;emolTVA+=tva;emolTTC+=r.em+tva;
+  }
+  const debours=DEBOURS;
+  const fraisTotal=emolTTC+debours;
+  const honoraires=Math.max(0,cfg.honoraires||0);
+  const acteTotal=Object.keys(donorActeTotal).reduce((a,k)=>a+donorActeTotal[k],0);
+
+  /* Ventilation des émoluments par colonne, au prorata de la valeur retenue à l'acte */
+  for(const key of colKeys){
+    const c=cols[key];
+    const tot=donorActeTotal[c.di];
+    const part=tot>0?c.vActe/tot:0;
+    c.emolHT=donorEmol[c.di].ht*part;
+    c.emolTVA=donorEmol[c.di].tva*part;
+    c.emolTTC=donorEmol[c.di].ttc*part;
+    c.debours=donorEmol[c.di].debours*part;
+    c.frais=c.emolTTC+c.debours;
+    c.honoraires=acteTotal>0?honoraires*(c.vActe/acteTotal):0;
+    c.coutTotal=c.droitsNets+c.frais+c.honoraires;
+  }
+
+  const T=(f)=>colKeys.reduce((s,k)=>s+(cols[k][f]||0),0);
+  return{
+    colKeys,cols,donorEmol,
+    totaux:{
+      vPP:T('vPP'),vActe:T('vActe'),vTrans:T('vTrans'),
+      partElig:T('partElig'),partNonElig:T('partNonElig'),exoDutreil:T('exoDutreil'),
+      eligTaxable:T('eligTaxable'),assiette:T('assiette'),
+      abattPersoUtil:T('abattPersoUtil'),abattHandUtil:T('abattHandUtil'),
+      baseTax:T('baseTax'),droitsBruts:T('droitsBruts'),reduction:T('reduction'),droitsNets:T('droitsNets'),
+      emolHT,emolTVA,emolTTC,debours,frais:fraisTotal,honoraires,
+      coutTotal:T('droitsNets')+fraisTotal+honoraires
+    }
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CAPACITÉ MAXIMALE — inversion algébrique
+   ═══════════════════════════════════════════════════════════ */
+function capaciteMax(p){
+  /* p = {age,typeD,dutreil,quoteElig,decote,lien,handicap,ant,objectif,plafond,red790:'auto'} */
+  const lien=LIENS[p.lien]||LIENS.enfant;
+  const abattPerso=lien.abatt, abattHand=p.handicap?ABATT_HANDICAP:0;
+  const persoConso=Math.min(p.ant,abattPerso);
+  const handConso=Math.min(Math.max(0,p.ant-abattPerso),abattHand);
+  const abattRestant=(abattPerso-persoConso)+(abattHand-handConso);
+  const prevTaxBase=Math.max(0,p.ant-abattPerso-abattHand);
+
+  const q=p.dutreil?Math.max(0,Math.min(1,p.quoteElig)):0;
+  const dec=Math.max(0,Math.min(0.99,p.decote||0));
+  const u=p.typeD==='NP'?getNP(p.age).np/100:1;
+  const k=(1-dec)*u*(1-TAUX_DUTREIL*q);              // assiette taxable = valeur PP × k
+
+  const red790=q>0&&p.dutreil&&p.typeD==='PP'&&p.age>0&&p.age<AGE_RED790;
+  const wElig=(1-TAUX_DUTREIL*q)>0?((1-TAUX_DUTREIL)*q)/(1-TAUX_DUTREIL*q):0;  // part éligible dans l'assiette
+  const facteurRed=red790?(1-TAUX_RED790*wElig):1;   // droits nets = droits bruts × facteurRed
+
+  let baseTax=0,droitsBruts=0,droitsNets=0;
+  if(p.objectif==='plafond'&&p.plafond>0){
+    const cibleBrute=p.plafond/facteurRed;
+    baseTax=inverseDMTG(cibleBrute,prevTaxBase,lien.bareme);
+    droitsBruts=calcDMTGIncremental(baseTax,prevTaxBase,lien.bareme);
+    droitsNets=droitsBruts*facteurRed;
+  }
+  const assietteMax=baseTax+abattRestant;
+  const valeurMax=k>0?assietteMax/k:0;
+
+  return{
+    abattPerso,abattHand,abattRestant,prevTaxBase,
+    q,dec,u,k,red790,wElig,facteurRed,
+    baseTax,droitsBruts,droitsNets,assietteMax,valeurMax,
+    baremeKey:lien.bareme,lienLabel:lien.label
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════ */
+function showPage(p,btn){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.main-nav-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(p==='capacite')calcCapacite();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE 1 — FORMULAIRE
+   ═══════════════════════════════════════════════════════════ */
+let nbDonateurs=1,typeD='PP',repMode='egal',childCount=0,antCount=0;
+let pieChart=null,barChart=null;
+
+function setDonateurs(n){
+  nbDonateurs=n;
+  document.getElementById('d-1').classList.toggle('active',n===1);
+  document.getElementById('d-2').classList.toggle('active',n===2);
+  renderDonateurs();renderQuotes();refreshAntSelects();majApercu();
+}
+function renderDonateurs(){
+  const el=document.getElementById('donateurs-form');
+  const en=el.querySelectorAll('.don-name'),ea=el.querySelectorAll('.don-age');
+  let html='';
+  for(let i=0;i<nbDonateurs;i++){
+    html+=`<div class="donor-block"><div class="donor-block-title">${nbDonateurs===1?'Donateur':'Donateur '+(i+1)}</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Prénom / Nom</label><input type="text" class="don-name" placeholder="Ex : Jean Martin" value="${en[i]?en[i].value:''}" oninput="updateDonorNames()"></div>
+        <div class="form-group"><label>Âge (ans révolus)</label><input type="number" class="don-age" placeholder="Ex : 62" min="1" max="120" value="${ea[i]?ea[i].value:(i===0?'62':'60')}" oninput="majApercu()"></div>
+      </div></div>`;
+  }
+  el.innerHTML=html;
+}
+function renderQuotes(){
+  const el=document.getElementById('quotes-donateurs');
+  if(nbDonateurs<2){el.innerHTML='';return;}
+  const names=getDonorNames();
+  el.innerHTML=`<div style="margin-top:12px;background:var(--surface-alt);border:1px dashed var(--border-strong);border-radius:8px;padding:12px 14px;">
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Quotes-parts des donateurs dans les titres</div>
+    <div class="form-grid">${names.map((n,i)=>`<div class="form-group"><label>${n} (%)</label><input type="number" class="don-quote" data-idx="${i}" min="0" max="100" step="0.01" value="50" oninput="majApercu()"></div>`).join('')}</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Le total doit faire 100 %. Exemple : titres communs 50 / 50, ou biens propres 100 / 0.</div>
+  </div>`;
+}
+function getDonorNames(){return Array.from(document.querySelectorAll('.don-name')).map((el,i)=>el.value.trim()||('Donateur '+(i+1)));}
+function getDonorAges(){return Array.from(document.querySelectorAll('.don-age')).map(el=>parseInt(el.value)||0);}
+function updateDonorNames(){renderQuotesLabels();refreshAntSelects();}
+function renderQuotesLabels(){
+  const names=getDonorNames();
+  document.querySelectorAll('.don-quote').forEach(inp=>{
+    const lbl=inp.closest('.form-group').querySelector('label');
+    if(lbl)lbl.textContent=names[+inp.dataset.idx]+' (%)';
+  });
+}
+
+function setTypeD(t){
+  typeD=t;
+  document.getElementById('t-pp').classList.toggle('active',t==='PP');
+  document.getElementById('t-np').classList.toggle('active',t==='NP');
+  document.getElementById('np-warn').style.display=t==='NP'?'':'none';
+  majApercu();
+}
+function setRep(r){
+  repMode=r;
+  document.getElementById('r-egal').classList.toggle('active',r==='egal');
+  document.getElementById('r-libre').classList.toggle('active',r==='libre');
+  const w=document.getElementById('rep-wrap');
+  w.style.display=r==='libre'?'':'none';
+  if(r==='libre')renderRep();
+}
+function renderRep(){
+  const wrap=document.getElementById('rep-wrap');
+  const names=getChildNames();
+  if(!names.length){wrap.innerHTML='<p style="font-size:12px;color:var(--text-muted);">Ajoutez d\'abord des donataires.</p>';return;}
+  const old={};wrap.querySelectorAll('.rep-pct').forEach(i=>old[i.dataset.idx]=i.value);
+  const def=(100/names.length).toFixed(2).replace(/\.?0+$/,'');
+  wrap.innerHTML=`<div class="form-grid">${names.map((n,i)=>`<div class="form-group"><label>${n} (%)</label><input type="number" class="rep-pct" data-idx="${i}" min="0" max="100" step="0.01" value="${old[i]!==undefined?old[i]:def}"></div>`).join('')}</div>`;
+}
+function toggleDecote(){
+  const on=document.getElementById('decote-chk').checked;
+  document.getElementById('decote-input').style.display=on?'flex':'none';
+  majApercu();
+}
+function toggleDutreil(){
+  const on=document.getElementById('dut-chk').checked;
+  document.getElementById('dut-params').style.display=on?'':'none';
+  majApercu();
+}
+
+/* Un donataire n'est pris en compte que s'il est nommé */
+function getChildRows(){return Array.from(document.querySelectorAll('.child-row')).filter(r=>(r.querySelector('.child-name').value||'').trim()!=='');}
+function getChildNames(){return getChildRows().map(r=>r.querySelector('.child-name').value.trim());}
+
+function addChild(){
+  childCount++;const id=childCount;
+  const div=document.createElement('div');div.className='child-row';div.id='child-'+id;
+  div.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+      <div style="display:flex;align-items:flex-end;gap:12px;padding:16px 20px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+        <div class="form-group" style="margin:0;flex:1;min-width:150px;">
+          <label>Prénom / Nom du donataire</label>
+          <input type="text" class="child-name" placeholder="Ex : Sophie Martin" oninput="if(repMode==='libre')renderRep();">
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+          <label>Qualité du donataire</label>
+          <select class="child-lien">${Object.entries(LIENS).map(([k,v])=>`<option value="${k}">${v.label} — ${fmt(v.abatt)}</option>`).join('')}</select>
+        </div>
+        <button class="btn btn-danger" onclick="document.getElementById('child-${id}').remove();if(repMode==='libre')renderRep();" style="padding:9px 14px;font-size:12px;white-space:nowrap;">✕ Supprimer</button>
+      </div>
+      <div style="padding:11px 20px 0;">
+        <label class="opt-line" for="hcp-${id}">
+          <input type="checkbox" class="child-handicap" id="hcp-${id}">
+          <span>Abattement personne handicapée — 159 325 €</span>
+        </label>
+        <span class="tip" tabindex="0" style="margin-left:5px;vertical-align:middle;">i<span class="tip-box">
+          <strong>Art. 779 II CGI — 159 325 €</strong><br>
+          Donataire incapable de travailler dans des conditions normales de rentabilité en raison d'une infirmité physique ou mentale, congénitale ou acquise.<br><br>
+          <strong>Cumulable</strong> avec l'abattement personnel, <strong>quel que soit le lien de parenté</strong> — y compris en l'absence de tout lien. Renouvelable tous les 15 ans.<br><br>
+          Preuve à la charge du redevable : Cass. com. 23 juin 2021, n° 19-16.680.
+        </span></span>
+      </div>
+      <div style="padding:14px 20px 16px;">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;">Donations antérieures de moins de 15 ans</div>
+        <div id="ant-list-${id}" class="ant-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+        <button class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="addAntEntry(${id})">+ Ajouter une donation antérieure</button>
+      </div>
+    </div>`;
+  document.getElementById('children-list').appendChild(div);
+  updateAntEmpty(id);
+  if(repMode==='libre')renderRep();
+}
+
+function antDonorOptions(sel){
+  const names=getDonorNames();
+  let html=`<option value="d0"${sel==='d0'?' selected':''}>${names[0]||'Donateur 1'}</option>`;
+  if(nbDonateurs>1){
+    html+=`<option value="d1"${sel==='d1'?' selected':''}>${names[1]||'Donateur 2'}</option>`;
+    html+=`<option value="both"${sel==='both'?' selected':''}>Les deux donateurs (50/50)</option>`;
+  }
+  return html;
+}
+function refreshAntSelects(){
+  document.querySelectorAll('.ant-donor-sel').forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML=antDonorOptions(cur);
+    if(!Array.from(sel.options).some(o=>o.value===cur))sel.value='d0';
+  });
+}
+function addAntEntry(childId){
+  antCount++;const eid=antCount;
+  const list=document.getElementById('ant-list-'+childId);
+  if(!list)return;
+  const div=document.createElement('div');
+  div.className='ant-entry';div.id='ant-entry-'+eid;
+  div.style.cssText='display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;padding:12px 14px;';
+  div.innerHTML=`
+    <div class="form-group" style="margin:0;"><label>Donateur</label><select class="ant-donor-sel">${antDonorOptions('d0')}</select></div>
+    <div class="form-group" style="margin:0;"><label>Montant taxable rappelé (€)</label><input type="number" class="ant-donor-val" min="0" placeholder="Ex : 30 000"></div>
+    <button class="btn btn-danger" style="padding:9px 12px;" onclick="document.getElementById('ant-entry-${eid}').remove();updateAntEmpty(${childId});">✕</button>`;
+  list.appendChild(div);
+  updateAntEmpty(childId);
+}
+function updateAntEmpty(childId){
+  const list=document.getElementById('ant-list-'+childId);
+  if(!list)return;
+  const has=list.querySelectorAll('.ant-entry').length>0;
+  let ph=list.querySelector('.ant-empty');
+  if(!has){
+    if(!ph){
+      ph=document.createElement('p');ph.className='ant-empty';
+      ph.style.cssText='font-size:12px;color:var(--text-muted);font-style:italic;margin:0;';
+      ph.textContent='Aucune donation antérieure enregistrée pour ce donataire.';
+      list.appendChild(ph);
+    }
+  }else if(ph)ph.remove();
+}
+
+/* Aperçu dynamique de la valorisation et des conditions */
+function majApercu(){
+  const v=parseFloat(document.getElementById('valeur').value)||0;
+  const dec=document.getElementById('decote-chk').checked?(parseFloat(document.getElementById('decote-taux').value)||0)/100:0;
+  const dut=document.getElementById('dut-chk').checked;
+  const q=dut?(parseFloat(document.getElementById('quote-elig').value)||0)/100:0;
+  const ages=getDonorAges();
+  const el=document.getElementById('apercu-valeur');
+  const npEl=document.getElementById('np-hint');
+
+  if(typeD==='NP'&&ages.some(a=>a>0)){
+    const lines=ages.map((a,i)=>{
+      if(!a)return '';
+      const b=getNP(a);
+      return `${nbDonateurs>1?'<strong>'+(getDonorNames()[i])+'</strong> ('+a+' ans)':'Donateur âgé de '+a+' ans'} : usufruit ${b.usufruit} % · <strong>nue-propriété ${b.np} %</strong>`;
+    }).filter(Boolean);
+    npEl.innerHTML=`<div class="hint-box"><strong>Barème art. 669 CGI</strong><br>${lines.join('<br>')}</div>`;
+  }else npEl.innerHTML='';
+
+  if(v>0){
+    const vActe=v*(1-dec);
+    const u=typeD==='NP'&&ages[0]>0?getNP(ages[0]).np/100:1;
+    const vTrans=vActe*u;
+    const assiette=vTrans*(1-TAUX_DUTREIL*q);
+    el.innerHTML=`<div class="hint-box" style="background:var(--green-light);border-left-color:var(--green);color:var(--green);">
+      <strong>Chaîne de valorisation</strong><br>
+      Valeur vénale PP : <strong>${fmt(v)}</strong>${dec>0?` → après décote de ${fmtPct(dec*100,1)} : <strong>${fmt(vActe)}</strong>`:''}${u<1?` → valeur NP (${Math.round(u*100)} %) : <strong>${fmt(vTrans)}</strong>`:''}${q>0?` → après exonération Dutreil sur ${fmtPct(q*100,0)} de la valeur : <strong>${fmt(assiette)}</strong>`:''}
+      ${nbDonateurs>1?'<br><span style="font-size:11.5px;opacity:.85;">Aperçu établi sur l\'âge du premier donateur ; le calcul complet retient l\'âge de chacun.</span>':''}
+    </div>`;
+  }else el.innerHTML='';
+
+  /* Indication réduction 790 */
+  const rh=document.getElementById('red790-hint');
+  if(!dut||!rh){if(rh)rh.innerHTML='';return;}
+  const mode=document.getElementById('red790').value;
+  if(mode==='non'){rh.innerHTML=`<div class="info-box">Réduction de l'article 790 CGI volontairement écartée.</div>`;return;}
+  if(mode==='oui'){rh.innerHTML=`<div class="info-box"><strong>Application forcée.</strong> Vérifiez que les conditions du 787 B sont réunies et que le donateur a moins de 70 ans au jour de l'acte.</div>`;return;}
+  const eligibles=ages.map((a,i)=>({n:getDonorNames()[i],a})).filter(x=>x.a>0&&x.a<AGE_RED790);
+  if(typeD==='NP'){
+    rh.innerHTML=`<div class="warn-box"><strong>Réduction non applicable.</strong> La donation porte sur la nue-propriété : la doctrine exclut du champ de l'article 790 CGI toute transmission portant sur un démembrement de propriété. Une donation en pleine propriété avant 70 ans permettrait d'en bénéficier.</div>`;
+  }else if(!eligibles.length){
+    rh.innerHTML=`<div class="warn-box"><strong>Réduction non applicable.</strong> Aucun donateur n'a moins de 70 ans au jour de l'acte.</div>`;
+  }else{
+    rh.innerHTML=`<div class="ok-box"><strong>Réduction de 50 % applicable</strong> pour ${eligibles.map(x=>x.n+' ('+x.a+' ans)').join(', ')}. ${q<1?`Elle ne portera que sur les droits afférents à la fraction éligible au 787 B (${fmtPct(q*100,0)} de la valeur).`:''}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE 1 — LECTURE + CALCUL
+   ═══════════════════════════════════════════════════════════ */
+function lireFormulaire(){
+  const names=getDonorNames(),ages=getDonorAges();
+  let quotes=Array.from(document.querySelectorAll('.don-quote')).map(i=>(parseFloat(i.value)||0)/100);
+  if(nbDonateurs===1)quotes=[1];
+  const donors=names.slice(0,nbDonateurs).map((n,i)=>({name:n,age:ages[i]||0,quote:quotes[i]!==undefined?quotes[i]:1/nbDonateurs}));
+
+  const rows=getChildRows();
+  const children=rows.map(row=>{
+    const name=row.querySelector('.child-name').value.trim();
+    const lien=row.querySelector('.child-lien').value;
+    const handicap=row.querySelector('.child-handicap').checked;
+    const ant={};for(let i=0;i<nbDonateurs;i++)ant[i]=0;
+    row.querySelectorAll('.ant-entry').forEach(e=>{
+      const sel=e.querySelector('.ant-donor-sel'),val=parseFloat(e.querySelector('.ant-donor-val').value)||0;
+      if(!sel||val<=0)return;
+      if(sel.value==='both'){ant[0]+=val/2;if(nbDonateurs>1)ant[1]+=val/2;}
+      else{const di=sel.value==='d1'?1:0;if(ant[di]!==undefined)ant[di]+=val;}
+    });
+    return{name,lien,handicap,ant};
+  });
+
+  let reps;
+  if(repMode==='libre'){
+    reps=Array.from(document.querySelectorAll('.rep-pct')).map(i=>(parseFloat(i.value)||0)/100);
+  }else reps=children.map(()=>1/(children.length||1));
+
+  const dut=document.getElementById('dut-chk').checked;
+  return{
+    donors,children,reps,
+    valeur:parseFloat(document.getElementById('valeur').value)||0,
+    decote:document.getElementById('decote-chk').checked?(parseFloat(document.getElementById('decote-taux').value)||0)/100:0,
+    typeD,
+    dutreil:dut,
+    quoteElig:dut?(parseFloat(document.getElementById('quote-elig').value)||0)/100:0,
+    red790:document.getElementById('red790').value,
+    honoraires:parseFloat(document.getElementById('honoraires').value)||0,
+    socNom:document.getElementById('soc-nom').value.trim()||'la société'
+  };
+}
+
+function calculer(){
+  const cfg=lireFormulaire();
+  if(!cfg.children.length){alert('Renseignez le nom d\'au moins un donataire.');return;}
+  if(cfg.valeur<=0){alert('Saisissez la valeur vénale des titres transmis.');return;}
+  if(nbDonateurs>1){
+    const tq=cfg.donors.reduce((s,d)=>s+d.quote,0);
+    if(Math.abs(tq-1)>0.005){alert('Quotes-parts des donateurs : total '+(tq*100).toFixed(2)+' % ≠ 100 %.');return;}
+  }
+  if(repMode==='libre'){
+    const tr=cfg.reps.reduce((s,v)=>s+v,0);
+    if(Math.abs(tr-1)>0.005){alert('Répartition entre donataires : total '+(tr*100).toFixed(2)+' % ≠ 100 %.');return;}
+  }
+  if(cfg.typeD==='NP'&&cfg.donors.some(d=>!d.age)){alert('Renseignez l\'âge de chaque donateur pour une donation en nue-propriété.');return;}
+  if(cfg.dutreil&&(cfg.quoteElig<0||cfg.quoteElig>1)){alert('La quote-part éligible doit être comprise entre 0 et 100 %.');return;}
+
+  const R=moteur(cfg);
+  const Rsans=moteur(Object.assign({},cfg,{dutreil:false,quoteElig:0,red790:'non'}));
+  const RsansRed=moteur(Object.assign({},cfg,{red790:'non'}));
+  afficher(cfg,R,Rsans,RsansRed);
+}
+
+function afficher(cfg,R,Rsans,RsansRed){
+  const T=R.totaux, zone=document.getElementById('result-zone');
+  const nD=cfg.donors.length;
+  const anyRed=R.colKeys.some(k=>R.cols[k].red790&&R.cols[k].reduction>0);
+  const tagPP=cfg.typeD==='NP'?'<span class="tag tag-np">Nue-propriété</span>':'<span class="tag tag-pp">Pleine propriété</span>';
+  const tagDut=cfg.dutreil?`<span class="tag tag-dut">Dutreil ${fmtPct(cfg.quoteElig*100,0)}</span>`:'';
+  const tagRed=anyRed?'<span class="tag tag-red">Réduction 50 %</span>':'';
+  const tauxEff=T.vTrans>0?(T.coutTotal/T.vTrans)*100:0;
+  const economie=Rsans.totaux.coutTotal-T.coutTotal;
+
+  /* ── KPI ── */
+  const kpi=`<div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Valeur transmise</div><div class="kpi-val">${fmt(T.vTrans)}</div><div class="kpi-sub">${cfg.typeD==='NP'?'nue-propriété':'pleine propriété'}${cfg.decote>0?' · après décote':''}</div></div>
+    <div class="kpi"><div class="kpi-label">Base taxable</div><div class="kpi-val">${fmt(T.baseTax)}</div><div class="kpi-sub">après Dutreil et abattements</div></div>
+    <div class="kpi"><div class="kpi-label">Droits nets</div><div class="kpi-val accent">${fmt(T.droitsNets)}</div><div class="kpi-sub">${T.reduction>0?'après réduction de '+fmt(T.reduction):'barème art. 777 CGI'}</div></div>
+    <div class="kpi"><div class="kpi-label">Frais d'acte</div><div class="kpi-val">${fmt(T.frais)}</div><div class="kpi-sub">émoluments TTC + débours</div></div>
+    ${T.honoraires>0?`<div class="kpi"><div class="kpi-label">Honoraires</div><div class="kpi-val">${fmt(T.honoraires)}</div><div class="kpi-sub">accompagnement du dispositif</div></div>`:''}
+    <div class="kpi"><div class="kpi-label">Économie Dutreil</div><div class="kpi-val green">${fmt(Math.max(0,economie))}</div><div class="kpi-sub">vs transmission de droit commun</div></div>
+  </div>`;
+
+  /* ── Camembert ── */
+  const segments=[
+    {label:'Droits de mutation nets',val:T.droitsNets,color:'#1a4f8c'},
+    {label:'Émoluments du notaire TTC',val:T.emolTTC,color:'#0f6e56'},
+    {label:'Débours forfaitaires',val:T.debours,color:'#888780'},
+    {label:'Honoraires d\'accompagnement',val:T.honoraires,color:'#854f0b'}
+  ].filter(s=>s.val>0);
+  const legend=segments.map(s=>`<div class="legend-item"><span class="legend-dot" style="background:${s.color};"></span><span class="legend-label">${s.label}</span><span class="legend-val">${fmt(s.val)}<span class="legend-pct">${T.coutTotal>0?((s.val/T.coutTotal)*100).toFixed(1):'0'} %</span></span></div>`).join('');
+
+  /* ── Tableau de synthèse ── */
+  const keys=R.colKeys.filter(k=>R.cols[k].vPP>0);
+  const th=keys.map(k=>`<th>${R.cols[k].donorName}<br><span style="font-weight:400;opacity:.8;">→ ${R.cols[k].childName}</span></th>`).join('');
+  const rowVal=(label,fn,cls,neg,sub)=>{
+    let tds=keys.map(k=>{
+      const v=fn(R.cols[k]);
+      const disp=(v===undefined||v===null||Math.abs(v)<0.5)?'<span class="zero">—</span>':(neg?'− ':'')+fmt(v);
+      return `<td class="${cls||''}">${disp}</td>`;
+    }).join('');
+    const tot=keys.reduce((s,k)=>s+(fn(R.cols[k])||0),0);
+    tds+=`<td class="total-col">${Math.abs(tot)<0.5?'<span class="zero">—</span>':(neg?'− ':'')+fmt(tot)}</td>`;
+    return `<tr><td class="row-label${sub?' sub-label':''}">${label}</td>${tds}</tr>`;
+  };
+  const row=(label,f,cls,neg,sub)=>rowVal(label,c=>c[f],cls,neg,sub);
+  const rowRaw=(label,fn,cls)=>{
+    const tds=keys.map(k=>`<td class="${cls||''}">${fn(R.cols[k])}</td>`).join('');
+    return `<tr><td class="row-label">${label}</td>${tds}<td class="total-col">—</td></tr>`;
+  };
+  const cat=l=>`<tr><td class="row-label category" colspan="${keys.length+2}">${l}</td></tr>`;
+
+  let tbody='';
+  tbody+=cat('1 · Valorisation');
+  tbody+=row('Valeur vénale en pleine propriété','vPP');
+  if(cfg.decote>0){
+    tbody+=rowVal(`Décote pour illiquidité (${fmtPct(cfg.decote*100,1)})`,c=>c.vPP-c.vActe,'green',true,true);
+    tbody+=row('Valeur retenue à l\'acte','vActe');
+  }
+  if(cfg.typeD==='NP'){
+    tbody+=rowRaw('Clé de démembrement (art. 669 CGI)',c=>c.npPct+' %');
+    tbody+=row('Valeur de la nue-propriété transmise','vTrans');
+  }
+  tbody+=cat('2 · Régime Dutreil — art. 787 B CGI');
+  if(cfg.dutreil&&cfg.quoteElig>0){
+    tbody+=rowRaw('Quote-part éligible',c=>fmtPct(c.quoteElig*100,2));
+    tbody+=row('Fraction éligible','partElig');
+    tbody+=row('Exonération de 75 %','exoDutreil','green',true);
+    if(cfg.quoteElig<1)tbody+=row('Fraction non éligible','partNonElig');
+  }else{
+    tbody+=`<tr><td class="row-label">Exonération partielle</td><td colspan="${keys.length+1}" style="text-align:left;color:var(--text-muted);font-style:italic;">Régime Dutreil non appliqué</td></tr>`;
+  }
+  tbody+=row('Assiette taxable avant abattement','assiette');
+  tbody+=cat('3 · Abattements');
+  if(keys.some(k=>R.cols[k].antVal>0)){
+    tbody+=row('Donations antérieures rappelées (art. 784)','antVal');
+    tbody+=row('Base taxable antérieure reportée','prevTaxBase');
+  }
+  tbody+=row('Abattement personnel disponible','abattPersoDispo');
+  tbody+=row('Abattement personnel utilisé','abattPersoUtil','green',true);
+  if(keys.some(k=>R.cols[k].abattHandDispo>0)){
+    tbody+=row('Abattement handicap utilisé','abattHandUtil','green',true);
+  }
+  tbody+=`<tr class="total-synth"><td class="row-label">Base taxable</td>${keys.map(k=>`<td>${fmt(R.cols[k].baseTax)}</td>`).join('')}<td class="total-col">${fmt(T.baseTax)}</td></tr>`;
+  tbody+=cat('4 · Droits de mutation à titre gratuit');
+  tbody+=row('Droits bruts (barème art. 777 CGI)','droitsBruts');
+  if(T.reduction>0){
+    tbody+=rowRaw('Part des droits éligible à la réduction',c=>c.reduction>0?fmtPct(c.partReduite*100,2):'—');
+    tbody+=row('Réduction de 50 % (art. 790 CGI)','reduction','green',true);
+  }
+  tbody+=`<tr class="total-synth"><td class="row-label">Droits nets dus</td>${keys.map(k=>`<td>${fmt(R.cols[k].droitsNets)}</td>`).join('')}<td class="total-col">${fmt(T.droitsNets)}</td></tr>`;
+  tbody+=cat('5 · Frais d\'acte');
+  tbody+=row('Émoluments HT (quote-part)','emolHT',null);
+  tbody+=row('TVA 20 %','emolTVA',null);
+  tbody+=row('Débours forfaitaires','debours',null);
+  if(T.honoraires>0)tbody+=row('Honoraires d\'accompagnement (quote-part)','honoraires',null);
+  tbody+=`<tr class="total-synth"><td class="row-label">Coût total de la transmission</td>${keys.map(k=>`<td>${fmt(R.cols[k].coutTotal)}</td>`).join('')}<td class="total-col">${fmt(T.coutTotal)}</td></tr>`;
+
+  const synth=`<div class="synth-wrap"><table class="synth-table"><thead><tr><th class="row-header">Poste</th>${th}<th class="th-total">Total</th></tr></thead><tbody>${tbody}</tbody></table></div>`;
+
+  /* ── Sensibilité à la quote-part de titres transmise ── */
+  const qts=[0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1];
+  const scen=qts.map(x=>moteur(Object.assign({},cfg,{valeur:cfg.valeur*x})));
+  const qCell=(i,inner,cls)=>`<td class="${cls||''}${qts[i]===1?' col-ref':''}">${inner}</td>`;
+  const qRow=(label,fn,cls,neg,sub)=>{
+    const tds=scen.map((S,i)=>{
+      const v=fn(S.totaux,S);
+      const disp=(v===undefined||v===null||Math.abs(v)<0.5)?'<span class="zero">—</span>':(neg?'− ':'')+fmt(v);
+      return qCell(i,disp,cls);
+    }).join('');
+    return `<tr><td class="row-label${sub?' sub-label':''}">${label}</td>${tds}</tr>`;
+  };
+  const qRowTxt=(label,fn,cls)=>`<tr><td class="row-label">${label}</td>${scen.map((S,i)=>qCell(i,fn(S.totaux,S),cls)).join('')}</tr>`;
+  const qRowStrong=(label,fn)=>{
+    const tds=scen.map((S,i)=>qCell(i,fmt(fn(S.totaux)),'')).join('');
+    return `<tr class="total-synth"><td class="row-label">${label}</td>${tds}</tr>`;
+  };
+  const qCat=l=>`<tr><td class="row-label category" colspan="${qts.length+1}">${l}</td></tr>`;
+
+  let qb='';
+  qb+=qCat('1 · Valorisation');
+  qb+=qRow('Valeur vénale en pleine propriété',t=>t.vPP);
+  if(cfg.decote>0){
+    qb+=qRow(`Décote pour illiquidité (${fmtPct(cfg.decote*100,1)})`,t=>t.vPP-t.vActe,'green',true,true);
+    qb+=qRow('Valeur retenue à l\'acte',t=>t.vActe);
+  }
+  if(cfg.typeD==='NP')qb+=qRow('Valeur de la nue-propriété transmise',t=>t.vTrans);
+  qb+=qCat('2 · Régime Dutreil — art. 787 B CGI');
+  if(cfg.dutreil&&cfg.quoteElig>0){
+    qb+=qRow('Fraction éligible',t=>t.partElig);
+    qb+=qRow('Exonération de 75 %',t=>t.exoDutreil,'green',true);
+    if(cfg.quoteElig<1)qb+=qRow('Fraction non éligible',t=>t.partNonElig);
+  }else{
+    qb+=`<tr><td class="row-label">Exonération partielle</td><td colspan="${qts.length}" style="text-align:left;color:var(--text-muted);font-style:italic;">Régime Dutreil non appliqué</td></tr>`;
+  }
+  qb+=qRow('Assiette taxable avant abattement',t=>t.assiette);
+  qb+=qCat('3 · Abattements');
+  qb+=qRow('Abattement personnel utilisé',t=>t.abattPersoUtil,'green',true);
+  if(T.abattHandUtil>0)qb+=qRow('Abattement handicap utilisé',t=>t.abattHandUtil,'green',true);
+  qb+=qRowStrong('Base taxable',t=>t.baseTax);
+  qb+=qCat('4 · Droits de mutation à titre gratuit');
+  qb+=qRow('Droits bruts (barème art. 777 CGI)',t=>t.droitsBruts);
+  if(T.reduction>0)qb+=qRow('Réduction de 50 % (art. 790 CGI)',t=>t.reduction,'green',true);
+  qb+=qRowStrong('Droits nets dus',t=>t.droitsNets);
+  qb+=qCat('5 · Frais d\'acte');
+  qb+=qRow('Émoluments TTC et débours',t=>t.frais,'frais-row');
+  if(T.honoraires>0)qb+=qRow('Honoraires d\'accompagnement',t=>t.honoraires,'frais-row');
+  qb+=qCat('6 · Coût global');
+  qb+=qRowTxt('Pression fiscale',t=>t.vPP>0?fmtPct((t.droitsNets/t.vPP)*100,2):'—');
+  qb+=qRowStrong('Coût total de la transmission',t=>t.coutTotal);
+  qb+=qRowTxt('Coût rapporté à la valeur transmise',t=>t.vTrans>0?fmtPct((t.coutTotal/t.vTrans)*100,2):'—');
+  qb+=qRowTxt('Taux marginal atteint',(t,S)=>{
+    const k=S.colKeys.find(x=>S.cols[x].baseTax>0);
+    if(!k)return '<span class="zero">—</span>';
+    const c=S.cols[k],b=c.prevTaxBase+c.baseTax;
+    const tr=BAREMES_DMTG[c.baremeKey].find(x=>b<=x.max)||BAREMES_DMTG[c.baremeKey].slice(-1)[0];
+    return fmtPct(tr.taux*100,0);
+  });
+
+  const qHead=qts.map(x=>`<th class="${x===1?'th-ref':''}">${fmtPct(x*100,0)}</th>`).join('');
+  const quoteTable=`<div class="synth-wrap"><table class="synth-table compact"><thead><tr><th class="row-header">Poste</th>${qHead}</tr></thead><tbody>${qb}</tbody></table></div>`;
+
+  /* ── Détail émoluments ── */
+  let emolHTML='';
+  for(let di=0;di<nD;di++){
+    const e=R.donorEmol[di];
+    emolHTML+=`<div class="section-header">${cfg.donors[di].name} — assiette : ${fmt(e.assiette)} (valeur retenue à l'acte)</div>
+    <table><thead><tr><th>Tranche</th><th class="right">Base</th><th class="right">Taux</th><th class="right">Montant HT</th></tr></thead><tbody>
+    ${e.details.map(r=>`<tr class="sub"><td>${r.label}</td><td class="right">${fmtD(r.base)}</td><td class="right">${r.taux}</td><td class="right">${fmtD(r.montant)}</td></tr>`).join('')}
+    <tr class="subtotal"><td>Émoluments HT${e.ajust?` <span style="font-weight:400;font-size:11px;color:var(--amber);">(${e.ajust})</span>`:''}</td><td class="right"></td><td class="right">barème</td><td class="right">${fmtD(e.ht)}</td></tr>
+    <tr class="sub"><td>TVA</td><td class="right"></td><td class="right">20 %</td><td class="right">${fmtD(e.tva)}</td></tr>
+    <tr class="subtotal"><td>Émoluments TTC</td><td class="right"></td><td class="right"></td><td class="right">${fmtD(e.ttc)}</td></tr>
+    <tr class="sub"><td>Débours forfaitaires (quote-part)</td><td class="right"></td><td class="right">forfait</td><td class="right">${fmtD(e.debours)}</td></tr>
+    </tbody></table>`;
+  }
+  emolHTML+=`<table><tbody>
+    <tr class="subtotal"><td>Total des frais d'acte</td><td class="right"></td><td class="right"></td><td class="right">${fmtD(T.frais)}</td></tr>
+    ${T.honoraires>0?`<tr class="sub"><td>Honoraires d'accompagnement du dispositif</td><td class="right"></td><td class="right">forfait</td><td class="right">${fmtD(T.honoraires)}</td></tr>`:''}
+    <tr class="total-row"><td>Total hors droits de mutation</td><td class="right"></td><td class="right"></td><td class="right">${fmtD(T.frais+T.honoraires)}</td></tr>
+  </tbody></table>`;
+
+  /* ── Notes ── */
+  let notes=`<div class="bareme-note"><strong>Méthode.</strong> Décote d'illiquidité appliquée en premier sur la valeur vénale, puis clé de démembrement de l'article 669 CGI le cas échéant, puis exonération de 75 % sur la seule fraction éligible au 787 B, puis abattements personnels et handicap, puis barème progressif de l'article 777 CGI en tenant compte du rappel fiscal de l'article 784 CGI. ${T.reduction>0?`La réduction de 50 % de l'article 790 CGI est appliquée aux droits afférents à la fraction éligible, déterminée au prorata de la base nette taxable.`:''}</div>`;
+  notes+=`<div class="parts-note"><strong>Frais d'acte.</strong> Les émoluments sont assis sur la valeur retenue à l'acte, <strong>sans tenir compte de l'exonération Dutreil</strong> : le 787 B est une exonération de droits de mutation, non d'assiette notariale. Barème général de l'article A444-67 1° C. com. Ni taxe de publicité foncière ni contribution de sécurité immobilière : la donation de parts sociales n'est pas soumise à publicité foncière. Débours estimés à ${fmt(DEBOURS)}, répartis entre les donateurs.${T.honoraires>0?` Les honoraires d'accompagnement (${fmt(T.honoraires)}) sont un forfait d'ingénierie saisi par vos soins, indépendant de la quote-part transmise.`:''} Non compris : modification des statuts, publication au support d'annonces légales, honoraires d'évaluation et de rédaction du pacte.${cfg.typeD==='NP'?' <strong>Assiette en NP :</strong> les émoluments sont ici calculés sur la valeur en pleine propriété retenue à l\'acte, par cohérence avec le simulateur de frais notariaux du portail.':''}</div>`;
+  if(cfg.decote>0)notes+=`<div class="bareme-note" style="background:#fdf4ff;color:#6b21a8;"><strong>Décote d'illiquidité.</strong> Le cumul avec l'exonération Dutreil est admis mais expose la valorisation à un contrôle renforcé. La décote doit être documentée par un rapport d'évaluation et justifiée par les stipulations statutaires et extra-statutaires.</div>`;
+
+  /* ── Assemblage ── */
+  zone.innerHTML=`
+  <div class="result-card">
+    <div class="total-header">
+      <div class="total-eyebrow">Coût total de la transmission ${tagPP}${tagDut}${tagRed}</div>
+      <div class="total-amount">${fmt(T.coutTotal)}</div>
+      <div class="total-sub">
+        soit ${fmtPct(tauxEff,2)} de la valeur transmise (${fmt(T.vTrans)})<br>
+        <span style="font-size:11.5px;">${fmt(T.droitsNets)} de droits · ${fmt(T.frais)} de frais d'acte${T.honoraires>0?' · '+fmt(T.honoraires)+' d\'honoraires':''}</span>
+      </div>
+    </div>
+    ${kpi}
+    <div class="chart-section"><div class="pie-wrap"><canvas id="pieChart"></canvas></div><div class="legend">${legend}</div></div>
+    <div class="bar-wrap">
+      <div class="bar-title">Effet des leviers sur les droits de mutation</div>
+      <div class="bar-canvas"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="detail-toggle" onclick="toggleDetail('detail-emol','chev-emol')"><div class="chevron" id="chev-emol"></div>Voir le détail des émoluments du notaire</div>
+    <div class="detail-panel" id="detail-emol">${emolHTML}</div>
+    ${notes}
+  </div>
+  <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:0 0 10px 4px;">Détail de la liquidation, par couple donateur / donataire</div>
+  ${synth}
+  <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:1.75rem 0 10px 4px;">Sensibilité à la quote-part de titres transmise</div>
+  ${quoteTable}
+  <div class="info-box" style="margin-top:12px;">
+    Chaque colonne rejoue la liquidation complète sur une fraction de la valeur saisie : la colonne <strong>100 %</strong> correspond au scénario retenu ci-dessus (${fmt(cfg.valeur)}), les autres en sont des sous-multiples. Répartition entre donataires, qualité, abattements, rappel fiscal et quote-part éligible au 787 B sont inchangés d'une colonne à l'autre.<br><br>
+    <strong>Point de vigilance.</strong> ${cfg.decote>0?`La décote de ${fmtPct(cfg.decote*100,1)} est maintenue constante sur toutes les colonnes. En pratique elle n'est pas indépendante de la fraction cédée : un bloc minoritaire se décote davantage qu'un bloc de contrôle. Ajustez le taux si vous retenez sérieusement une quote-part réduite.`:'Si vous transmettez une fraction minoritaire, une décote d\'illiquidité ou de minorité peut se justifier alors qu\'elle ne l\'était pas sur le bloc de contrôle. Le tableau ne l\'applique pas automatiquement.'} La progressivité du barème fait par ailleurs que le coût n'est pas proportionnel à la quote-part transmise.
+  </div>`;
+
+  /* ── Graphiques ── */
+  if(pieChart){pieChart.destroy();pieChart=null;}
+  const ctx=document.getElementById('pieChart').getContext('2d');
+  pieChart=new Chart(ctx,{type:'doughnut',data:{labels:segments.map(s=>s.label),datasets:[{data:segments.map(s=>Math.round(s.val)),backgroundColor:segments.map(s=>s.color),borderWidth:3,borderColor:'#fff',hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:true,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const v=c.parsed,t=c.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return ` ${c.label} : ${fmt(v)} (${((v/t)*100).toFixed(1)} %)`;}}}}}});
+
+  if(barChart){barChart.destroy();barChart=null;}
+  const labels=['Droit commun','+ Exonération 787 B'],data=[Rsans.totaux.droitsNets,RsansRed.totaux.droitsNets];
+  const colors=['#b91c1c','#2a78d6'];
+  if(T.reduction>0){labels.push('+ Réduction 790');data.push(T.droitsNets);colors.push('#0f6e56');}
+  const bctx=document.getElementById('barChart').getContext('2d');
+  barChart=new Chart(bctx,{type:'bar',data:{labels,datasets:[{data:data.map(v=>Math.round(v)),backgroundColor:colors,borderRadius:6,maxBarThickness:78}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' Droits nets : '+fmt(c.parsed.y)}}},
+    scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('fr-FR',{notation:'compact',style:'currency',currency:'EUR',maximumFractionDigits:1}).format(v),font:{size:11}},grid:{color:'rgba(0,0,0,.06)'}},x:{grid:{display:false},ticks:{font:{size:11.5}}}}}});
+
+  document.getElementById('result-zone').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function toggleDetail(panelId,chevId){
+  const p=document.getElementById(panelId),c=document.getElementById(chevId);
+  const o=p.classList.toggle('open');c.classList.toggle('open',o);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE 2 — CAPACITÉ DE TRANSMISSION
+   ═══════════════════════════════════════════════════════════ */
+let capObjectif='franchise',capTypeD='PP',capDutreil=true,capChart=null,capNbDonateurs=2,capChildCount=0;
+
+function setObjectif(o){
+  capObjectif=o;
+  document.getElementById('o-franchise').classList.toggle('active',o==='franchise');
+  document.getElementById('o-plafond').classList.toggle('active',o==='plafond');
+  document.getElementById('plafond-wrap').style.display=o==='plafond'?'':'none';
+  calcCapacite();
+}
+function setCapType(t){
+  capTypeD=t;
+  document.getElementById('c-pp').classList.toggle('active',t==='PP');
+  document.getElementById('c-np').classList.toggle('active',t==='NP');
+  calcCapacite();
+}
+function setCapDutreil(v){
+  capDutreil=v;
+  document.getElementById('c-dut-oui').classList.toggle('active',v);
+  document.getElementById('c-dut-non').classList.toggle('active',!v);
+  calcCapacite();
+}
+function setCapDonateurs(n){
+  capNbDonateurs=n;
+  document.getElementById('cd-1').classList.toggle('active',n===1);
+  document.getElementById('cd-2').classList.toggle('active',n===2);
+  capRenderDonateurs();calcCapacite();
+}
+function capRenderDonateurs(){
+  const el=document.getElementById('cap-donateurs-form');
+  const en=el.querySelectorAll('.cap-don-name'),ea=el.querySelectorAll('.cap-don-age');
+  let html='';
+  for(let i=0;i<capNbDonateurs;i++){
+    html+=`<div class="donor-block"><div class="donor-block-title">${capNbDonateurs===1?'Donateur':'Donateur '+(i+1)}</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Prénom / Nom</label><input type="text" class="cap-don-name" placeholder="${'Donateur '+(i+1)}" value="${en[i]?en[i].value:''}" oninput="calcCapacite()"></div>
+        <div class="form-group"><label>Âge (ans révolus)</label><input type="number" class="cap-don-age" min="1" max="120" value="${ea[i]?ea[i].value:(i===0?'62':'60')}" oninput="calcCapacite()"></div>
+      </div></div>`;
+  }
+  el.innerHTML=html;
+}
+function capGetDonors(){
+  const n=Array.from(document.querySelectorAll('.cap-don-name')),a=Array.from(document.querySelectorAll('.cap-don-age'));
+  const out=[];
+  for(let i=0;i<capNbDonateurs;i++)out.push({name:(n[i]&&n[i].value.trim())||('Donateur '+(i+1)),age:(a[i]?parseInt(a[i].value):0)||0});
+  return out;
+}
+
+function capAddChild(){
+  capChildCount++;const id=capChildCount;
+  const div=document.createElement('div');div.className='cap-child-row';div.id='cap-child-'+id;
+  div.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;">
+      <div class="form-grid-3" style="align-items:end;">
+        <div class="form-group" style="margin:0;">
+          <label>Prénom / Nom</label>
+          <input type="text" class="cap-child-name" placeholder="Donataire ${id}" oninput="calcCapacite()">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Qualité du donataire</label>
+          <select class="cap-child-lien" onchange="calcCapacite()">${Object.entries(LIENS).map(([k,v])=>`<option value="${k}">${v.label} — ${fmt(v.abatt)}</option>`).join('')}</select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label>Donations antérieures &lt; 15 ans, par donateur (€)
+            <span class="tip" tabindex="0" style="margin-left:4px;vertical-align:middle;">i<span class="tip-box">
+              <strong>Art. 784 CGI — rappel fiscal</strong><br>
+              Montant <strong>taxable</strong> déjà reçu de <em>chaque</em> donateur depuis moins de quinze ans.<br><br>
+              Il consomme l'abattement personnel puis, le cas échéant, l'abattement handicap ; le surplus sert d'assise aux tranches du barème progressif.<br><br>
+              La fraction antérieurement exonérée au titre du 787 B n'a pas à être rappelée.
+            </span></span>
+          </label>
+          <input type="number" class="cap-child-ant" value="0" min="0" step="1000" oninput="calcCapacite()">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;flex-wrap:wrap;">
+        <label class="opt-line" for="cap-hcp-${id}">
+          <input type="checkbox" class="cap-child-handicap" id="cap-hcp-${id}" onchange="calcCapacite()">
+          <span>Abattement personne handicapée — 159 325 € (art. 779 II CGI)</span>
+        </label>
+        <button class="btn btn-danger" onclick="document.getElementById('cap-child-${id}').remove();calcCapacite();">✕ Supprimer</button>
+      </div>
+    </div>`;
+  document.getElementById('cap-children-list').appendChild(div);
+  calcCapacite();
+}
+function capGetChildren(){
+  return Array.from(document.querySelectorAll('.cap-child-row')).map((r,i)=>({
+    name:(r.querySelector('.cap-child-name').value||'').trim()||('Donataire '+(i+1)),
+    lien:r.querySelector('.cap-child-lien').value,
+    handicap:r.querySelector('.cap-child-handicap').checked,
+    ant:parseFloat(r.querySelector('.cap-child-ant').value)||0
+  }));
+}
+
+function capGlobals(over){
+  const g={
+    typeD:capTypeD,
+    dutreil:capDutreil,
+    quoteElig:(parseFloat(document.getElementById('cap-elig').value)||0)/100,
+    decote:(parseFloat(document.getElementById('cap-decote').value)||0)/100,
+    objectif:capObjectif,
+    plafond:parseFloat(document.getElementById('cap-plafond').value)||0
+  };
+  return Object.assign(g,over||{});
+}
+/* Agrège la capacité sur l'ensemble des couples donateur / donataire */
+function capAgrege(donors,children,over){
+  const g=capGlobals(over);
+  const couples=[];
+  let valeur=0,droits=0,abatt=0,reduction=0;
+  for(const d of donors)for(const c of children){
+    const r=capaciteMax(Object.assign({age:d.age,lien:c.lien,handicap:c.handicap,ant:c.ant},g));
+    couples.push({donor:d,child:c,r});
+    valeur+=r.valeurMax;droits+=r.droitsNets;abatt+=r.abattRestant;
+    reduction+=(r.droitsBruts-r.droitsNets);
+  }
+  return{couples,valeur,droits,abatt,reduction,g};
+}
+
+function calcCapacite(){
+  const zone=document.getElementById('cap-result-zone'),hint=document.getElementById('cap-hint');
+  const donors=capGetDonors(),children=capGetChildren();
+  if(!children.length){
+    hint.innerHTML='';
+    zone.innerHTML=`<div class="result-card"><div class="empty-state"><div class="empty-icon">👥</div><strong>Aucun donataire renseigné</strong><br>Ajoutez au moins un donataire pour lancer le calcul.</div></div>`;
+    if(capChart){capChart.destroy();capChart=null;}
+    return;
+  }
+  const A=capAgrege(donors,children);
+  const g=A.g,nbCouples=A.couples.length;
+  const q=g.dutreil?g.quoteElig:0;
+
+  /* Alerte arbitrage PP / NP */
+  const jeunes=donors.filter(d=>d.age>0&&d.age<AGE_RED790);
+  if(capTypeD==='NP'&&capDutreil&&q>0&&jeunes.length){
+    const alt=capAgrege(donors,children,{typeD:'PP'});
+    hint.innerHTML=`<div class="warn-box"><strong>Arbitrage à documenter.</strong> ${jeunes.map(d=>d.name+' ('+d.age+' ans)').join(' et ')} ${jeunes.length>1?'ont':'a'} moins de 70 ans : une donation en pleine propriété ouvrirait droit à la réduction de 50 % de l'article 790 CGI, perdue en nue-propriété.${g.objectif==='plafond'?` À enveloppe de droits identique, la capacité globale passerait de ${fmt(A.valeur)} en NP à ${fmt(alt.valeur)} en PP.`:''}</div>`;
+  }else if(capTypeD==='NP'){
+    hint.innerHTML=`<div class="hint-box"><strong>Clés de démembrement (art. 669 CGI)</strong><br>${donors.map(d=>`${d.name} (${d.age} ans) : nue-propriété <strong>${getNP(d.age).np} %</strong> · usufruit ${getNP(d.age).usufruit} %`).join('<br>')}</div>`;
+  }else hint.innerHTML='';
+
+  if(A.valeur<=0&&g.objectif==='franchise'){
+    zone.innerHTML=`<div class="result-card"><div class="empty-state"><div class="empty-icon">🎯</div><strong>Aucune capacité en franchise de droits</strong><br>Les abattements sont intégralement consommés par les donations antérieures de chaque donataire.<br>Basculez sur « Plafonner les droits » ou attendez l'expiration du délai de quinze ans.</div></div>`;
+    if(capChart){capChart.destroy();capChart=null;}
+    return;
+  }
+
+  /* Détail par couple */
+  const cpl=A.couples.map(c=>`<tr>
+      <td class="row-label">${c.donor.name} → ${c.child.name}</td>
+      <td>${LIENS[c.child.lien].court}</td>
+      <td class="right">${fmt(c.r.abattRestant)}</td>
+      <td class="right">${c.r.prevTaxBase>0?fmt(c.r.prevTaxBase):'<span class="zero">—</span>'}</td>
+      <td class="right">${c.r.baseTax>0?fmt(c.r.baseTax):'<span class="zero">—</span>'}</td>
+      <td class="right">${c.r.u<1?Math.round(c.r.u*100)+' %':'100 %'}</td>
+      <td class="right">${c.r.droitsNets>0?fmt(c.r.droitsNets):'<span class="zero">—</span>'}</td>
+      <td class="right" style="font-weight:600;color:var(--accent);">${fmt(c.r.valeurMax)}</td>
+    </tr>`).join('');
+  const detail=`<table class="matrix-table" style="min-width:760px;">
+    <thead><tr><th class="row-header">Couple donateur / donataire</th><th>Qualité</th><th>Abattement disponible</th><th>Base antérieure</th><th>Base taxable admissible</th><th>Clé 669</th><th>Droits nets</th><th>Valeur PP maximale</th></tr></thead>
+    <tbody>${cpl}
+      <tr class="hl"><td class="row-label">Total — ${nbCouples} couple${nbCouples>1?'s':''}</td><td></td><td class="right">${fmt(A.abatt)}</td><td></td><td></td><td></td><td class="right">${fmt(A.droits)}</td><td class="right">${fmt(A.valeur)}</td></tr>
+    </tbody></table>`;
+
+  /* Matrice de sensibilité */
+  const qs=[0,0.25,0.5,0.75,1];
+  const ageRef=donors[0].age;
+  const modes=[{k:'PP',l:'Pleine propriété'},{k:'NP',l:'Nue-propriété'}];
+  let mrows='';
+  for(const qv of qs){
+    const hl=capDutreil&&Math.abs(qv-g.quoteElig)<0.005;
+    const cells=modes.map(m=>`<td>${fmt(capAgrege(donors,children,{typeD:m.k,quoteElig:qv,dutreil:qv>0}).valeur)}</td>`).join('');
+    mrows+=`<tr class="${hl?'hl':''}"><td class="row-label">${qv===0?'Sans Dutreil':'Éligible à '+fmtPct(qv*100,0)}</td>${cells}</tr>`;
+  }
+  const matrice=`<div class="synth-wrap"><table class="matrix-table"><thead><tr><th class="row-header">Quote-part éligible au 787 B</th>${modes.map(m=>`<th>${m.l}</th>`).join('')}</tr></thead><tbody>${mrows}</tbody></table></div>`;
+
+  const levier=q>0?1/(1-TAUX_DUTREIL*q):1;
+  const titreObj=g.objectif==='franchise'?'en franchise totale de droits':'pour '+fmt(g.plafond*nbCouples)+' de droits';
+
+  zone.innerHTML=`
+  <div class="result-card">
+    <div class="total-header">
+      <div class="total-eyebrow">Valeur en pleine propriété transmissible ${titreObj}</div>
+      <div class="total-amount">${fmt(A.valeur)}</div>
+      <div class="total-sub">
+        ${nbCouples} couple${nbCouples>1?'s':''} donateur / donataire — ${donors.length} donateur${donors.length>1?'s':''} × ${children.length} donataire${children.length>1?'s':''}<br>
+        <span style="font-size:11.5px;">${A.reduction>0?'dont '+fmt(A.reduction)+' de réduction au titre de l\'article 790 CGI':'barème art. 777 CGI'}</span>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Abattements disponibles</div><div class="kpi-val">${fmt(A.abatt)}</div><div class="kpi-sub">tous couples confondus</div></div>
+      <div class="kpi"><div class="kpi-label">Droits générés</div><div class="kpi-val ${A.droits>0?'accent':'green'}">${fmt(A.droits)}</div><div class="kpi-sub">${A.reduction>0?'après réduction de '+fmt(A.reduction):'total tous couples'}</div></div>
+      <div class="kpi"><div class="kpi-label">Effet de levier Dutreil</div><div class="kpi-val green">× ${levier.toFixed(2).replace('.',',')}</div><div class="kpi-sub">sur la capacité transmissible</div></div>
+      <div class="kpi"><div class="kpi-label">Coût effectif</div><div class="kpi-val">${A.valeur>0?fmtPct((A.droits/A.valeur)*100,2):'—'}</div><div class="kpi-sub">droits / valeur transmise</div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-title">Capacité transmissible selon la quote-part éligible</div>
+      <div class="bar-canvas"><canvas id="capChart"></canvas></div>
+    </div>
+    <div class="detail-toggle" onclick="toggleDetail('detail-cap','chev-cap')"><div class="chevron" id="chev-cap"></div>Voir le détail par couple donateur / donataire</div>
+    <div class="detail-panel" id="detail-cap"><div style="overflow-x:auto;">${detail}</div></div>
+    <div class="bareme-note"><strong>Méthode.</strong> Inversion algébrique exacte : pour chaque couple donateur / donataire, la valeur maximale est obtenue en remontant du plafond de droits vers la base taxable à travers les tranches de l'article 777 CGI, en tenant compte de la base taxable antérieure propre au couple, puis en divisant l'assiette par le coefficient de conversion (décote × clé de démembrement × exonération Dutreil). Aucune approximation itérative n'est employée. Les abattements, la qualité du donataire et le rappel fiscal sont appréciés couple par couple.</div>
+  </div>
+  <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin:0 0 10px 4px;">Matrice de sensibilité — capacité globale sur ${nbCouples} couple${nbCouples>1?'s':''}</div>
+  ${matrice}
+  <div class="info-box" style="margin-top:12px;">Rappel : l'abattement personnel se reconstitue tous les quinze ans (art. 784 CGI). La capacité ci-dessus s'entend <strong>par période de quinze ans et par couple donateur / donataire</strong>.</div>`;
+
+  /* Graphique */
+  if(capChart){capChart.destroy();capChart=null;}
+  const labels=qs.map(x=>x===0?'Sans Dutreil':fmtPct(x*100,0));
+  const dataPP=qs.map(x=>Math.round(capAgrege(donors,children,{typeD:'PP',quoteElig:x,dutreil:x>0}).valeur));
+  const dataNP=qs.map(x=>Math.round(capAgrege(donors,children,{typeD:'NP',quoteElig:x,dutreil:x>0}).valeur));
+  const cctx=document.getElementById('capChart').getContext('2d');
+  capChart=new Chart(cctx,{type:'bar',
+    data:{labels,datasets:[
+      {label:'Pleine propriété',data:dataPP,backgroundColor:'#1a4f8c',borderRadius:5,maxBarThickness:44},
+      {label:'Nue-propriété',data:dataNP,backgroundColor:'#8fb4dd',borderRadius:5,maxBarThickness:44}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11.5},padding:14}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+' : '+fmt(c.parsed.y)}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('fr-FR',{notation:'compact',style:'currency',currency:'EUR',maximumFractionDigits:1}).format(v),font:{size:11}},grid:{color:'rgba(0,0,0,.06)'}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INITIALISATION
+   ═══════════════════════════════════════════════════════════ */
+function init(){
+  renderDonateurs();
+  addChild();
+  capRenderDonateurs();
+  capAddChild();
+  capAddChild();
+  majApercu();
+  const params=new URLSearchParams(window.location.search);
+  const pg=params.get('page');
+  if(pg==='capacite')showPage('capacite',document.getElementById('nav-capacite'));
+}
+if(typeof document!=='undefined'&&document.getElementById('donateurs-form'))init();
+</script>
+</body>
+</html>

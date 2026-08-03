@@ -118,6 +118,26 @@ main{max-width:1180px;margin:0 auto;padding:36px 72px 100px;position:relative;z-
 .arrow{display:inline-block;transition:transform .18s;}
 .card:hover .arrow{transform:translateX(3px);}
 
+/* CARTE EN COURS DE CRÉATION */
+.card.soon{
+  background:#F1F2F6;
+  box-shadow:inset 0 0 0 1px rgba(13,27,92,.07);
+}
+.card.soon:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px rgba(13,27,92,.10),0 10px 26px rgba(13,27,92,.09);}
+.card.soon .card-picto{background:linear-gradient(135deg,#B7BCCD,#9AA1B7);filter:grayscale(1);opacity:.75;transition:filter .22s,opacity .22s;}
+.card.soon:hover .card-picto{filter:grayscale(.25);opacity:1;}
+.card.soon .card-cat{color:#9CA2B6;}
+.card.soon h2{color:#7C8298;}
+.card.soon p{color:#9CA2B6;}
+.card.soon .tag{color:#8B92A8;background:#E5E7EF;}
+.card.soon .cta{color:#9CA2B6;}
+.badge-soon{
+  position:absolute;top:20px;right:20px;
+  font-family:'Sora',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:1.3px;
+  text-transform:uppercase;color:#8A6D0B;background:#FBF0CE;
+  border:1px solid #EFDFA4;border-radius:20px;padding:4px 11px;
+}
+
 /* BANDE INFO */
 .info-strip{
   background:var(--surface);border-radius:14px;padding:36px 40px;
@@ -179,7 +199,7 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
     </a>
 
     <!-- FRAIS NOTARIAUX -->
-    <a class="card" href="simulateur_donation.html?page=frais">
+    <a class="card" href="simulateur_donation_immobilier.html?page=frais">
       <div class="card-picto">⚖️</div>
       <div class="card-cat">Transmission · Frais</div>
       <h2>Frais notariaux de donation</h2>
@@ -194,7 +214,7 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
     </a>
 
     <!-- SIMULATION DONATION -->
-    <a class="card" href="simulateur_donation.html?page=simulation">
+    <a class="card" href="simulateur_donation_immobilier.html?page=simulation">
       <div class="card-picto">📜</div>
       <div class="card-cat">Transmission · Stratégie</div>
       <h2>Simulation globale de donation</h2>
@@ -208,17 +228,17 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
       <div class="cta">Ouvrir le simulateur <span class="arrow">→</span></div>
     </a>
 
-    <!-- ASSURANCE VIE -->
-    <a class="card" href="simulateur-assurance-vie.html">
-      <div class="card-picto">🛡️</div>
-      <div class="card-cat">Épargne · Fiscalité</div>
-      <h2>Assurance-vie — Projection, rachats et fiscalité</h2>
-      <p>Projette le contrat (versements, allocation euro/UC, rendements, frais de gestion) et calcule les rachats bruts et nets de fiscalité. Inclut un calcul inverse de l'effort d'épargne nécessaire pour atteindre un objectif de revenus.</p>
+    <!-- TRANSMISSION DUTREIL -->
+    <a class="card" href="simulateur-dutreil.html">
+      <div class="card-picto">🏛️</div>
+      <div class="card-cat">Transmission &middot; Entreprise</div>
+      <h2>Transmission Dutreil — parts &amp; actions</h2>
+      <p>Liquide les droits et les frais d'acte sur une donation de titres sous r&eacute;gime de faveur : exon&eacute;ration de 75 %, quote-part &eacute;ligible, d&eacute;cote d'illiquidit&eacute;, d&eacute;membrement et r&eacute;duction de 50 % de l'article 790. Tableau de sensibilit&eacute; &agrave; la quote-part transmise et second module de capacit&eacute; maximale transmissible.</p>
       <div class="tags">
-        <span class="tag">Rachats nets/bruts</span>
-        <span class="tag">Fiscalité &gt; 8 ans</span>
-        <span class="tag">Allocation UC</span>
-        <span class="tag">Effort d'épargne</span>
+        <span class="tag">Art. 787 B CGI</span>
+        <span class="tag">Art. 790 CGI</span>
+        <span class="tag">Quote-part &eacute;ligible</span>
+        <span class="tag">Capacit&eacute; maximale</span>
       </div>
       <div class="cta">Ouvrir le simulateur <span class="arrow">→</span></div>
     </a>
@@ -236,6 +256,23 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
         <span class="tag">Export</span>
       </div>
       <div class="cta">Ouvrir le simulateur <span class="arrow">→</span></div>
+    </a>
+
+    <!-- ASSURANCE-VIE -->
+    <a class="card soon" href="simulateur-assurance-vie.html">
+      <span class="badge-soon">En cours de cr&eacute;ation</span>
+      <div class="card-picto">🛡️</div>
+      <div class="card-cat">Épargne &amp; Capitalisation</div>
+      <h2>Assurance-vie — Projection et rachats nets</h2>
+      <p>Modélise un contrat multi-supports de bout en bout : versements initiaux, programmés et ponctuels, clé euro/UC, frais d'entrée et de gestion, puis rachats pilotés en brut ou en net d'impôt. Intègre la règle du prorata, le PFU 7,5 / 12,8 %, l'abattement des huit ans et les prélèvements sociaux au fil de l'eau. Un second module remonte du revenu net souhaité vers l'effort d'épargne à consentir.</p>
+      <div class="tags">
+        <span class="tag">Art. 125-0 A CGI</span>
+        <span class="tag">PFU &amp; seuil 150 k€</span>
+        <span class="tag">Abattement 8 ans</span>
+        <span class="tag">Rachats nets</span>
+        <span class="tag">Calcul inverse</span>
+      </div>
+      <div class="cta">Ouvrir la version de travail <span class="arrow">→</span></div>
     </a>
 
   </div>
