@@ -422,8 +422,15 @@ function nice(v){
 }
 /* lignes du tableau : en mode inverse, l'échelle d'objectifs part du capital initial */
 function buildRows(o,inv){
-  if(!inv)return{vals:EPARGNE.concat([Math.max(2501,state.freeE)]),
-                 types:['obj','obj','obj','obj','obj','obj','free']};
+  if(!inv){
+    const freeE=Math.max(100,state.freeE);
+    const list=EPARGNE.filter(function(v){return v!==freeE;})
+                      .map(function(v){return{v:v,t:'obj'};});
+    list.push({v:freeE,t:'free'});
+    list.sort(function(a,b){return a.v-b.v;});
+    return{vals:list.map(function(x){return x.v;}),
+           types:list.map(function(x){return x.t;})};
+  }
   let objs,head=[],types=[];
   if(o.P0<=0){objs=OBJECTIFS.slice();}
   else{
@@ -503,7 +510,7 @@ function render(){
     if(TYPES[ri]==='free'){
       th.className='free-row';
       th.innerHTML='<span class="lbl">'+(inv?'Objectif libre':'Montant libre')+'</span>'+
-        '<input type="number" id="freeval" min="'+(inv?1000:2501)+
+        '<input type="number" id="freeval" min="'+(inv?1000:100)+
         '" step="'+(inv?25000:100)+'" value="'+v+'"> €';
     }else if(TYPES[ri]==='socle'){
       th.className='socle-row';
@@ -542,8 +549,9 @@ function render(){
   });
   const fi=document.getElementById('freeval');
   if(fi)fi.onchange=function(e){const x=parseFloat(e.target.value)||0;
-    if(inv){state.freeO=Math.max(1000,x);state.freeOSet=true;state.selFree=true;}
-    else state.freeE=Math.max(2501,x);render();};
+    if(inv){state.freeO=Math.max(1000,x);state.freeOSet=true;}
+    else state.freeE=Math.max(100,x);
+    state.selFree=true;render();};
 
   const L={capital:'Capital constitué',interets:'Intérêts capitalisés',
            part:"Part des intérêts dans le capital",mensualite:"Effort d'épargne mensuel requis",
