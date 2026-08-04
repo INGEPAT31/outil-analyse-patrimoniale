@@ -30,9 +30,13 @@ header > .hero-content{position:relative;z-index:6;max-width:1180px;margin:0 aut
 }
 header h1{
   font-family:'Sora',sans-serif;font-size:clamp(32px,4.2vw,50px);font-weight:700;
-  line-height:1.16;letter-spacing:-.5px;max-width:640px;margin-bottom:18px;
+  line-height:1.24;letter-spacing:-.5px;margin-bottom:22px;
+  white-space:nowrap;            /* deux lignes franches, jamais de césure subie */
 }
-header h1 em{font-style:normal;color:var(--gold-soft);}
+header h1 em{
+  font-style:normal;color:var(--gold-soft);
+  display:block;                 /* « mise en chiffres. » toujours d'un seul tenant */
+}
 header p{
   font-size:14.5px;font-weight:400;color:rgba(255,255,255,.8);max-width:490px;line-height:1.7;
 }
@@ -191,6 +195,8 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
 }
 @media(max-width:860px){
   header{padding:44px 22px 116px;min-height:0;}
+  header h1{white-space:normal;line-height:1.18;}
+  header h1 em{display:inline;}
   .hero-curve{width:100%;opacity:.4;}
   .h-logo{width:88px;height:88px;bottom:20px;}
   main{padding:28px 18px 72px;}
@@ -239,7 +245,7 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
 
   <div class="hero-content">
     <div class="eyebrow">Outils de simulation</div>
-    <h1>L'ingénierie patrimoniale, <em>mise en chiffres.</em></h1>
+    <h1>L'ingénierie patrimoniale, <em>Mise en chiffres.</em></h1>
     <p>Des simulateurs construits pour l'audit patrimonial — rigoureux, visuels, prêts à partager avec vos clients.</p>
   </div>
 </header>
