@@ -20,14 +20,27 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
 
-header{background:var(--hero);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;}
+header{background:linear-gradient(112deg,#0D1B5C 0%,#132995 62%,#1C36B4 100%);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;}
+/* Trame de points — cohérence avec le bandeau de la page d'accueil */
+header::before{
+  content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(175,192,255,.20) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+  mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+}
+@media print{
+  header{background:#132995 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  header::before{display:none;}
+}
+
 .h-eyebrow{font-family:'Sora',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--hero-pale);margin-bottom:12px;}
 .h-back{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.5px;display:block;margin-bottom:14px;}
 .h-back:hover{color:var(--hero-pale);}
 .h-left h1{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.3px;}
 .h-left p{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:7px;letter-spacing:.2px;max-width:460px;}
 .h-logo{
-  position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:0;
+  position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:1;
   transform:translateY(-50%);
   transition:transform 1.15s cubic-bezier(.22,.61,.36,1);
   -webkit-user-select:none;user-select:none;
