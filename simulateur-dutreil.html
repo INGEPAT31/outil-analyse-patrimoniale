@@ -246,6 +246,17 @@ header::before{
           <input type="text" id="soc-nom" placeholder="Ex : HOLDING MARTIN SAS">
         </div>
         <div class="form-group">
+          <label>Valeur vénale de la totalité des parts détenues (€)
+            <span class="tip" tabindex="0" style="margin-left:4px;vertical-align:middle;">i<span class="tip-box">
+              <strong>Assiette de référence de l'étude de sensibilité</strong><br><br>
+              Valeur en pleine propriété de <em>l'ensemble</em> des parts détenues par le ou les donateurs, avant toute transmission.<br><br>
+              Elle ne modifie aucun calcul de droits : elle sert uniquement à situer la donation envisagée par rapport au patrimoine détenu, et à graduer le tableau de sensibilité en bas de page.<br><br>
+              Laissez le champ vide pour que la valeur transmise serve elle-même de référence à 100 %.
+            </span></span>
+          </label>
+          <input type="number" id="valeur-detenue" placeholder="Facultatif — ex : 8 000 000" min="0" step="10000" oninput="majApercu()">
+        </div>
+        <div class="form-group">
           <label>Valeur vénale des titres transmis, en pleine propriété (€)</label>
           <input type="number" id="valeur" placeholder="Ex : 2 000 000" min="0" step="10000" value="2000000" oninput="majApercu()">
         </div>
@@ -892,6 +903,7 @@ function updateAntEmpty(childId){
 /* Aperçu dynamique de la valorisation et des conditions */
 function majApercu(){
   const v=parseFloat(document.getElementById('valeur').value)||0;
+  const vDet=parseFloat(document.getElementById('valeur-detenue').value)||0;
   const dec=document.getElementById('decote-chk').checked?(parseFloat(document.getElementById('decote-taux').value)||0)/100:0;
   const dut=document.getElementById('dut-chk').checked;
   const q=dut?(parseFloat(document.getElementById('quote-elig').value)||0)/100:0;
@@ -916,6 +928,7 @@ function majApercu(){
     el.innerHTML=`<div class="hint-box" style="background:var(--green-light);border-left-color:var(--green);color:var(--green);">
       <strong>Chaîne de valorisation</strong><br>
       Valeur vénale PP : <strong>${fmt(v)}</strong>${dec>0?` → après décote de ${fmtPct(dec*100,1)} : <strong>${fmt(vActe)}</strong>`:''}${u<1?` → valeur NP (${Math.round(u*100)} %) : <strong>${fmt(vTrans)}</strong>`:''}${q>0?` → après exonération Dutreil sur ${fmtPct(q*100,0)} de la valeur : <strong>${fmt(assiette)}</strong>`:''}
+      ${vDet>0?`<br><span style="font-size:11.5px;opacity:.85;">Quote-part transmise : <strong>${(v/vDet*100).toFixed(2).replace('.',',').replace(',00','')} %</strong> des ${fmt(vDet)} de parts détenues.${v>vDet+0.5?' <span style="color:#b91c1c;font-weight:600;">Valeur transmise supérieure à la valeur détenue.</span>':''}</span>`:''}
       ${nbDonateurs>1?'<br><span style="font-size:11.5px;opacity:.85;">Aperçu établi sur l\'âge du premier donateur ; le calcul complet retient l\'âge de chacun.</span>':''}
     </div>`;
   }else el.innerHTML='';
@@ -969,6 +982,7 @@ function lireFormulaire(){
   return{
     donors,children,reps,
     valeur:parseFloat(document.getElementById('valeur').value)||0,
+    valeurDetenue:parseFloat(document.getElementById('valeur-detenue').value)||0,
     decote:document.getElementById('decote-chk').checked?(parseFloat(document.getElementById('decote-taux').value)||0)/100:0,
     typeD,
     dutreil:dut,
@@ -983,6 +997,7 @@ function calculer(){
   const cfg=lireFormulaire();
   if(!cfg.children.length){alert('Renseignez le nom d\'au moins un donataire.');return;}
   if(cfg.valeur<=0){alert('Saisissez la valeur vénale des titres transmis.');return;}
+  if(cfg.valeurDetenue>0&&cfg.valeurDetenue<cfg.valeur-0.5){alert('La valeur des titres transmis ne peut pas excéder la valeur totale des parts détenues.');return;}
   if(nbDonateurs>1){
     const tq=cfg.donors.reduce((s,d)=>s+d.quote,0);
     if(Math.abs(tq-1)>0.005){alert('Quotes-parts des donateurs : total '+(tq*100).toFixed(2)+' % ≠ 100 %.');return;}
@@ -1100,8 +1115,21 @@ function afficher(cfg,R,Rsans,RsansRed){
   /* ── Sensibilité à la quote-part de titres transmise ──
      Construite sous forme de modèle de données, exploité à la fois
      pour le rendu HTML et pour l'export PNG. */
-  const qts=[0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1];
-  const scen=qts.map(x=>moteur(Object.assign({},cfg,{valeur:cfg.valeur*x})));
+  const vRef=cfg.valeurDetenue>0?cfg.valeurDetenue:cfg.valeur;
+  const ratio=vRef>0?Math.min(1,cfg.valeur/vRef):1;
+  const grille=[0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1];
+  /* La quote-part réellement transmise s'intercale dans la grille à son rang,
+     sauf si elle coïncide déjà avec un palier. */
+  let qts=grille.slice(),refIndex=grille.findIndex(x=>Math.abs(x-ratio)<0.0005);
+  if(refIndex<0){
+    qts=grille.concat([ratio]).sort((a,b)=>a-b);
+    refIndex=qts.indexOf(ratio);
+  }
+  const scen=qts.map(x=>moteur(Object.assign({},cfg,{valeur:vRef*x})));
+  const qPct=x=>{
+    const v=x*100;
+    return (Math.abs(v-Math.round(v))<0.005?fmtPct(v,0):fmtPct(v,2)).replace(',00 %',' %');
+  };
   const qData=[];
   const qCat=l=>qData.push({type:'cat',label:l});
   const qNum=(label,fn,o)=>{o=o||{};qData.push({type:o.strong?'strong':'row',label,sub:o.sub,cls:o.cls,
@@ -1148,22 +1176,22 @@ function afficher(cfg,R,Rsans,RsansRed){
     return fmtPct(tr.taux*100,0);
   });
 
-  const qHeads=qts.map(x=>fmtPct(x*100,0));
+  const qHeads=qts.map(qPct);
   /* Mémorisé pour l'export image */
   window.__qTable={
-    head:qHeads,rows:qData,refIndex:qts.length-1,
+    head:qHeads,rows:qData,refIndex,
     titre:'Sensibilité à la quote-part de titres transmise',
-    sous:`${cfg.socNom} — ${fmt(cfg.valeur)} en pleine propriété à 100 %${cfg.typeD==='NP'?' · donation en nue-propriété':''}${cfg.dutreil?' · Dutreil sur '+fmtPct(cfg.quoteElig*100,0)+' de la valeur':' · sans régime Dutreil'}`
+    sous:`${cfg.socNom} — référence ${fmt(vRef)} en pleine propriété${cfg.typeD==='NP'?' · donation en nue-propriété':''}${cfg.dutreil?' · Dutreil sur '+fmtPct(cfg.quoteElig*100,0)+' de la valeur':' · sans régime Dutreil'}`
   };
 
   let qb='';
   for(const r of qData){
     if(r.type==='cat'){qb+=`<tr><td class="row-label category" colspan="${qts.length+1}">${r.label}</td></tr>`;continue;}
     if(r.type==='note'){qb+=`<tr><td class="row-label">${r.label}</td><td colspan="${qts.length}" style="text-align:left;color:var(--text-muted);font-style:italic;">${r.note}</td></tr>`;continue;}
-    const tds=r.cells.map((v,i)=>`<td class="${r.cls||''}${i===qts.length-1?' col-ref':''}">${v==='—'?'<span class="zero">—</span>':v}</td>`).join('');
+    const tds=r.cells.map((v,i)=>`<td class="${r.cls||''}${i===refIndex?' col-ref':''}">${v==='—'?'<span class="zero">—</span>':v}</td>`).join('');
     qb+=`<tr class="${r.type==='strong'?'total-synth':''}"><td class="row-label${r.sub?' sub-label':''}">${r.label}</td>${tds}</tr>`;
   }
-  const qHead=qHeads.map((h,i)=>`<th class="${i===qHeads.length-1?'th-ref':''}">${h}</th>`).join('');
+  const qHead=qHeads.map((h,i)=>`<th class="${i===refIndex?'th-ref':''}">${h}</th>`).join('');
   const quoteTable=`<div class="synth-wrap"><table class="synth-table compact"><thead><tr><th class="row-header">Poste</th>${qHead}</tr></thead><tbody>${qb}</tbody></table></div>`;
 
   /* ── Détail émoluments ── */
@@ -1223,7 +1251,7 @@ function afficher(cfg,R,Rsans,RsansRed){
   </div>
   ${quoteTable}
   <div class="info-box" style="margin-top:12px;">
-    Chaque colonne rejoue la liquidation complète sur une fraction de la valeur saisie : la colonne <strong>100 %</strong> correspond au scénario retenu ci-dessus (${fmt(cfg.valeur)}), les autres en sont des sous-multiples. Répartition entre donataires, qualité, abattements, rappel fiscal et quote-part éligible au 787 B sont inchangés d'une colonne à l'autre.<br><br>
+    Chaque colonne rejoue la liquidation complète sur une quote-part différente des parts détenues, prises pour ${fmt(vRef)} en pleine propriété. ${cfg.valeurDetenue>0?`La colonne <strong>${qPct(ratio)}</strong>, mise en évidence, correspond à la donation envisagée : ${fmt(cfg.valeur)} sur ${fmt(vRef)} détenus.`:`La colonne <strong>100 %</strong> correspond au scénario retenu ci-dessus ; renseignez la valeur totale des parts détenues pour que la quote-part réellement transmise s'intercale à son rang.`} Répartition entre donataires, qualité, abattements, rappel fiscal et quote-part éligible au 787 B sont inchangés d'une colonne à l'autre.<br><br>
     <strong>Point de vigilance.</strong> ${cfg.decote>0?`La décote de ${fmtPct(cfg.decote*100,1)} est maintenue constante sur toutes les colonnes. En pratique elle n'est pas indépendante de la fraction cédée : un bloc minoritaire se décote davantage qu'un bloc de contrôle. Ajustez le taux si vous retenez sérieusement une quote-part réduite.`:'Si vous transmettez une fraction minoritaire, une décote d\'illiquidité ou de minorité peut se justifier alors qu\'elle ne l\'était pas sur le bloc de contrôle. Le tableau ne l\'applique pas automatiquement.'} La progressivité du barème fait par ailleurs que le coût n'est pas proportionnel à la quote-part transmise.
   </div>`;
 
