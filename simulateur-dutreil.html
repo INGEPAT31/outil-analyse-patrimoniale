@@ -204,6 +204,32 @@ header::before{
       .detail-panel{display:block !important;}
     }
   </style>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   Logo LOCA — prisme filaire révélé par l'inclinaison
+   Au repos : plaque unique à 0,19, parfaitement droite.
+   Au survol du logo : le volume se déploie et suit le pointeur.
+   ═══════════════════════════════════════════════════════════ */
+.h-logo{perspective:520px;transition:none !important;}
+.h-logo::before,.h-logo::after{content:none !important;display:none !important;}
+.h-logo:hover{transform:translateY(-50%) !important;}
+.h-logo .plate{position:absolute;top:0;right:0;bottom:0;left:0;
+  transform-style:preserve-3d;will-change:transform;--prof:0;}
+.h-logo .couche{position:absolute;top:0;right:0;bottom:0;left:0;
+  background:var(--logo) center/contain no-repeat;}
+.h-logo .avant{opacity:.19;transition:opacity .45s ease;}
+.h-logo.eveille .avant{opacity:.34;}
+.h-logo .sheen{position:absolute;top:0;right:0;bottom:0;left:0;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%);
+  background-size:300% 100%;background-position:-150% 0;opacity:0;
+  -webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;}
+.h-logo:hover .sheen{animation:logo-sheen 1.15s ease-out;}
+@media(prefers-reduced-motion:reduce){
+  .h-logo .avant{transition:none;}
+  .h-logo .sheen{animation:none !important;}
+}
+@media print{.h-logo .plate{transform:none !important;--prof:0 !important;}}
+</style>
 </head>
 <body>
 <header>
@@ -1669,6 +1695,61 @@ function init(){
 }
 if(typeof document!=='undefined'&&document.getElementById('donateurs-form'))init();
 </script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Logo LOCA — prisme filaire piloté au pointeur.
+   Angle de repos : 0° sur les deux axes. La variable CSS --prof
+   pilote l'opacité des couches de profondeur et vaut 0 à plat,
+   ce qui évite l'empilement opaque du logo vu de face.
+   La boucle de rendu s'arrête d'elle-même une fois stabilisée.
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  var logo=document.querySelector('.h-logo');
+  if(!logo)return;
+  var plate=document.createElement('div');plate.className='plate';
+  var sheen=document.createElement('div');sheen.className='sheen';
+  plate.appendChild(sheen);logo.appendChild(plate);
+
+  var N=18,pas=1.15;
+  for(var i=0;i<N;i++){
+    var d=document.createElement('div');
+    d.className='couche'+(i===N-1?' avant':'');
+    var t=i/(N-1);
+    d.style.transform='translateZ('+((i-(N-1)/2)*pas).toFixed(2)+'px)';
+    if(i<N-1)d.style.opacity='calc(var(--prof) * '+(0.05+0.20*Math.pow(t,2.2)).toFixed(3)+')';
+    plate.insertBefore(d,sheen);
+  }
+
+  var ampY=150,ampX=70,seuil=26;
+  var cur={ry:0,rx:0},cible={ry:0,rx:0},raf=null;
+  function pose(){
+    plate.style.transform='rotateY('+cur.ry.toFixed(2)+'deg) rotateX('+cur.rx.toFixed(2)+'deg)';
+    var k=Math.min(1,(Math.abs(cur.ry)+Math.abs(cur.rx))/seuil);
+    plate.style.setProperty('--prof',k.toFixed(3));
+  }
+  pose();
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  function boucle(){
+    cur.ry+=(cible.ry-cur.ry)*0.14;
+    cur.rx+=(cible.rx-cur.rx)*0.14;
+    if(Math.abs(cible.ry-cur.ry)<0.04&&Math.abs(cible.rx-cur.rx)<0.04){
+      cur.ry=cible.ry;cur.rx=cible.rx;pose();raf=null;return;
+    }
+    pose();raf=requestAnimationFrame(boucle);
+  }
+  function relancer(){if(raf===null)raf=requestAnimationFrame(boucle);}
+
+  logo.addEventListener('mousemove',function(e){
+    var r=logo.getBoundingClientRect();
+    cible.ry=((e.clientX-r.left)/r.width-0.5)*ampY;
+    cible.rx=-((e.clientY-r.top)/r.height-0.5)*ampX;
+    logo.classList.add('eveille');relancer();
+  });
+  logo.addEventListener('mouseleave',function(){
+    cible.ry=0;cible.rx=0;logo.classList.remove('eveille');relancer();
+  });
+})();
+</script>
 </body>
 </html>
- 
