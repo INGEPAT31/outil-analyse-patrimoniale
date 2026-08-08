@@ -199,6 +199,37 @@ footer .loca-credit{font-style:italic;font-size:10px;color:#A7AECB;margin-top:6p
    Harmonisation de la charte sur l'ensemble du portail.
    ═══════════════════════════════════════════════════════════ */
 header{background:linear-gradient(112deg,#0D1B5C 0%,#132995 62%,#1C36B4 100%);}
+header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;z-index:2;
+  background:linear-gradient(90deg,rgba(232,206,116,0) 0%,rgba(232,206,116,.85) 22%,rgba(232,206,116,.85) 78%,rgba(232,206,116,0) 100%);}
+
+/* ── Ligne filante : une bille parcourt un rail jalonné ────── */
+.h-piste{position:relative;z-index:1;max-width:430px;height:14px;margin-top:34px;}
+.h-rail{position:absolute;left:0;right:0;top:50%;height:1px;transform:translateY(-50%);
+  background:linear-gradient(90deg,rgba(175,192,255,0) 0%,rgba(175,192,255,.40) 8%,
+             rgba(175,192,255,.40) 92%,rgba(175,192,255,0) 100%);}
+.h-jalon{position:absolute;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;
+  background:rgba(175,192,255,.55);}
+.h-bille{position:absolute;top:50%;left:0;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+  border-radius:50%;background:#E8CE74;
+  box-shadow:0 0 0 4px rgba(232,206,116,.16), 0 0 16px 3px rgba(232,206,116,.55);
+  animation:bille-course 7s cubic-bezier(.45,.05,.55,.95) infinite;}
+.h-bille::after{content:'';position:absolute;top:50%;left:50%;width:22px;height:22px;
+  margin:-11px 0 0 -11px;border-radius:50%;border:1px solid rgba(232,206,116,.45);
+  animation:bille-halo 2.6s ease-out infinite;}
+@keyframes bille-course{
+  0%{left:0;} 42%{left:100%;} 50%{left:100%;} 92%{left:0;} 100%{left:0;}
+}
+@keyframes bille-halo{
+  0%{transform:scale(.35);opacity:.85;}
+  70%{transform:scale(1);opacity:0;}
+  100%{transform:scale(1);opacity:0;}
+}
+@media(prefers-reduced-motion:reduce){
+  .h-bille{animation:none;left:100%;}
+  .h-bille::after{animation:none;opacity:0;}
+}
+@media(max-width:820px){.h-piste{max-width:100%;margin-top:26px;}}
+@media print{.h-piste{display:none;}header::after{display:none;}}
 header::before{
   content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;
   background-image:radial-gradient(rgba(175,192,255,.20) 1px,transparent 1px);
@@ -212,6 +243,7 @@ header > *:not(.h-logo){position:relative;z-index:1;}
 @media print{
   header{background:#132995 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   header::before{display:none;}
+  header::after{display:none;}
 }
 </style>
 </head>
@@ -222,6 +254,15 @@ header > *:not(.h-logo){position:relative;z-index:1;}
   <div class="eyebrow">Outils de simulation</div>
   <h1>L'ingénierie patrimoniale, mise en chiffres.</h1>
   <p>Des simulateurs construits pour l'audit patrimonial — rigoureux, visuels, prêts à partager avec vos clients.</p>
+  <div class="h-piste" aria-hidden="true">
+    <span class="h-rail"></span>
+    <span class="h-jalon" style="left:0%"></span>
+    <span class="h-jalon" style="left:25%"></span>
+    <span class="h-jalon" style="left:50%"></span>
+    <span class="h-jalon" style="left:75%"></span>
+    <span class="h-jalon" style="left:100%"></span>
+    <span class="h-bille"></span>
+  </div>
 </header>
 
 <main>
@@ -301,6 +342,23 @@ header > *:not(.h-logo){position:relative;z-index:1;}
         <span class="tag">Tableau croisé</span>
         <span class="tag">Euros constants</span>
         <span class="tag">Export</span>
+      </div>
+      <div class="cta">Ouvrir le simulateur <span class="arrow">→</span></div>
+    </a>
+
+    <!-- CONTRAT DE CAPITALISATION IS -->
+    <a class="card" href="simulateur-capitalisation-is.html">
+      <div class="card-picto">🏦</div>
+      <div class="card-cat">Trésorerie d'entreprise</div>
+      <h2>Contrat de capitalisation en société à l'IS</h2>
+      <p>Projette un placement de trésorerie sur contrat multi-supports détenu par une holding patrimoniale&nbsp;: frais d'entrée et de gestion, clé fonds euro / UC, rachats programmés et tableau récapitulatif année par année. Applique la taxation forfaitaire de 105&nbsp;% du TME et sa régularisation au rachat, puis chiffre le dividende net d'IS et de PFU que l'associé peut réellement appréhender.</p>
+      <div class="tags">
+        <span class="tag">Art. 238 septies E CGI</span>
+        <span class="tag">105 % du TME</span>
+        <span class="tag">IS 15 / 25 %</span>
+        <span class="tag">Dividende net de PFU</span>
+        <span class="tag">Export PNG &amp; CSV</span>
+        <span class="tag">Fiche A4 intégrée</span>
       </div>
       <div class="cta">Ouvrir le simulateur <span class="arrow">→</span></div>
     </a>

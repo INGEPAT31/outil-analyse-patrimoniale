@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contrat de capitalisation en société à l'IS — Simulateur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f4f3f0;--surface:#fff;--surface-alt:#f9f9f7;
+  --border:rgba(0,0,0,.10);--border-strong:rgba(0,0,0,.18);
+  --text:#0b0b0a;--text-sec:#52514e;--text-muted:#898781;
+  --accent:#1a4f8c;--accent-light:#e6f0fb;--accent-mid:#2a78d6;
+  --green:#0f6e56;--green-light:#e1f5ee;
+  --amber:#854f0b;--amber-light:#faeeda;
+  --red:#9a2c2c;--red-light:#fbe9e9;
+  --violet:#3c3489;--violet-light:#eeedfe;
+  --gold:#E8CE74;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --hero:#132995;--hero-pale:#AFC0FF;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 4rem;-webkit-font-smoothing:antialiased;}
+.container{max-width:1060px;margin:0 auto;padding:2rem 1rem 0;}
+
+header{background:linear-gradient(112deg,#0D1B5C 0%,#132995 62%,#1C36B4 100%);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;margin-bottom:2rem;}
+header::before{
+  content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(175,192,255,.20) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+  mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+}
+header .h-links{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+header .h-back{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.5px;display:inline-block;}
+header .h-back:hover{color:var(--hero-pale);}
+header .h-fiche{color:var(--gold);}
+header .h-fiche:hover{color:#fff;}
+header .h-eyebrow{font-family:'Sora',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--hero-pale);margin-bottom:12px;}
+header h1{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.3px;}
+header p{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:7px;line-height:1.6;max-width:600px;}
+.h-logo{position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:1;transform:translateY(-50%);-webkit-user-select:none;user-select:none;}
+
+.main-nav{display:flex;background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.5rem;}
+.main-nav-btn{flex:1;padding:16px 12px;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text-sec);background:transparent;border:none;cursor:pointer;transition:all .15s;border-bottom:3px solid transparent;}
+.main-nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-light);font-weight:600;}
+.main-nav-btn:not(.active):hover{background:var(--surface-alt);}
+.page{display:none;}.page.active{display:block;}
+
+.card{background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem;border-top:3px solid var(--accent);}
+.card.c-alloc{border-top-color:var(--violet);}
+.card.c-rachat{border-top-color:var(--amber);}
+.card.c-fisc{border-top-color:var(--green);}
+.card.c-plain{border-top-color:var(--border-strong);}
+.card-title{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;display:flex;align-items:center;gap:7px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:12px;font-weight:500;color:var(--text-sec);letter-spacing:.01em;}
+label .hint{color:var(--text-muted);font-weight:400;font-size:11px;}
+input[type="number"],input[type="text"],select{height:42px;padding:0 12px;font-size:15px;font-family:'Inter',sans-serif;color:var(--text);background:var(--surface-alt);border:1px solid var(--border-strong);border-radius:var(--radius);outline:none;transition:border-color .15s,box-shadow .15s;width:100%;-moz-appearance:textfield;}
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--accent-mid);box-shadow:0 0 0 3px rgba(42,120,214,.12);background:#fff;}
+input:disabled{opacity:.45;cursor:not-allowed;}
+.toggle-group{display:flex;border:1px solid var(--border-strong);border-radius:var(--radius);overflow:hidden;height:42px;}
+.toggle-btn{flex:1;font-size:12.5px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text-sec);background:var(--surface-alt);border:none;cursor:pointer;transition:all .15s;padding:0 6px;}
+.toggle-btn.active{background:var(--accent);color:#fff;font-weight:600;}
+.toggle-btn:not(.active):hover{background:#eeede9;}
+.chk{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-sec);cursor:pointer;padding:6px 0;}
+.chk input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;}
+
+.btn{height:44px;padding:0 22px;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;border-radius:var(--radius);border:none;cursor:pointer;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#15406f;}
+.btn-secondary{background:var(--surface-alt);color:var(--text-sec);border:1px solid var(--border-strong);}
+.btn-secondary:hover{background:#eeede9;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem;}
+.kpi{background:var(--surface);border-radius:10px;border:.5px solid var(--border);box-shadow:var(--shadow);padding:16px 18px;}
+.kpi .k-lab{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;line-height:1.4;}
+.kpi .k-val{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--text);}
+.kpi .k-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.kpi.k-green .k-val{color:var(--green);} .kpi.k-green{border-top:3px solid var(--green);}
+.kpi.k-red .k-val{color:var(--red);} .kpi.k-red{border-top:3px solid var(--red);}
+.kpi.k-blue .k-val{color:var(--accent);} .kpi.k-blue{border-top:3px solid var(--accent);}
+.kpi.k-violet .k-val{color:var(--violet);} .kpi.k-violet{border-top:3px solid var(--violet);}
+
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table.rec{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums;}
+table.rec thead th{background:linear-gradient(160deg,#1e3d7a,#16305f);color:#fff;font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.02em;padding:11px 10px;text-align:right;border-right:1px solid rgba(232,206,116,.55);line-height:1.35;vertical-align:middle;}
+table.rec thead th:first-child{text-align:center;border-top-left-radius:6px;}
+table.rec thead th:last-child{border-right:none;border-top-right-radius:6px;}
+table.rec tbody td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.rec tbody td:first-child{text-align:center;font-weight:600;color:var(--text-sec);background:var(--surface-alt);}
+table.rec tbody tr:nth-child(even) td{background:#fbfbfa;}
+table.rec tbody tr:nth-child(even) td:first-child{background:#f2f1ed;}
+table.rec tbody tr:hover td{background:var(--accent-light);}
+table.rec tfoot td{padding:11px 10px;text-align:right;font-weight:700;background:#eaf0f9;border-top:2px solid var(--accent);white-space:nowrap;}
+table.rec tfoot td:first-child{text-align:center;}
+td.pos{color:var(--green);} td.neg{color:var(--red);}
+td.hi-cap{background:#dff2e8 !important;color:var(--green);font-weight:600;}
+td.hi-tax{background:#fbe7e2 !important;color:var(--red);font-weight:600;}
+tfoot td.hi-cap{background:#0f6e56 !important;color:#fff !important;}
+tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
+
+.chart-box{background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem;border-top:3px solid var(--accent-mid);}
+.chart-h{font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin-bottom:14px;color:var(--text);}
+.chart-c{position:relative;height:340px;}
+
+.note{border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.65;margin-top:12px;}
+.note-info{background:var(--accent-light);color:#16406f;border-left:3px solid var(--accent);}
+.note-warn{background:var(--amber-light);color:var(--amber);border-left:3px solid #c8860d;}
+.note-ok{background:var(--green-light);color:var(--green);border-left:3px solid var(--green);}
+.note b{font-weight:600;}
+.note code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:4px;}
+
+.prose h3{font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin:20px 0 8px;color:var(--accent);}
+.prose h3:first-child{margin-top:0;}
+.prose p{font-size:13px;line-height:1.75;color:var(--text-sec);margin-bottom:9px;}
+.prose ul{margin:0 0 10px 18px;}
+.prose li{font-size:13px;line-height:1.7;color:var(--text-sec);margin-bottom:5px;}
+.prose .ref{font-size:11.5px;color:var(--text-muted);font-style:italic;}
+.formula{background:#12213f;color:#dbe6ff;font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:12px 14px;border-radius:8px;line-height:1.8;overflow-x:auto;margin:10px 0;}
+.formula b{color:var(--gold);font-weight:600;}
+
+.fiche-cta{display:flex;align-items:center;gap:18px;text-decoration:none;background:var(--surface);
+  border-radius:12px;border:.5px solid var(--border);border-top:3px solid var(--gold);box-shadow:var(--shadow);
+  padding:1.35rem 1.5rem;margin-bottom:1.25rem;transition:all .15s;}
+.fiche-cta:hover{border-color:var(--accent-mid);box-shadow:0 2px 6px rgba(0,0,0,.10),0 8px 26px rgba(0,0,0,.10);transform:translateY(-1px);}
+.fiche-cta .fc-ico{font-size:30px;flex:none;line-height:1;}
+.fiche-cta .fc-t{font-family:'Sora',sans-serif;font-size:14.5px;font-weight:600;color:var(--accent);margin-bottom:5px;}
+.fiche-cta .fc-s{font-size:12.5px;line-height:1.6;color:var(--text-sec);}
+.fiche-cta .fc-arr{font-size:20px;color:var(--accent-mid);flex:none;}
+
+.flash{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);background:#12213f;color:#fff;font-size:13px;padding:11px 20px;border-radius:8px;opacity:0;pointer-events:none;transition:all .25s;z-index:99;box-shadow:0 6px 24px rgba(0,0,0,.25);}
+.flash.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.flash.err{background:#8c2020;}
+
+.footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border);line-height:1.9;}
+.footer .loca-credit{font-style:italic;font-size:10.5px;margin-top:6px;color:#b5922a;letter-spacing:0.01em;}
+
+@media(max-width:760px){
+  .form-grid,.form-grid-3,.form-grid-4{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .main-nav{flex-direction:column;}
+  header{padding:28px 20px 32px;}
+  .h-logo{display:none;}
+}
+@media print{
+  header{background:#132995 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  header::before{display:none;}
+  .main-nav,.btn,.btn-row{display:none !important;}
+  .card,.chart-box,.kpi{box-shadow:none;break-inside:avoid;}
+  .page{display:block !important;}
+}
+</style>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   Logo LOCA — prisme filaire révélé par l'inclinaison
+   ═══════════════════════════════════════════════════════════ */
+.h-logo{perspective:520px;transition:none !important;}
+.h-logo::before,.h-logo::after{content:none !important;display:none !important;}
+.h-logo:hover{transform:translateY(-50%) !important;}
+.h-logo .plate{position:absolute;top:0;right:0;bottom:0;left:0;
+  transform-style:preserve-3d;will-change:transform;--prof:0;}
+.h-logo .couche{position:absolute;top:0;right:0;bottom:0;left:0;
+  background:var(--logo) center/contain no-repeat;}
+.h-logo .avant{opacity:.19;transition:opacity .45s ease;}
+.h-logo.eveille .avant{opacity:.34;}
+.h-logo .sheen{position:absolute;top:0;right:0;bottom:0;left:0;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%);
+  background-size:300% 100%;background-position:-150% 0;opacity:0;
+  -webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;}
+.h-logo:hover .sheen{animation:logo-sheen 1.15s ease-out;}
+@keyframes logo-sheen{0%{opacity:0;background-position:-150% 0;}12%{opacity:1;}100%{opacity:0;background-position:150% 0;}}
+@media(prefers-reduced-motion:reduce){
+  .h-logo .avant{transition:none;}
+  .h-logo .sheen{animation:none !important;}
+}
+@media print{.h-logo .plate{transform:none !important;--prof:0 !important;}}
+</style>
+</head>
+<body>
+<header>
+  <span class="h-logo" style="--logo:url('data:image/png;base64,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')" aria-hidden="true"></span>
+  <div style="position:relative;z-index:1;">
+    <div class="h-links">
+      <a class="h-back" href="index.html">← Retour aux outils</a>
+      <a class="h-back h-fiche" href="fiche-contrat-capitalisation.html">📄 Fiche technique du contrat de capitalisation →</a>
+    </div>
+    <div class="h-eyebrow">Ingénierie patrimoniale · Trésorerie d'entreprise</div>
+    <h1>Contrat de capitalisation en société à l'IS</h1>
+    <p>Projection d'un placement de trésorerie sur contrat multi-supports détenu par une personne morale : frais d'entrée et de gestion, clé fonds euro / unités de compte, rachats programmés, taxation forfaitaire de l'article 238 septies E du CGI et remontée de trésorerie nette d'IS et de PFU.</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="main-nav">
+    <button class="main-nav-btn active" data-p="p1" onclick="goPage('p1')">Projection de l'investissement</button>
+    <button class="main-nav-btn" data-p="p2" onclick="goPage('p2')">Remontée de trésorerie</button>
+    <button class="main-nav-btn" data-p="p3" onclick="goPage('p3')">Méthode &amp; sources</button>
+  </div>
+
+  <!-- ══════════ PAGE 1 ══════════ -->
+  <div class="page active" id="p1">
+
+    <div class="card">
+      <div class="card-title">① Versements et durée</div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label for="i-initial">Versement initial brut (€)</label>
+          <input type="number" id="i-initial" value="300000" min="0" step="1000">
+        </div>
+        <div class="form-group">
+          <label for="i-fe">Frais sur versement <span class="hint">(%)</span></label>
+          <input type="number" id="i-fe" value="1" min="0" max="10" step="0.1">
+        </div>
+        <div class="form-group">
+          <label for="i-annee">Année de souscription</label>
+          <input type="number" id="i-annee" value="2027" min="1990" max="2100" step="1">
+        </div>
+        <div class="form-group">
+          <label for="i-mois">Mois de souscription</label>
+          <select id="i-mois">
+            <option value="1">Janvier</option><option value="2">Février</option><option value="3">Mars</option>
+            <option value="4">Avril</option><option value="5">Mai</option><option value="6">Juin</option>
+            <option value="7">Juillet</option><option value="8">Août</option><option value="9">Septembre</option>
+            <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="i-duree">Durée d'investissement <span class="hint">(années)</span></label>
+          <input type="number" id="i-duree" value="15" min="1" max="40" step="1">
+        </div>
+        <div class="form-group">
+          <label for="i-vc">Versement complémentaire annuel brut (€)</label>
+          <input type="number" id="i-vc" value="0" min="0" step="500">
+        </div>
+        <div class="form-group">
+          <label for="i-vc-deb">Versements compl. — de l'année</label>
+          <input type="number" id="i-vc-deb" value="2" min="1" max="40" step="1">
+        </div>
+        <div class="form-group">
+          <label for="i-vc-nb">… pendant (années)</label>
+          <input type="number" id="i-vc-nb" value="0" min="0" max="40" step="1">
+        </div>
+        <div class="form-group">
+          <label for="i-vc-idx">Indexation des versements compl. <span class="hint">(%/an)</span></label>
+          <input type="number" id="i-vc-idx" value="0" min="0" max="15" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <div class="card c-alloc">
+      <div class="card-title">② Allocation et rendements</div>
+      <div class="form-grid-4">
+        <div class="form-group">
+          <label for="i-weuro">Part fonds euro <span class="hint">(%)</span></label>
+          <input type="number" id="i-weuro" value="60" min="0" max="100" step="1">
+        </div>
+        <div class="form-group">
+          <label for="i-reuro">Rendement fonds euro <span class="hint">(%/an)</span></label>
+          <input type="number" id="i-reuro" value="3.00" min="-5" max="15" step="0.05">
+        </div>
+        <div class="form-group">
+          <label for="i-ruc">Rendement UC brut <span class="hint">(%/an)</span></label>
+          <input type="number" id="i-ruc" value="5.50" min="-20" max="25" step="0.05">
+        </div>
+        <div class="form-group">
+          <label for="i-fguc">Frais de gestion UC <span class="hint">(%/an)</span></label>
+          <input type="number" id="i-fguc" value="0.85" min="0" max="5" step="0.05">
+        </div>
+        <div class="form-group full">
+          <label>Le taux de rendement du fonds euro saisi ci-dessus est&nbsp;:</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="tg-eur-net" onclick="setEuroNet(true)">Net de frais de gestion <span class="hint">(taux publié par l'assureur)</span></button>
+            <button class="toggle-btn" id="tg-eur-brut" onclick="setEuroNet(false)">Brut de frais de gestion</button>
+          </div>
+        </div>
+        <div class="form-group" id="wrap-fgeuro" style="display:none;">
+          <label for="i-fgeuro">Frais de gestion fonds euro <span class="hint">(%/an)</span></label>
+          <input type="number" id="i-fgeuro" value="0.60" min="0" max="5" step="0.05">
+        </div>
+        <div class="form-group">
+          <label for="i-arb">Frais d'arbitrage <span class="hint">(% des flux réalloués)</span></label>
+          <input type="number" id="i-arb" value="0" min="0" max="5" step="0.05">
+        </div>
+        <div class="form-group full">
+          <label class="chk"><input type="checkbox" id="i-reeq" checked> Rééquilibrer chaque année vers l'allocation cible <span class="hint">&nbsp;(sinon, dérive libre de l'allocation)</span></label>
+        </div>
+      </div>
+      <div class="note note-info">
+        <b>Convention retenue.</b> Les frais de gestion sont prélevés en fin d'année sur l'encours revalorisé&nbsp;: <code>V₁ = V₀ × (1 + r) × (1 − frais)</code>. Les taux de fonds euro communiqués par les assureurs sont, par construction, <b>nets de frais de gestion et bruts de prélèvements sociaux</b> — d'où le réglage par défaut. Aucun prélèvement social n'est modélisé&nbsp;: le contrat est détenu par une personne morale à l'IS, hors champ des articles L.136-6 et L.136-7 du CSS.
+      </div>
+    </div>
+
+    <div class="card c-rachat">
+      <div class="card-title">③ Rachats</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label for="i-rmode">Politique de rachat</label>
+          <select id="i-rmode" onchange="syncRachat()">
+            <option value="aucun">Aucun rachat — capitalisation pure jusqu'au terme</option>
+            <option value="produits">Rachat d'un montant égal aux produits de l'exercice</option>
+            <option value="fixe">Rachat annuel d'un montant fixe</option>
+            <option value="pct">Rachat annuel d'un pourcentage de la valeur du contrat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="i-rmontant">Montant / taux de rachat annuel</label>
+          <input type="number" id="i-rmontant" value="0" min="0" step="500" disabled>
+        </div>
+        <div class="form-group">
+          <label for="i-rdeb">Premier rachat — année n°</label>
+          <input type="number" id="i-rdeb" value="1" min="1" max="40" step="1" disabled>
+        </div>
+        <div class="form-group full">
+          <label class="chk"><input type="checkbox" id="i-rtotal"> Rachat total du contrat la dernière année <span class="hint">&nbsp;(dénouement et régularisation d'IS)</span></label>
+        </div>
+      </div>
+      <div class="note note-info" id="note-prorata" style="display:none;">
+        <b>Ce mode rachète chaque année un montant égal aux produits de l'exercice.</b> Ce rachat porte, comme tout rachat, à la fois sur du capital et sur des produits&nbsp;: la part de produits vaut <code>Rachat × (1 − Nominal / Valeur du contrat)</code>. Le contrat se maintient donc à peu près à son niveau, la part de capital rachetée rejoignant la trésorerie de la société.
+      </div>
+      <div class="note note-warn" id="note-rachat" style="display:none;">
+        <b>Attention — montant distribuable.</b> Seuls les <b>produits compris dans le rachat</b> constituent un résultat comptable distribuable, jamais la totalité du rachat. Distribuer la part de capital rachetée créerait un compte courant d'associé débiteur, prohibé dans les SARL et SAS (art. L. 223-23 C. com., sanction pénale art. L. 242-6, 3° C. com.) et requalifiable en distribution occulte.
+      </div>
+    </div>
+
+    <div class="card c-fisc">
+      <div class="card-title">④ Fiscalité de la société</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Régime d'imposition des produits</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="tg-forfait" onclick="setRegime('forfait')">Multi-supports — taxation forfaitaire 105&nbsp;% TME</button>
+            <button class="toggle-btn" id="tg-reel" onclick="setRegime('reel')">Mono-support fonds euro — produits réels</button>
+          </div>
+        </div>
+        <div class="form-group" id="wrap-tme">
+          <label for="i-tme">TME au jour de la souscription <span class="hint">(%)</span></label>
+          <input type="number" id="i-tme" value="3.30" min="-2" max="15" step="0.01">
+        </div>
+        <div class="form-group" id="wrap-taux-forf">
+          <label>Taux actuariel forfaitaire retenu <span class="hint">(105&nbsp;% × TME)</span></label>
+          <input type="text" id="o-tauxforf" value="—" readonly style="background:#eef2f8;font-weight:600;color:var(--accent);">
+        </div>
+        <div class="form-group">
+          <label for="i-autres">Autres bénéfices imposables de la société <span class="hint">(€/an, hors contrat)</span></label>
+          <input type="number" id="i-autres" value="0" min="0" step="1000">
+        </div>
+        <div class="form-group">
+          <label for="i-fiscasso">Imposition du dividende chez l'associé</label>
+          <select id="i-fiscasso" onchange="syncFisc()">
+            <option value="pfu314">PFU 31,4 % — 12,8 % IR + 18,6 % PS (depuis le 01/01/2026)</option>
+            <option value="pfu30">PFU 30 % — 12,8 % IR + 17,2 % PS (distributions antérieures)</option>
+            <option value="bareme">Barème progressif — abattement 40 % et CSG déductible</option>
+          </select>
+        </div>
+        <div class="form-group" id="wrap-tmi" style="display:none;">
+          <label for="i-tmi">Tranche marginale d'imposition de l'associé</label>
+          <select id="i-tmi">
+            <option value="0">0 %</option><option value="11">11 %</option>
+            <option value="30" selected>30 %</option><option value="41">41 %</option>
+            <option value="45">45 %</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Taux d'imposition effectif du dividende</label>
+          <input type="text" id="o-tauxasso" value="—" readonly style="background:#eef2f8;font-weight:600;color:var(--accent);">
+        </div>
+        <div class="form-group full">
+          <label class="chk"><input type="checkbox" id="i-tauxreduit" checked> La société est éligible au taux réduit d'IS de 15&nbsp;% <span class="hint">&nbsp;(art. 219, I-b CGI)</span></label>
+          <label class="chk"><input type="checkbox" id="i-fecharge" checked> Les frais sur versement sont comptabilisés en charge de l'exercice <span class="hint">&nbsp;(sinon&nbsp;: incorporés au coût d'acquisition)</span></label>
+        </div>
+      </div>
+      <div class="note note-info">
+        <b>Le PFU n'est plus à 30 %.</b> L'article 12 de la LFSS 2026 (loi n° 2025-1403 du 30 décembre 2025) a créé une contribution de 1,4 point qui porte la CSG sur les revenus du capital de 9,2 à 10,6 %&nbsp;: les prélèvements sociaux passent à 18,6 % et le PFU sur dividendes à <b>31,4 %</b>. Attention à ne pas transposer&nbsp;: les <b>produits des contrats de capitalisation et d'assurance-vie sont expressément exclus de la hausse</b> et demeurent à 17,2 % (art. L. 136-8, IV du CSS) — mais cela ne concerne que la personne physique qui détiendrait le contrat en direct, non la société à l'IS, hors du champ des prélèvements sociaux. Le barème progressif reste souvent préférable en dessous de 30 % de tranche marginale, grâce à l'abattement de 40 % et aux 6,8 points de CSG déductible. La contribution exceptionnelle sur les hauts revenus n'est pas modélisée.
+      </div>
+      <div class="note note-warn">
+        <b>Taux réduit d'IS — conditions cumulatives.</b> 15&nbsp;% sur les 42&nbsp;500&nbsp;premiers euros de bénéfice, à condition que le chiffre d'affaires HT soit inférieur à 10&nbsp;M€, que le capital soit entièrement libéré et détenu de façon continue à 75&nbsp;% au moins par des personnes physiques (ou par une société elle-même éligible). Le solde est taxé à 25&nbsp;%. Le champ « autres bénéfices » sert à positionner correctement le contrat dans le barème&nbsp;: c'est l'<b>IS marginal</b> imputable au contrat qui est calculé, et non un IS moyen.
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcul()">Calculer la projection</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-secondary" onclick="exportPNG()">⬇ Tableau en PNG</button>
+      <button class="btn btn-secondary" onclick="exportChartPNG()">⬇ Graphique en PNG</button>
+      <button class="btn btn-secondary" onclick="window.print()">🖨 Imprimer</button>
+    </div>
+
+    <div class="note note-warn" id="alerte-rachat" style="display:none;margin-top:0;margin-bottom:1.25rem;"></div>
+
+    <div id="res1" style="display:none;">
+      <div class="kpi-grid">
+        <div class="kpi k-blue"><div class="k-lab">Versements nets investis</div><div class="k-val" id="k-verse">—</div><div class="k-sub" id="k-verse-sub">—</div></div>
+        <div class="kpi k-green"><div class="k-lab">Valeur du contrat au terme</div><div class="k-val" id="k-cap">—</div><div class="k-sub" id="k-cap-sub">—</div></div>
+        <div class="kpi k-violet"><div class="k-lab">Produits bruts cumulés</div><div class="k-val" id="k-prod">—</div><div class="k-sub" id="k-prod-sub">—</div></div>
+        <div class="kpi k-red"><div class="k-lab">IS cumulé sur le contrat</div><div class="k-val" id="k-is">—</div><div class="k-sub" id="k-is-sub">—</div></div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-h">Évolution de l'épargne</div>
+        <div class="chart-c"><canvas id="chart1"></canvas></div>
+        <div class="note note-info" style="margin-top:14px;">
+          Le graphique est présenté <b>brut de fiscalité</b>&nbsp;: l'impôt sur les sociétés est réputé acquitté sur la trésorerie de l'entreprise et ne vient pas diminuer la valeur du contrat.
+        </div>
+      </div>
+
+      <div class="card c-plain">
+        <div class="card-title">Tableau récapitulatif de l'investissement</div>
+        <div class="tbl-wrap" id="tbl-wrap"></div>
+        <div class="note note-info" id="note-methode"></div>
+      </div>
+    </div>
+
+    <div id="err1"></div>
+  </div>
+
+  <!-- ══════════ PAGE 2 ══════════ -->
+  <div class="page" id="p2">
+    <div class="card c-rachat">
+      <div class="card-title">Dividendes nets d'IS et de PFU</div>
+      <p style="font-size:13px;line-height:1.75;color:var(--text-sec);">
+        Cet onglet chiffre ce que l'associé personne physique perçoit réellement lorsque la société rachète sur le contrat puis distribue. Il reprend intégralement les paramètres de l'onglet « Projection ».
+        <b>Rappel&nbsp;:</b> le montant distribuable est limité aux produits compris dans le rachat, nets de l'IS qui les a frappés.
+      </p>
+      <div class="note note-warn" style="margin-top:12px;">
+        Le résultat fiscal issu de la taxation forfaitaire annuelle <b>ne constitue pas un résultat comptable distribuable</b>. C'est le rachat qui déclenche la constatation comptable de la plus-value et ouvre la faculté de distribuer. Sans rachat, aucune distribution n'est possible au titre du contrat, alors même que l'IS forfaitaire a déjà été acquitté.
+      </div>
+
+      <div class="form-grid" style="margin-top:16px;">
+        <div class="form-group full">
+          <label class="chk"><input type="checkbox" id="i-disttotal" onchange="if(window.__relancer)window.__relancer()"> Distribuer la <b>totalité du rachat</b>, et non les seuls produits qu'il contient</label>
+        </div>
+      </div>
+      <div class="note note-warn" id="note-disttotal" style="display:none;">
+        <b>Cette option sort du résultat dégagé par le contrat.</b> La part de capital rachetée n'est pas un bénéfice&nbsp;: la distribuer suppose que la société dispose par ailleurs de <b>réserves distribuables ou d'un report à nouveau créditeur</b> d'un montant au moins égal, ou d'un compte courant d'associé créditeur à rembourser — un remboursement de compte courant n'étant alors pas un dividende et échappant au PFU. À défaut, l'opération crée un compte courant d'associé débiteur, prohibé en SARL et SAS (art. L. 223-23 C. com.), pénalement sanctionné (art. L. 242-6, 3°) et requalifiable en distribution occulte, taxée sans l'abattement de 40 %. Le simulateur applique ici le PFU à l'intégralité du montant remonté&nbsp;: c'est l'hypothèse la plus coûteuse, à confronter aux autres voies de remontée.
+      </div>
+    </div>
+
+    <div id="res2" style="display:none;">
+      <div class="kpi-grid">
+        <div class="kpi k-blue"><div class="k-lab">Rachats bruts cumulés</div><div class="k-val" id="d-rachat">—</div><div class="k-sub">Trésorerie sortie du contrat</div></div>
+        <div class="kpi k-violet"><div class="k-lab">Dividendes bruts distribués</div><div class="k-val" id="d-div">—</div><div class="k-sub" id="d-div-sub">Produits rachetés nets d'IS</div></div>
+        <div class="kpi k-green"><div class="k-lab">Net perçu par l'associé</div><div class="k-val" id="d-net">—</div><div class="k-sub" id="d-net-sub">Après imposition personnelle</div></div>
+        <div class="kpi k-red"><div class="k-lab">Frottement fiscal global</div><div class="k-val" id="d-frott">—</div><div class="k-sub" id="d-frott-sub">IS + PFU rapportés aux produits rachetés</div></div>
+      </div>
+      <div class="card c-plain">
+        <div class="card-title">Détail annuel de la remontée de trésorerie</div>
+        <div class="tbl-wrap" id="tbl-wrap2"></div>
+        <div class="note note-info" style="margin-top:12px;">
+          <b>Part de capital rachetée.</b> Le solde du rachat (rachat brut − produits) correspond à un remboursement de capital&nbsp;: il reste acquis à la société et ne peut être appréhendé par l'associé que par une autre voie (remboursement de compte courant créditeur, réduction de capital, distribution de réserves antérieures…). Chacune a son propre régime fiscal.
+        </div>
+      </div>
+    </div>
+    <div id="err2" style="font-size:13px;color:var(--text-muted);">Lancez d'abord le calcul depuis l'onglet « Projection de l'investissement ».</div>
+  </div>
+
+  <!-- ══════════ PAGE 3 ══════════ -->
+  <div class="page" id="p3">
+    <a class="fiche-cta" href="fiche-contrat-capitalisation.html">
+      <div class="fc-ico">📄</div>
+      <div class="fc-txt">
+        <div class="fc-t">Fiche technique — Le contrat de capitalisation</div>
+        <div class="fc-s">Synthèse A4 recto-verso, prête à imprimer&nbsp;: nature juridique, souscripteurs, fonctionnement, fiscalité des rachats et de la transmission, démembrement et IFI&nbsp;; au verso, le régime complet de la société à l'IS.</div>
+      </div>
+      <div class="fc-arr">→</div>
+    </a>
+    <div class="card c-plain prose">
+      <h3>1. Qui peut souscrire ?</h3>
+      <p>La charte déontologique de la Fédération française de l'assurance (mars 2019, reprenant l'engagement FFSA/GEMA du 1<sup>er</sup> juillet 2011) réserve la souscription de contrats de capitalisation à prime unique par une personne morale aux organismes sans but lucratif et aux <b>sociétés patrimoniales ou holdings passives</b> dont l'activité principale est la gestion de leur propre patrimoine mobilier et immobilier, dont les associés sont des personnes physiques (ou des sociétés à l'IR, ou des sociétés à l'IS elles-mêmes détenues par des personnes physiques), et dont le chiffre d'affaires industriel, commercial, artisanal ou libéral n'excède pas 10&nbsp;% de la somme du chiffre d'affaires et des produits financiers, plus-values comprises. Les loyers et les honoraires facturés aux filiales ne sont pas retenus dans ce chiffre d'affaires.</p>
+      <p>En cas d'investissement sur un fonds euro, la rémunération de la première année n'est versée qu'au terme de la quatrième année de détention&nbsp;; une sortie anticipée la réduit au prorata du montant racheté.</p>
+      <p class="ref">Point de vigilance particulier pour les SEL et SPFPL, dont l'objet est en principe exclusivement l'exercice de la profession libérale et, accessoirement, la gestion de trésorerie en lien avec cet objet (loi du 31 décembre 1990, art. 1 et 31-1 ; comp. Cass. civ. 1, 20 mars 2013, n° 12-17113).</p>
+
+      <h3>2. Le régime fiscal appliqué par le simulateur</h3>
+      <p>Les produits d'un contrat de capitalisation détenu par une société à l'IS ne sont pas imposés comme chez un particulier. Ils relèvent du régime des <b>primes de remboursement</b> de l'article 238 septies E du CGI. Pour un contrat multi-supports — dont la valeur de remboursement est aléatoire — une <b>taxation forfaitaire annuelle</b> est due à chaque clôture, <b>même en l'absence de tout rachat</b>.</p>
+      <div class="formula">
+Taux actuariel  <b>t = 105 % × TME</b> connu au jour de la souscription (fixe pour toute la durée du contrat)<br>
+Ancienneté à la clôture de l'exercice k :  <b>a = (13 − mois de souscription)/12 + (k − 1)</b><br><br>
+Base cumulée théorique :   <b>C = Nominal net × [ (1 + t)^a − 1 ]</b><br>
+Base imposable de l'exercice :  <b>B = C − intérêts déjà taxés forfaitairement</b>
+      </div>
+      <p>En cas de rachat partiel, le nominal et le cumul des intérêts déjà taxés sont réduits <b>au prorata de la fraction rachetée</b>. La régularisation intervient au rachat&nbsp;:</p>
+      <div class="formula">
+Proportion rachetée :  <b>p = Rachat / Valeur du contrat</b><br>
+Base théorique du rachat :  <b>Rachat − Nominal × p</b><br>
+Base réellement imposable :  <b>base théorique − (intérêts déjà taxés × p)</b>
+      </div>
+      <p>Un contrat <b>mono-support en euros</b> obéit à une logique différente&nbsp;: les intérêts sont définitivement acquis chaque année et sont donc imposés pour leur montant réel. C'est le second régime proposé par le simulateur.</p>
+      <p class="ref">CGI art. 238 septies E, II, 3 · BOI-BIC-PDSTK-10-20-60-10 · BOI-BIC-PDSTK-10-20-60-20, § 110, 150, 160, 180, 230 et 310 · CE 13 janvier 2010, n° 321416 · Bulletin CNCC n° 164, décembre 2011.</p>
+
+      <h3>3. Ce que le simulateur modélise — et ce qu'il ne modélise pas</h3>
+      <ul>
+        <li><b>Modélisé</b>&nbsp;: frais sur versement, frais de gestion différenciés fonds euro / UC, rééquilibrage annuel et frais d'arbitrage, taxation forfaitaire avec prorata du premier exercice, régularisation au rachat, provision pour dépréciation en cas de moins-value latente globale, barème d'IS 15&nbsp;% / 25&nbsp;% appliqué en marginal, distribution des produits rachetés, au PFU de 31,4 % ou au barème progressif avec abattement de 40 % et CSG déductible.</li>
+        <li><b>Non modélisé</b>&nbsp;: la volatilité (les rendements sont supposés constants, ce qui est une hypothèse de travail et non une prévision — le risque de séquence de rendements est ignoré), la contribution sociale de 3,3&nbsp;% sur l'IS (art. 235 ter ZC CGI, due au-delà de 763&nbsp;000&nbsp;€ d'IS), la contribution exceptionnelle sur les hauts revenus de l'associé (art. 223 sexies CGI), l'IFI dû à raison de la fraction du contrat représentative d'actifs immobiliers logés en UC (art. 972 CGI), et l'éventuel report déficitaire de la société.</li>
+        <li><b>Convention d'assiette</b>&nbsp;: conformément aux exemples de la doctrine administrative, le « nominal » servant de base au forfait et au calcul du rachat imposable est retenu <b>net des frais sur versement</b>.</li>
+      </ul>
+
+      <h3>4. Comptabilisation</h3>
+      <p>Le contrat s'analyse comme un placement unique, quel que soit le poids respectif du fonds euro et des unités de compte&nbsp;; il est en principe inscrit au compte 272 (droits de créance immobilisés). Les plus-values latentes ne sont pas comptabilisées&nbsp;; les moins-values latentes, appréciées <b>globalement sur l'ensemble du contrat</b> et non support par support, donnent lieu à une provision pour dépréciation déductible. Les frais d'entrée peuvent au choix être passés en charge de l'exercice ou incorporés au coût d'acquisition.</p>
+      <p class="ref">BOI-BIC-CHG-20-20-10, § 140 · CE 13 janvier 2010, n° 321416.</p>
+
+      <h3>5. Le piège des simulateurs du marché</h3>
+      <p>De nombreuses présentations commerciales appliquent un taux d'IS de 15&nbsp;% aux produits réels de chaque année. C'est doublement inexact pour un contrat multi-supports&nbsp;: l'assiette n'est pas la performance réelle mais le forfait de 105&nbsp;% du TME, et le taux de 15&nbsp;% est plafonné à 42&nbsp;500&nbsp;€ de bénéfice annuel, tous produits de la société confondus. Selon le niveau du TME au jour de la souscription, la taxation forfaitaire peut être nettement plus favorable que la performance réelle — ou l'inverse. Basculer entre les deux régimes proposés par le simulateur permet de mesurer l'écart.</p>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Simulateur à titre indicatif — les montants réels dépendent des conditions générales du contrat, du TME retenu par la compagnie, de la situation fiscale propre à la société et de la performance effectivement constatée.<br>
+    Taxation forfaitaire art. 238 septies E CGI · BOI-BIC-PDSTK-10-20-60-10 et -20 · Taux d'IS art. 219 CGI · Comptabilisation BOI-BIC-CHG-20-20-10 · Charte déontologique FFA de mars 2019 · Distribution art. L. 223-23 et L. 242-6 C. com. · PFU art. 200 A CGI · Prélèvements sociaux art. L. 136-8 CSS, loi n° 2025-1403 du 30 décembre 2025 (LFSS 2026), art. 12.<br>
+    <strong>Document réservé à l'usage professionnel interne.</strong>
+    <div class="loca-credit">Ce simulateur a été établi par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ÉTAT & UTILITAIRES
+   ═══════════════════════════════════════════════════════════ */
+var euroNet = true;      // le rendement fonds euro saisi est net de frais de gestion
+var regime  = 'forfait'; // 'forfait' (238 septies E) ou 'reel' (mono-support euro)
+var CH = null;           // instance Chart.js
+var RES = null;          // dernier résultat calculé
+
+function eur(v){
+  if(!isFinite(v)) return '—';
+  var s = Math.round(v).toLocaleString('fr-FR');
+  return s.replace(/\u202F/g,'\u00A0') + '\u00A0€';
+}
+function pct(v,d){ if(!isFinite(v)) return '—'; return (v*100).toFixed(d===undefined?2:d).replace('.',',') + '\u00A0%'; }
+function num(id){ var e=document.getElementById(id); var v=parseFloat(String(e.value).replace(',','.')); return isFinite(v)?v:0; }
+function chk(id){ return document.getElementById(id).checked; }
+function flash(msg,err){
+  var f=document.getElementById('flash'); f.textContent=msg;
+  f.className='flash on'+(err?' err':'');
+  clearTimeout(f.__t); f.__t=setTimeout(function(){f.className='flash';},2600);
+}
+
+function goPage(p){
+  var pages=document.querySelectorAll('.page');
+  for(var i=0;i<pages.length;i++) pages[i].classList.toggle('active', pages[i].id===p);
+  var btns=document.querySelectorAll('.main-nav-btn');
+  for(var j=0;j<btns.length;j++) btns[j].classList.toggle('active', btns[j].dataset.p===p);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function setEuroNet(v){
+  euroNet=v;
+  document.getElementById('tg-eur-net').classList.toggle('active',v);
+  document.getElementById('tg-eur-brut').classList.toggle('active',!v);
+  document.getElementById('wrap-fgeuro').style.display = v?'none':'';
+  if(window.__relancer) window.__relancer();
+}
+function setRegime(r){
+  regime=r;
+  document.getElementById('tg-forfait').classList.toggle('active',r==='forfait');
+  document.getElementById('tg-reel').classList.toggle('active',r==='reel');
+  var d = (r==='reel');
+  document.getElementById('wrap-tme').style.opacity = d?'.4':'1';
+  document.getElementById('i-tme').disabled = d;
+  document.getElementById('wrap-taux-forf').style.opacity = d?'.4':'1';
+  syncTauxForf();
+  if(window.__relancer) window.__relancer();
+}
+function syncTauxForf(){
+  var t = num('i-tme')*1.05;
+  document.getElementById('o-tauxforf').value = (regime==='reel') ? 'sans objet' : t.toFixed(4).replace('.',',')+' %';
+}
+var rachatModePrec='aucun';
+function syncRachat(){
+  var m=document.getElementById('i-rmode').value;
+  var on = (m!=='aucun');
+  var mt=document.getElementById('i-rmontant'), db=document.getElementById('i-rdeb');
+  db.disabled=!on;
+  mt.disabled = !on || m==='produits';
+  document.getElementById('note-rachat').style.display = on?'':'none';
+  document.getElementById('note-prorata').style.display = (m==='produits')?'':'none';
+  var lab = mt.previousElementSibling;
+  /* L'unité du champ change avec le mode : on ne conserve jamais une valeur
+     saisie dans l'unité précédente, sous peine de lire 10 000 € comme 10 000 %. */
+  var change = (m!==rachatModePrec);
+  if(m==='pct'){
+    lab.innerHTML='Taux de rachat annuel <span class="hint">(% de la valeur du contrat)</span>';
+    mt.step='0.1'; mt.max='100';
+    if(change || !(parseFloat(mt.value)>0) || parseFloat(mt.value)>100) mt.value='4';
+  } else if(m==='fixe'){
+    lab.innerHTML='Montant du rachat annuel <span class="hint">(€)</span>';
+    mt.step='500'; mt.removeAttribute('max');
+    if(change || !(parseFloat(mt.value)>0)) mt.value='10000';
+  } else {
+    lab.innerHTML='Montant / taux de rachat annuel <span class="hint">(déterminé automatiquement)</span>';
+    mt.removeAttribute('max');
+  }
+  if(change && on && document.getElementById('i-rdeb').value==='1' && m!=='fixe') { /* laissé au choix */ }
+  rachatModePrec=m;
+}
+document.getElementById('i-tme').addEventListener('input',syncTauxForf);
+
+/* Taux d'imposition effectif du dividende chez l'associé.
+   PFU : 12,8 % d'IR + prélèvements sociaux.
+   Barème : abattement de 40 % sur le dividende, puis déduction de
+   6,8 points de CSG du revenu global, d'où un taux effectif
+   d'IR de TMI × (60 % − 6,8 %) auquel s'ajoutent les 18,6 % de PS. */
+function tauxAssocie(){
+  var m=document.getElementById('i-fiscasso').value;
+  if(m==='pfu314') return 0.314;
+  if(m==='pfu30')  return 0.30;
+  var tmi=parseFloat(document.getElementById('i-tmi').value)/100;
+  return 0.186 + tmi*(0.60-0.068);
+}
+function syncFisc(){
+  var m=document.getElementById('i-fiscasso').value;
+  document.getElementById('wrap-tmi').style.display = (m==='bareme')?'':'none';
+  syncTauxAsso();
+  if(window.__relancer) window.__relancer();
+}
+function syncTauxAsso(){
+  document.getElementById('o-tauxasso').value=(tauxAssocie()*100).toFixed(2).replace('.',',')+' %';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BARÈME D'IS — art. 219, I CGI
+   15 % sur les 42 500 premiers euros si éligible, 25 % au-delà.
+   ═══════════════════════════════════════════════════════════ */
+var SEUIL_TAUX_REDUIT = 42500;
+function isBareme(base, tauxReduit){
+  if(base<=0) return 0;
+  if(!tauxReduit) return base*0.25;
+  return 0.15*Math.min(base,SEUIL_TAUX_REDUIT) + 0.25*Math.max(0,base-SEUIL_TAUX_REDUIT);
+}
+/* IS marginal imputable au contrat : différentiel avec et sans le résultat du contrat.
+   Un résultat de contrat négatif produit ainsi une économie d'IS (valeur négative). */
+function isMarginal(resultatContrat, autres, tauxReduit){
+  var b1 = Math.max(0, autres + resultatContrat);
+  var b0 = Math.max(0, autres);
+  return isBareme(b1,tauxReduit) - isBareme(b0,tauxReduit);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOTEUR DE PROJECTION
+   Ordre des opérations au sein d'un exercice k :
+     1. versement de début d'année (net des frais sur versement)
+     2. performance de l'année, frais de gestion prélevés sur l'encours
+     3. (régime réel uniquement) constatation des intérêts acquis
+     4. rachat de fin d'année + régularisation d'assiette
+     5. (régime forfaitaire) taxation forfaitaire de clôture sur le
+        nominal réduit — conforme à l'exemple du BOI-BIC-PDSTK-10-20-60-20
+     6. provision pour dépréciation, résultat fiscal, IS marginal
+     7. rééquilibrage de l'allocation
+   ═══════════════════════════════════════════════════════════ */
+function moteur(p){
+  var t   = p.tme*1.05;              // taux actuariel forfaitaire (décimal)
+  var a0  = (13-p.mois)/12;          // ancienneté à la clôture du 1er exercice
+  var E=0, U=0;                      // encours fonds euro / UC
+  var nominal=0;                     // assiette nette servant au 238 septies E
+  var cout=0;                        // coût comptable (provisions)
+  var taxedCum=0;                    // intérêts déjà taxés, part non rachetée
+  var prov=0;                        // provision pour dépréciation en cours
+  var baseForfCum=0, isForfCum=0;    // pour le taux d'IS moyen des exercices antérieurs
+
+  var cum={verseBrut:0,verseNet:0,fraisEntree:0,fraisGestion:0,produits:0,rachat:0,
+           produitsRachetes:0,is:0,div:0,pfu:0,net:0,baseDist:0};
+  var rows=[], flux=new Array(p.duree+1).fill(0);
+
+  for(var k=1;k<=p.duree;k++){
+    /* 1 — versement */
+    var brut=0;
+    if(k===1) brut += p.initial;
+    if(p.vcNb>0 && k>=p.vcDeb && k<p.vcDeb+p.vcNb) brut += p.vc*Math.pow(1+p.vcIdx, k-p.vcDeb);
+    var fe = brut*p.fe;
+    var net = brut-fe;
+    nominal += net;
+    cout    += net + (p.feCharge?0:fe);
+    cum.verseBrut+=brut; cum.verseNet+=net; cum.fraisEntree+=fe;
+    E += net*p.wE; U += net*(1-p.wE);
+    var vDeb = E+U;
+
+    /* 2 — performance et frais de gestion */
+    var Eb = E*(1+p.rE), Ub = U*(1+p.rUC);
+    var fgE = euroNet ? 0 : Eb*p.fgE;
+    var fgU = Ub*p.fgUC;
+    E = Eb-fgE; U = Ub-fgU;
+    var V = E+U;
+    var produits = V - vDeb;
+    cum.produits += produits; cum.fraisGestion += fgE+fgU;
+
+    /* 3 — régime réel : les intérêts sont acquis annuellement */
+    var baseAnnuelle = 0;
+    if(p.regime==='reel'){ baseAnnuelle = produits; taxedCum += baseAnnuelle; }
+
+    /* taux d'IS moyen supporté sur les exercices antérieurs (avant l'exercice k) */
+    var tauxMoyAnt = baseForfCum>0 ? isForfCum/baseForfCum : 0;
+
+    /* 4 — rachat */
+    var R=0, partProduits=0, baseRachat=0;
+    var rachatTotal = (p.rTotal && k===p.duree);
+    if(V>0 && (rachatTotal || (p.rMode!=='aucun' && k>=p.rDeb))){
+      if(rachatTotal) R = V;
+      else if(p.rMode==='fixe') R = p.rMontant;
+      else if(p.rMode==='pct')  R = V*p.rMontant;
+      else if(p.rMode==='produits') R = Math.max(0, produits);
+      R = Math.max(0, Math.min(R, V));
+      if(R>0){
+        var prop = R/V;
+        partProduits = R - nominal*prop;
+        baseRachat   = partProduits - taxedCum*prop;
+        nominal *= (1-prop); cout *= (1-prop); taxedCum *= (1-prop); prov *= (1-prop);
+        E *= (1-prop); U *= (1-prop); V = E+U;
+        cum.rachat += R; cum.produitsRachetes += partProduits;
+      }
+    }
+
+    /* 5 — taxation forfaitaire de clôture */
+    if(p.regime==='forfait'){
+      var anc = a0 + (k-1);
+      baseAnnuelle = nominal*(Math.pow(1+t,anc)-1) - taxedCum;
+      if(baseAnnuelle<0) baseAnnuelle=0;
+      taxedCum += baseAnnuelle;
+    }
+
+    /* 6 — provision, résultat fiscal, IS marginal */
+    var provCible = (p.regime==='forfait') ? Math.max(0, cout - V) : 0;
+    var varProv = provCible - prov;   // > 0 : dotation (charge) ; < 0 : reprise (produit)
+    prov = provCible;
+
+    var resultat = baseAnnuelle + baseRachat - varProv - (p.feCharge?fe:0);
+    var is = isMarginal(resultat, p.autres, p.tauxReduit);
+    cum.is += is;
+    var tauxMarg = (resultat>0) ? is/resultat : 0;
+
+    /* remontée de trésorerie : IS économiquement attaché aux produits rachetés */
+    var isAttache = baseRachat*tauxMarg + Math.max(0,partProduits-baseRachat)*tauxMoyAnt;
+    /* Assiette distribuée : par principe les seuls produits compris dans le
+       rachat ; sur option, la totalité du rachat — ce qui suppose que la
+       société dispose par ailleurs de réserves ou d'un report à nouveau
+       suffisants (voir l'avertissement de l'onglet Remontée de trésorerie). */
+    var baseDist = p.distTotal ? R : partProduits;
+    var div = Math.max(0, baseDist - isAttache);
+    var pfu = div*p.pfu;
+    var netAssocie = div - pfu;
+    cum.div+=div; cum.pfu+=pfu; cum.net+=netAssocie; cum.baseDist+=baseDist;
+
+    if(p.regime==='forfait'){ baseForfCum += baseAnnuelle; isForfCum += baseAnnuelle*tauxMarg; }
+    else { baseForfCum += Math.max(0,baseAnnuelle); isForfCum += Math.max(0,baseAnnuelle)*tauxMarg; }
+
+    /* 7 — rééquilibrage vers l'allocation cible */
+    var arb=0;
+    if(p.reeq && V>0){
+      var cibleE = V*p.wE;
+      arb = Math.abs(cibleE-E)*p.arb;
+      V -= arb;
+      E = V*p.wE; U = V-E;
+      cum.fraisGestion += arb;
+    }
+
+    /* flux de trésorerie de la société, calés en date :
+       le versement intervient en début d'exercice (t = k−1),
+       le rachat et l'IS en fin d'exercice (t = k). */
+    flux[k-1] = (flux[k-1]||0) - brut;
+    flux[k]   = (flux[k]  ||0) + R - is;
+
+    rows.push({
+      an:k, annee:p.annee0+k-1,
+      verseBrut:brut, verseNet:net, fraisEntree:fe,
+      produits:produits, rachat:R, partProduits:partProduits,
+      partCapital:R-partProduits, valeur:V,
+      base:baseAnnuelle, baseRachat:baseRachat, varProv:varProv,
+      resultat:resultat, is:is, isAttache:isAttache,
+      div:div, pfu:pfu, net:netAssocie, baseDist:baseDist,
+      cumVerseNet:cum.verseNet, cumProduits:cum.produits, cumRachat:cum.rachat
+    });
+  }
+
+  /* TRI net d'IS pour la société : flux annuels + valeur résiduelle au terme */
+  flux[p.duree] += rows[rows.length-1].valeur;
+  var tri = irr(flux);
+
+  return {rows:rows, cum:cum, valeurFinale:rows[rows.length-1].valeur, tri:tri, p:p,
+          tauxForf:t};
+}
+
+/* TRI — dichotomie sur [-99 % ; +200 %]. flux[i] est daté en t = i (années). */
+function irr(f){
+  function van(r){ var s=0; for(var i=0;i<f.length;i++) s += f[i]/Math.pow(1+r, i); return s; }
+  var lo=-0.99, hi=2.0;
+  if(van(lo)*van(hi)>0) return NaN;
+  for(var i=0;i<200;i++){ var m=(lo+hi)/2; if(van(lo)*van(m)<=0) hi=m; else lo=m; }
+  return (lo+hi)/2;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LECTURE DU FORMULAIRE & RESTITUTION
+   ═══════════════════════════════════════════════════════════ */
+function lireParams(){
+  return {
+    initial: num('i-initial'),
+    fe: num('i-fe')/100,
+    annee0: Math.round(num('i-annee')),
+    mois: parseInt(document.getElementById('i-mois').value,10),
+    duree: Math.max(1,Math.round(num('i-duree'))),
+    vc: num('i-vc'), vcDeb: Math.round(num('i-vc-deb')), vcNb: Math.round(num('i-vc-nb')),
+    vcIdx: num('i-vc-idx')/100,
+    wE: num('i-weuro')/100,
+    rE: num('i-reuro')/100, rUC: num('i-ruc')/100,
+    fgE: num('i-fgeuro')/100, fgUC: num('i-fguc')/100,
+    arb: num('i-arb')/100, reeq: chk('i-reeq'),
+    rMode: document.getElementById('i-rmode').value,
+    rMontant: (document.getElementById('i-rmode').value==='pct') ? num('i-rmontant')/100 : num('i-rmontant'),
+    rDeb: Math.round(num('i-rdeb')), rTotal: chk('i-rtotal'),
+    regime: regime, tme: num('i-tme')/100,
+    autres: num('i-autres'), tauxReduit: chk('i-tauxreduit'),
+    feCharge: chk('i-fecharge'), pfu: tauxAssocie(), distTotal: chk('i-disttotal')
+  };
+}
+
+function calcul(silencieux){
+  var p = lireParams();
+  if(p.initial<=0 && p.vc<=0){ if(!silencieux) flash('Renseignez au moins un versement',true); return; }
+  if(p.wE<0||p.wE>1){ if(!silencieux) flash('La part fonds euro doit être comprise entre 0 et 100 %',true); return; }
+  syncTauxForf(); syncTauxAsso();
+
+  RES = moteur(p);
+  renderKPI(RES); renderTable(RES); renderChart(RES); renderPage2(RES); alerteRachat(RES);
+  document.getElementById('res1').style.display='';
+  if(!silencieux) flash('Projection calculée sur ' + p.duree + ' ans');
+}
+
+/* Signale les rachats plafonnés par la valeur du contrat ou sans effet,
+   plutôt que de laisser l'utilisateur devant un tableau silencieusement faux. */
+function alerteRachat(R){
+  var n=document.getElementById('alerte-rachat');
+  var p=R.p, msg='';
+  if(p.rMode!=='aucun'){
+    var demandes=R.rows.filter(function(r){return r.an>=p.rDeb;});
+    var nuls=demandes.filter(function(r){return r.rachat<0.5;}).length;
+    var vide=R.rows.filter(function(r){return r.valeur<1 && r.an<p.duree;}).length;
+    if((p.rMode==='fixe'||p.rMode==='pct') && p.rMontant<=0)
+      msg='Le montant de rachat est nul&nbsp;: aucun rachat n\'est simulé. Renseignez un montant (ou un taux) supérieur à zéro.';
+    else if(vide>0)
+      msg='Le contrat est <b>intégralement épuisé avant le terme</b>&nbsp;: les rachats demandés excèdent la valeur disponible. Réduisez le montant du rachat, décalez sa date de départ ou raccourcissez la durée.';
+    else if(nuls>0 && p.rMode!=='aucun')
+      msg=nuls+' exercice(s) sans rachat effectif&nbsp;: la valeur du contrat ou les produits de l\'exercice ne permettaient pas de servir le rachat demandé.';
+  }
+  n.innerHTML=msg; n.style.display = msg?'':'none';
+}
+
+/* Tout paramètre modifié relance immédiatement la projection : la valeur
+   affichée correspond toujours au formulaire à l'écran. */
+(function autoCalc(){
+  var tmr=null;
+  function relancer(){ clearTimeout(tmr); tmr=setTimeout(function(){ calcul(true); },220); }
+  var champs=document.querySelectorAll('#p1 input, #p1 select, #p2 input, #p2 select');
+  for(var i=0;i<champs.length;i++){
+    champs[i].addEventListener('input',relancer);
+    champs[i].addEventListener('change',relancer);
+  }
+  window.__relancer=relancer;
+})();
+
+function renderKPI(R){
+  var c=R.cum;
+  document.getElementById('k-verse').textContent = eur(c.verseNet);
+  document.getElementById('k-verse-sub').textContent = eur(c.verseBrut)+' bruts · '+eur(c.fraisEntree)+' de frais sur versement';
+  document.getElementById('k-cap').textContent = eur(R.valeurFinale);
+  document.getElementById('k-cap-sub').textContent = c.rachat>0 ? ('+ '+eur(c.rachat)+' déjà rachetés') : 'aucun rachat sur la période';
+  document.getElementById('k-prod').textContent = eur(c.produits);
+  document.getElementById('k-prod-sub').textContent = 'après '+eur(c.fraisGestion)+' de frais de gestion';
+  document.getElementById('k-is').textContent = eur(c.is);
+  var eff = c.produits>0 ? c.is/c.produits : 0;
+  document.getElementById('k-is-sub').textContent = 'soit '+pct(eff,1)+' des produits · TRI net d\'IS '+pct(R.tri,2);
+}
+
+var COLS = [
+  {t:'Année', f:function(r){return r.annee;}, raw:true},
+  {t:'Versements nets', f:function(r){return r.verseNet;}},
+  {t:'Produits', f:function(r){return r.produits;}, signed:true},
+  {t:'Rachats bruts', f:function(r){return r.rachat;}},
+  {t:'Capital en fin d\'année', f:function(r){return r.valeur;}, cls:'hi-cap', noTotal:true},
+  {t:'Assiette imposable à l\'IS', f:function(r){return r.base + r.baseRachat - r.varProv;}, signed:true},
+  {t:'Impôt sur les sociétés', f:function(r){return r.is;}, cls:'hi-tax'}
+];
+
+function renderTable(R){
+  var h='<table class="rec"><thead><tr>';
+  for(var i=0;i<COLS.length;i++) h+='<th>'+COLS[i].t+'</th>';
+  h+='</tr></thead><tbody>';
+  for(var j=0;j<R.rows.length;j++){
+    var r=R.rows[j]; h+='<tr>';
+    for(var c=0;c<COLS.length;c++){
+      var col=COLS[c], v=col.f(r);
+      var cls = col.cls||'';
+      if(col.signed && v<-0.5) cls+=' neg';
+      h+='<td class="'+cls+'">'+(col.raw?v:eur(v))+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody><tfoot><tr>';
+  for(var c2=0;c2<COLS.length;c2++){
+    var col2=COLS[c2];
+    if(c2===0){ h+='<td>Total</td>'; continue; }
+    if(col2.noTotal){ h+='<td class="'+(col2.cls||'')+'">'+eur(R.valeurFinale)+'</td>'; continue; }
+    var s=0; for(var k2=0;k2<R.rows.length;k2++) s+=col2.f(R.rows[k2]);
+    h+='<td class="'+(col2.cls||'')+'">'+eur(s)+'</td>';
+  }
+  h+='</tr></tfoot></table>';
+  document.getElementById('tbl-wrap').innerHTML=h;
+
+  var n=document.getElementById('note-methode');
+  if(R.p.regime==='forfait'){
+    n.className='note note-info';
+    n.innerHTML='<b>Assiette forfaitaire — art. 238 septies E CGI.</b> Taux actuariel retenu&nbsp;: <code>105&nbsp;% × '+
+      (R.p.tme*100).toFixed(2).replace('.',',')+'&nbsp;% = '+(R.tauxForf*100).toFixed(4).replace('.',',')+'&nbsp;%</code>, fixe pour toute la durée du contrat, y compris en cas de versement complémentaire. '+
+      'L\'assiette de l\'exercice est indépendante de la performance réelle&nbsp;; elle est régularisée à chaque rachat. La colonne « assiette » intègre, le cas échéant, la base de régularisation du rachat, la dotation ou reprise de provision pour dépréciation et les frais sur versement passés en charge.';
+  } else {
+    n.className='note note-warn';
+    n.innerHTML='<b>Régime mono-support fonds euro.</b> Les intérêts étant définitivement acquis chaque année, ils sont imposés pour leur montant réel&nbsp;: aucune taxation forfaitaire, aucune régularisation au rachat. Ce régime ne s\'applique <b>pas</b> à un contrat multi-supports, même très majoritairement investi en fonds euro (CE 13 janvier 2010, n° 321416).';
+  }
+}
+
+function renderChart(R){
+  if(typeof Chart==='undefined') return;
+  var ctx=document.getElementById('chart1').getContext('2d');
+  if(CH) CH.destroy();
+  var lab=R.rows.map(function(r){return r.annee;});
+  CH = new Chart(ctx,{
+    type:'bar',
+    data:{labels:lab, datasets:[
+      {label:'Versements nets cumulés', data:R.rows.map(function(r){return r.cumVerseNet;}),
+       backgroundColor:'#1a4f8c', stack:'s', order:3},
+      {label:'Produits bruts cumulés', data:R.rows.map(function(r){return r.cumProduits;}),
+       backgroundColor:'#7fb2ea', stack:'s', order:3},
+      {label:'Rachats bruts cumulés', data:R.rows.map(function(r){return -r.cumRachat;}),
+       backgroundColor:'#b06fc9', stack:'s', order:3}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'bottom',labels:{font:{family:'Inter',size:11},usePointStyle:true,pointStyle:'rectRounded',padding:16,boxWidth:10}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+' : '+eur(Math.abs(c.parsed.y));}}}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{family:'Inter',size:10.5}}},
+        y:{stacked:true,grid:{color:'rgba(0,0,0,.06)'},
+           ticks:{font:{family:'Inter',size:10.5},callback:function(v){return Math.abs(v)>=1000?(v/1000)+' k€':v+' €';}}}
+      }
+    }
+  });
+}
+
+function renderPage2(R){
+  var rows=R.rows.filter(function(r){return r.rachat>0.5;});
+  var e2=document.getElementById('err2'), r2=document.getElementById('res2');
+  if(rows.length===0){
+    r2.style.display='none'; e2.style.display='';
+    e2.textContent='Aucun rachat n\'est programmé : la société ne peut constater aucun résultat distribuable au titre du contrat sur la période. Choisissez une politique de rachat dans l\'onglet « Projection ».';
+    return;
+  }
+  e2.style.display='none'; r2.style.display='';
+  var c=R.cum, tot=R.p.distTotal;
+  document.getElementById('note-disttotal').style.display = tot?'':'none';
+  document.getElementById('d-rachat').textContent=eur(c.rachat);
+  document.getElementById('d-div').textContent=eur(c.div);
+  document.getElementById('d-net').textContent=eur(c.net);
+  document.getElementById('d-div-sub').textContent = tot ? 'Totalité du rachat, nette d\'IS' : 'Produits rachetés nets d\'IS';
+  document.getElementById('d-net-sub').textContent = 'Après imposition personnelle à '+pct(R.p.pfu,2);
+  var refFrott = tot ? c.rachat : c.produitsRachetes;
+  var frott = refFrott>0 ? 1-(c.net/refFrott) : 0;
+  document.getElementById('d-frott').textContent=pct(frott,1);
+  document.getElementById('d-frott-sub').textContent = tot
+    ? 'IS + imposition personnelle rapportés au rachat total'
+    : 'IS + imposition personnelle rapportés aux produits rachetés';
+
+  var h='<table class="rec"><thead><tr>'+
+    '<th>Année</th><th>Rachat brut</th><th>dont produits</th><th>dont capital</th>'+
+    '<th>IS attaché aux produits</th><th>Montant distribué brut</th><th>Imposition de l\'associé</th><th>Net perçu par l\'associé</th>'+
+    '</tr></thead><tbody>';
+  var s={r:0,p:0,c:0,i:0,d:0,f:0,n:0};
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    s.r+=r.rachat; s.p+=r.partProduits; s.c+=r.partCapital; s.i+=r.isAttache;
+    s.d+=r.div; s.f+=r.pfu; s.n+=r.net;
+    h+='<tr><td>'+r.annee+'</td><td>'+eur(r.rachat)+'</td><td>'+eur(r.partProduits)+'</td><td>'+eur(r.partCapital)+
+       '</td><td class="hi-tax">'+eur(r.isAttache)+'</td><td>'+eur(r.div)+'</td><td class="hi-tax">'+eur(r.pfu)+
+       '</td><td class="hi-cap">'+eur(r.net)+'</td></tr>';
+  }
+  h+='</tbody><tfoot><tr><td>Total</td><td>'+eur(s.r)+'</td><td>'+eur(s.p)+'</td><td>'+eur(s.c)+
+     '</td><td class="hi-tax">'+eur(s.i)+'</td><td>'+eur(s.d)+'</td><td class="hi-tax">'+eur(s.f)+
+     '</td><td class="hi-cap">'+eur(s.n)+'</td></tr></tfoot></table>';
+  document.getElementById('tbl-wrap2').innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPORTS
+   ═══════════════════════════════════════════════════════════ */
+function exportCSV(){
+  if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
+  var L=['Annee;Versements bruts;Frais sur versement;Versements nets;Produits;Rachat brut;Dont produits;Dont capital;Valeur du contrat;Assiette IS;IS;Dividende brut;PFU;Net associe'];
+  RES.rows.forEach(function(r){
+    L.push([r.annee,r.verseBrut,r.fraisEntree,r.verseNet,r.produits,r.rachat,r.partProduits,r.partCapital,
+            r.valeur,(r.base+r.baseRachat-r.varProv),r.is,r.div,r.pfu,r.net]
+      .map(function(x){return typeof x==='number'?x.toFixed(2).replace('.',','):x;}).join(';'));
+  });
+  var blob=new Blob(['\ufeff'+L.join('\n')],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='contrat-capitalisation-IS.csv'; document.body.appendChild(a); a.click(); a.remove();
+  flash('Fichier CSV téléchargé');
+}
+
+/* Rendu canvas du tableau récapitulatif — capture propre pour insertion en rapport */
+function exportPNG(){
+  if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
+  var R=RES, dpr=2;
+  var W=[70,130,110,110,140,150,140];
+  var totW=W.reduce(function(a,b){return a+b;},0);
+  var hHead=54, hRow=26, hTot=34, pad=22, hTitle=54, hFoot=6;
+  var H = hTitle+hHead+hRow*R.rows.length+hTot+hFoot+pad;
+  var cv=document.createElement('canvas');
+  cv.width=(totW+pad*2)*dpr; cv.height=H*dpr;
+  var x=cv.getContext('2d'); x.scale(dpr,dpr);
+  x.fillStyle='#fff'; x.fillRect(0,0,totW+pad*2,H);
+
+  var X0=pad, Y=pad;
+  x.fillStyle='#0b0b0a'; x.font='600 15px Sora, Inter, sans-serif';
+  x.textAlign='left'; x.fillText('Contrat de capitalisation en société à l\'IS — projection sur '+R.p.duree+' ans', X0, Y+16);
+  x.fillStyle='#898781'; x.font='400 11px Inter, sans-serif';
+  var sousTitre = (R.p.regime==='forfait')
+    ? 'Taxation forfaitaire art. 238 septies E CGI — taux actuariel '+(R.tauxForf*100).toFixed(3).replace('.',',')+' % (105 % du TME)'
+    : 'Contrat mono-support en euros — imposition des produits réels';
+  x.fillText(sousTitre, X0, Y+34);
+  Y += hTitle;
+
+  var head=['Année','Versements\nnets','Produits','Rachats\nbruts','Capital en\nfin d\'année','Assiette\nimposable à l\'IS','Impôt sur\nles sociétés'];
+  var grad=x.createLinearGradient(0,Y,0,Y+hHead); grad.addColorStop(0,'#1e3d7a'); grad.addColorStop(1,'#16305f');
+  x.fillStyle=grad; x.fillRect(X0,Y,totW,hHead);
+  x.font='600 10.5px Inter, sans-serif';
+  var cx=X0;
+  for(var i=0;i<head.length;i++){
+    x.fillStyle='#fff'; x.textAlign= i===0?'center':'right';
+    var lines=head[i].split('\n');
+    var ty=Y+hHead/2-(lines.length-1)*6.5+4;
+    for(var l=0;l<lines.length;l++) x.fillText(lines[l], i===0?cx+W[i]/2:cx+W[i]-10, ty+l*13);
+    if(i<head.length-1){ x.strokeStyle='rgba(232,206,116,.55)'; x.beginPath(); x.moveTo(cx+W[i],Y); x.lineTo(cx+W[i],Y+hHead); x.stroke(); }
+    cx+=W[i];
+  }
+  Y+=hHead;
+
+  x.font='400 11.5px Inter, sans-serif';
+  for(var j=0;j<R.rows.length;j++){
+    var r=R.rows[j];
+    var vals=[String(r.annee), eur(r.verseNet), eur(r.produits), eur(r.rachat), eur(r.valeur),
+              eur(r.base+r.baseRachat-r.varProv), eur(r.is)];
+    if(j%2===1){ x.fillStyle='#fbfbfa'; x.fillRect(X0,Y,totW,hRow); }
+    x.fillStyle='#f2f1ed'; x.fillRect(X0,Y,W[0],hRow);
+    x.fillStyle='#dff2e8'; x.fillRect(X0+W[0]+W[1]+W[2]+W[3],Y,W[4],hRow);
+    x.fillStyle='#fbe7e2'; x.fillRect(X0+totW-W[6],Y,W[6],hRow);
+    var cx2=X0;
+    for(var c=0;c<vals.length;c++){
+      x.fillStyle = c===4?'#0f6e56' : (c===6?'#9a2c2c' : (c===0?'#52514e':'#0b0b0a'));
+      x.textAlign = c===0?'center':'right';
+      x.fillText(vals[c], c===0?cx2+W[c]/2:cx2+W[c]-10, Y+hRow/2+4);
+      cx2+=W[c];
+    }
+    x.strokeStyle='rgba(0,0,0,.10)'; x.beginPath(); x.moveTo(X0,Y+hRow); x.lineTo(X0+totW,Y+hRow); x.stroke();
+    Y+=hRow;
+  }
+
+  var sV=0,sP=0,sR=0,sB=0,sI=0;
+  R.rows.forEach(function(r){sV+=r.verseNet;sP+=r.produits;sR+=r.rachat;sB+=r.base+r.baseRachat-r.varProv;sI+=r.is;});
+  x.fillStyle='#eaf0f9'; x.fillRect(X0,Y,totW,hTot);
+  x.fillStyle='#0f6e56'; x.fillRect(X0+W[0]+W[1]+W[2]+W[3],Y,W[4],hTot);
+  x.fillStyle='#c0442b'; x.fillRect(X0+totW-W[6],Y,W[6],hTot);
+  x.strokeStyle='#1a4f8c'; x.lineWidth=2; x.beginPath(); x.moveTo(X0,Y); x.lineTo(X0+totW,Y); x.stroke(); x.lineWidth=1;
+  var tv=['Total',eur(sV),eur(sP),eur(sR),eur(R.valeurFinale),eur(sB),eur(sI)];
+  x.font='700 12px Inter, sans-serif'; var cx3=X0;
+  for(var c3=0;c3<tv.length;c3++){
+    x.fillStyle=(c3===4||c3===6)?'#fff':'#0b0b0a';
+    x.textAlign=c3===0?'center':'right';
+    x.fillText(tv[c3], c3===0?cx3+W[c3]/2:cx3+W[c3]-10, Y+hTot/2+4);
+    cx3+=W[c3];
+  }
+  cv.toBlob(function(b){
+    if(!b){ flash('Rendu impossible',true); return; }
+    var a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download='contrat-capitalisation-IS.png'; document.body.appendChild(a); a.click(); a.remove();
+    flash('Image téléchargée');
+  },'image/png');
+}
+
+/* Export du graphique seul — fond blanc, titre, sans mention ni commentaire */
+function exportChartPNG(){
+  if(!RES || !CH){ flash('Lancez d\'abord le calcul',true); return; }
+  var src=document.getElementById('chart1');
+  var dpr=2, W=880, Htitre=52, Hgraph=430, pad=24;
+  var cv=document.createElement('canvas');
+  cv.width=W*dpr; cv.height=(Htitre+Hgraph+pad)*dpr;
+  var x=cv.getContext('2d'); x.scale(dpr,dpr);
+  x.fillStyle='#fff'; x.fillRect(0,0,W,Htitre+Hgraph+pad);
+
+  x.fillStyle='#0b0b0a'; x.font='600 16px Sora, Inter, sans-serif'; x.textAlign='left';
+  x.fillText('Évolution de l\'épargne', pad, 30);
+  x.fillStyle='#898781'; x.font='400 11px Inter, sans-serif';
+  var p=RES.p;
+  x.fillText('Contrat de capitalisation en société à l\'IS · '+p.annee0+'–'+(p.annee0+p.duree-1)+
+             ' · '+Math.round(p.wE*100)+' % fonds euro / '+Math.round((1-p.wE)*100)+' % UC', pad, 47);
+
+  x.drawImage(src, pad, Htitre, W-pad*2, Hgraph-16);
+
+  cv.toBlob(function(b){
+    if(!b){ flash('Rendu impossible',true); return; }
+    var a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download='contrat-capitalisation-IS-graphique.png'; document.body.appendChild(a); a.click(); a.remove();
+    flash('Graphique téléchargé');
+  },'image/png');
+}
+
+/* init */
+syncTauxForf(); syncFisc(); syncRachat(); calcul(true);
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Logo LOCA — prisme filaire piloté au pointeur.
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  var logo=document.querySelector('.h-logo');
+  if(!logo)return;
+  var plate=document.createElement('div');plate.className='plate';
+  var sheen=document.createElement('div');sheen.className='sheen';
+  plate.appendChild(sheen);logo.appendChild(plate);
+
+  var N=18,pas=1.15;
+  for(var i=0;i<N;i++){
+    var d=document.createElement('div');
+    d.className='couche'+(i===N-1?' avant':'');
+    var t=i/(N-1);
+    d.style.transform='translateZ('+((i-(N-1)/2)*pas).toFixed(2)+'px)';
+    if(i<N-1)d.style.opacity='calc(var(--prof) * '+(0.05+0.20*Math.pow(t,2.2)).toFixed(3)+')';
+    plate.insertBefore(d,sheen);
+  }
+
+  var ampY=150,ampX=70,seuil=26;
+  var cur={ry:0,rx:0},cible={ry:0,rx:0},raf=null;
+  function pose(){
+    plate.style.transform='rotateY('+cur.ry.toFixed(2)+'deg) rotateX('+cur.rx.toFixed(2)+'deg)';
+    var k=Math.min(1,(Math.abs(cur.ry)+Math.abs(cur.rx))/seuil);
+    plate.style.setProperty('--prof',k.toFixed(3));
+  }
+  pose();
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  function boucle(){
+    cur.ry+=(cible.ry-cur.ry)*0.14;
+    cur.rx+=(cible.rx-cur.rx)*0.14;
+    if(Math.abs(cible.ry-cur.ry)<0.04&&Math.abs(cible.rx-cur.rx)<0.04){
+      cur.ry=cible.ry;cur.rx=cible.rx;pose();raf=null;return;
+    }
+    pose();raf=requestAnimationFrame(boucle);
+  }
+  function relancer(){if(raf===null)raf=requestAnimationFrame(boucle);}
+
+  logo.addEventListener('mousemove',function(e){
+    var r=logo.getBoundingClientRect();
+    cible.ry=((e.clientX-r.left)/r.width-0.5)*ampY;
+    cible.rx=-((e.clientY-r.top)/r.height-0.5)*ampX;
+    logo.classList.add('eveille');relancer();
+  });
+  logo.addEventListener('mouseleave',function(){
+    cible.ry=0;cible.rx=0;logo.classList.remove('eveille');relancer();
+  });
+})();
+</script>
+</body>
+</html>
