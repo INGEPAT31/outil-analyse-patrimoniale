@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche — Le contrat de capitalisation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f4f3f0;--surface:#fff;--surface-alt:#f9f9f7;
+  --border:rgba(0,0,0,.10);--border-strong:rgba(0,0,0,.18);
+  --text:#0b0b0a;--text-sec:#52514e;--text-muted:#898781;
+  --accent:#1a4f8c;--accent-light:#e6f0fb;--accent-mid:#2a78d6;
+  --green:#0f6e56;--green-light:#e1f5ee;
+  --amber:#854f0b;--amber-light:#faeeda;
+  --red:#9a2c2c;--red-light:#fbe9e9;
+  --violet:#3c3489;--violet-light:#eeedfe;
+  --gold:#E8CE74;--gold-dk:#b5922a;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --hero-pale:#AFC0FF;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  padding:0 0 4rem;-webkit-font-smoothing:antialiased;}
+.container{max-width:1080px;margin:0 auto;padding:2rem 1rem 0;}
+
+/* ── Bandeau ─────────────────────────────────────────────── */
+header{background:linear-gradient(112deg,#0D1B5C 0%,#132995 62%,#1C36B4 100%);
+  padding:34px 48px 40px;position:relative;overflow:hidden;margin-bottom:2rem;}
+header::before{content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(175,192,255,.20) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+  mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);}
+header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;z-index:2;
+  background:linear-gradient(90deg,rgba(232,206,116,0) 0%,rgba(232,206,116,.85) 22%,
+             rgba(232,206,116,.85) 78%,rgba(232,206,116,0) 100%);}
+header > *:not(.h-logo){position:relative;z-index:1;}
+.h-links{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+.h-back{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.5px;}
+.h-back:hover{color:var(--hero-pale);}
+.h-back.gold{color:var(--gold);}
+.h-back.gold:hover{color:#fff;}
+.h-eyebrow{font-family:'Sora',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.4px;
+  text-transform:uppercase;color:var(--hero-pale);margin-bottom:12px;}
+header h1{font-family:'Sora',sans-serif;font-size:27px;font-weight:700;color:#fff;
+  line-height:1.2;letter-spacing:-.3px;max-width:640px;}
+header .sub{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:9px;line-height:1.65;max-width:640px;}
+.h-logo{position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:1;
+  transform:translateY(-50%);-webkit-user-select:none;user-select:none;}
+
+/* ── Sommaire ────────────────────────────────────────────── */
+.sommaire{background:var(--surface);border-radius:12px;border:.5px solid var(--border);
+  box-shadow:var(--shadow);padding:1.15rem 1.35rem;margin-bottom:1.15rem;border-top:3px solid var(--gold);}
+.sommaire .lab{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:11px;}
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{font-size:12px;font-weight:500;color:var(--text-sec);text-decoration:none;
+  background:var(--surface-alt);border:1px solid var(--border);border-radius:999px;
+  padding:6px 13px;transition:all .15s;}
+.chip:hover{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);}
+.chip .n{color:var(--gold-dk);font-weight:700;margin-right:5px;}
+
+/* ── Cartes ──────────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+.card{background:var(--surface);border-radius:12px;border:.5px solid var(--border);
+  box-shadow:var(--shadow);padding:1.4rem 1.5rem;border-top:3px solid var(--accent);
+  scroll-margin-top:16px;}
+.card.wide{grid-column:1/-1;}
+.card.c-fisc{border-top-color:var(--green);}
+.card.c-transm{border-top-color:var(--violet);}
+.card.c-is{border-top-color:var(--amber);}
+.card h2{font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:var(--accent);
+  margin-bottom:12px;padding-bottom:9px;border-bottom:1.5px solid var(--gold);
+  display:flex;align-items:baseline;gap:9px;}
+.card.c-fisc h2{color:var(--green);}
+.card.c-transm h2{color:var(--violet);}
+.card.c-is h2{color:var(--amber);}
+.card h2 .n{font-size:11px;color:var(--gold-dk);font-weight:700;}
+h3{font-size:12.5px;font-weight:700;color:var(--text);margin:14px 0 5px;}
+p{font-size:13px;line-height:1.68;color:var(--text-sec);margin-bottom:8px;}
+ul{margin:0 0 8px 17px;}
+li{font-size:13px;line-height:1.62;color:var(--text-sec);margin-bottom:5px;}
+li::marker{color:var(--gold-dk);}
+b,strong{color:var(--text);font-weight:600;}
+.ref{font-size:11px;line-height:1.55;color:var(--text-muted);font-style:italic;margin-top:9px;}
+
+/* ── Encadrés ────────────────────────────────────────────── */
+.box{border-radius:8px;padding:11px 14px;margin:11px 0;}
+.box .t{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;}
+.box p,.box li{font-size:12.5px;line-height:1.6;margin-bottom:5px;}
+.box p:last-child,.box li:last-child{margin-bottom:0;}
+.box.warn{background:var(--amber-light);border-left:3px solid #c8860d;}
+.box.warn .t,.box.warn p,.box.warn li,.box.warn b{color:var(--amber);}
+.box.ok{background:var(--green-light);border-left:3px solid var(--green);}
+.box.ok .t,.box.ok p,.box.ok li,.box.ok b{color:var(--green);}
+.box.info{background:var(--accent-light);border-left:3px solid var(--accent);}
+.box.info .t,.box.info p,.box.info li,.box.info b{color:#16406f;}
+.box.red{background:var(--red-light);border-left:3px solid var(--red);}
+.box.red .t,.box.red p,.box.red li,.box.red b{color:var(--red);}
+
+/* ── Tableaux ────────────────────────────────────────────── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0;}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;}
+th{background:linear-gradient(160deg,#1e3d7a,#16305f);color:#fff;font-weight:600;font-size:11px;
+  padding:9px 11px;text-align:left;line-height:1.4;border-right:1px solid rgba(232,206,116,.5);
+  vertical-align:middle;}
+th:first-child{border-top-left-radius:6px;}
+th:last-child{border-right:none;border-top-right-radius:6px;}
+td{padding:8px 11px;border-bottom:1px solid var(--border);color:var(--text-sec);
+  line-height:1.5;vertical-align:top;}
+tr:nth-child(even) td{background:#fbfbfa;}
+td.k{font-weight:600;color:var(--text);background:var(--surface-alt)!important;width:32%;}
+td.c{text-align:center;}
+
+/* ── Formules ────────────────────────────────────────────── */
+.formula{background:#12213f;color:#dbe6ff;border-radius:8px;padding:13px 15px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.9;
+  margin:11px 0;overflow-x:auto;}
+.formula b{color:var(--gold);font-weight:600;}
+.formula .lab{color:#8fa4cf;}
+
+/* ── Retour simulateur ───────────────────────────────────── */
+.cta-sim{display:flex;align-items:center;gap:18px;text-decoration:none;background:var(--surface);
+  border-radius:12px;border:.5px solid var(--border);border-top:3px solid var(--accent-mid);
+  box-shadow:var(--shadow);padding:1.35rem 1.5rem;margin-top:18px;transition:all .15s;}
+.cta-sim:hover{transform:translateY(-1px);
+  box-shadow:0 2px 6px rgba(0,0,0,.10),0 8px 26px rgba(0,0,0,.10);}
+.cta-sim .ico{font-size:30px;flex:none;line-height:1;}
+.cta-sim .t{font-family:'Sora',sans-serif;font-size:14.5px;font-weight:600;color:var(--accent);margin-bottom:5px;}
+.cta-sim .s{font-size:12.5px;line-height:1.6;color:var(--text-sec);}
+.cta-sim .arr{font-size:20px;color:var(--accent-mid);flex:none;}
+
+.footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:2.5rem;
+  padding-top:1.5rem;border-top:1px solid var(--border);line-height:1.9;}
+.footer .loca-credit{font-style:italic;font-size:10.5px;margin-top:6px;color:var(--gold-dk);}
+
+@media(max-width:860px){
+  .grid{grid-template-columns:1fr;}
+  header{padding:28px 20px 32px;}
+  .h-logo{display:none;}
+  header h1{font-size:22px;}
+}
+@media print{
+  body{background:#fff;padding:0;}
+  header{background:#132995 !important;}
+  header::before,header::after{display:none;}
+  .sommaire,.cta-sim{display:none;}
+  .grid{grid-template-columns:1fr;gap:0;}
+  .card{box-shadow:none;break-inside:avoid;border:none;border-top:2px solid var(--accent);
+    padding:12px 0;margin-bottom:10px;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   Logo LOCA — prisme filaire révélé par l'inclinaison
+   ═══════════════════════════════════════════════════════════ */
+.h-logo{perspective:520px;transition:none !important;}
+.h-logo::before,.h-logo::after{content:none !important;display:none !important;}
+.h-logo:hover{transform:translateY(-50%) !important;}
+.h-logo .plate{position:absolute;top:0;right:0;bottom:0;left:0;
+  transform-style:preserve-3d;will-change:transform;--prof:0;}
+.h-logo .couche{position:absolute;top:0;right:0;bottom:0;left:0;
+  background:var(--logo) center/contain no-repeat;}
+.h-logo .avant{opacity:.19;transition:opacity .45s ease;}
+.h-logo.eveille .avant{opacity:.34;}
+.h-logo .sheen{position:absolute;top:0;right:0;bottom:0;left:0;
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%);
+  background-size:300% 100%;background-position:-150% 0;opacity:0;
+  -webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;}
+.h-logo:hover .sheen{animation:logo-sheen 1.15s ease-out;}
+@keyframes logo-sheen{0%{opacity:0;background-position:-150% 0;}12%{opacity:1;}100%{opacity:0;background-position:150% 0;}}
+@media(prefers-reduced-motion:reduce){
+  .h-logo .avant{transition:none;}
+  .h-logo .sheen{animation:none !important;}
+}
+@media print{.h-logo .plate{transform:none !important;--prof:0 !important;}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="h-logo" style="--logo:url('data:image/png;base64,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')" aria-hidden="true"></span>
+  <div class="h-links">
+    <a class="h-back" href="index.html">← Retour aux outils</a>
+    <a class="h-back gold" href="simulateur-capitalisation-is.html">Simulateur — contrat de capitalisation en société à l'IS →</a>
+  </div>
+  <div class="h-eyebrow">Fiche de synthèse · Ingénierie patrimoniale</div>
+  <h1>Le contrat de capitalisation</h1>
+  <div class="sub">Placement d'épargne à long terme régi par le Code des assurances, doté de la fiscalité de l'assurance-vie sur les rachats, mais transmissible et intégrant la succession. Deux régimes coexistent, selon que le souscripteur est une personne physique ou une société à l'impôt sur les sociétés.</div>
+</header>
+
+<div class="container">
+
+  <nav class="sommaire">
+    <div class="lab">Sommaire</div>
+    <div class="chips">
+      <a class="chip" href="#s1"><span class="n">01</span>Nature</a>
+      <a class="chip" href="#s2"><span class="n">02</span>Souscripteurs</a>
+      <a class="chip" href="#s3"><span class="n">03</span>Fonctionnement</a>
+      <a class="chip" href="#s4"><span class="n">04</span>Fiscalité des rachats</a>
+      <a class="chip" href="#s5"><span class="n">05</span>Transmission</a>
+      <a class="chip" href="#s6"><span class="n">06</span>Cession et apport</a>
+      <a class="chip" href="#s7"><span class="n">07</span>Démembrement et IFI</a>
+      <a class="chip" href="#s8"><span class="n">08</span>Souscription par une société</a>
+      <a class="chip" href="#s9"><span class="n">09</span>Taxation forfaitaire</a>
+      <a class="chip" href="#s10"><span class="n">10</span>Régularisation au rachat</a>
+      <a class="chip" href="#s11"><span class="n">11</span>Distribution</a>
+      <a class="chip" href="#s12"><span class="n">12</span>Comptabilisation</a>
+      <a class="chip" href="#s13"><span class="n">13</span>Assurance-vie ou capitalisation</a>
+    </div>
+  </nav>
+
+  <div class="box info" style="margin-bottom:18px;">
+    <div class="t">L'essentiel</div>
+    <p>Le contrat de capitalisation n'est <b>pas un contrat d'assurance-vie</b>&nbsp;: il ne repose sur aucun aléa lié à la durée de la vie humaine et ne comporte pas de clause bénéficiaire. Il est pourtant régi par le Code des assurances et offre les mêmes atouts — supports diversifiés, capitalisation en franchise d'impôt, rachats partiels — <b>hormis la fiscalité décès</b>. Sa singularité&nbsp;: c'est un <b>bien transmissible</b>, qui peut être donné, cédé, démembré, et qui entre dans la succession sans se dénouer.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ══ 01 ══════════════════════════════════════════════ -->
+    <section class="card" id="s1">
+      <h2><span class="n">01</span> Nature et caractéristiques</h2>
+      <div class="tw"><table>
+        <tr><td class="k">Qualification</td><td>Créance sur l'assureur — n'est pas un contrat d'assurance-vie&nbsp;: ni couverture d'un risque, ni dépendance à la durée de la vie</td></tr>
+        <tr><td class="k">Textes</td><td>C. ass. art. L. 132-1 et suivants</td></tr>
+        <tr><td class="k">Durée</td><td>Déterminée, généralement de 8 à 30 ans&nbsp;; en pratique prorogée tacitement d'année en année</td></tr>
+        <tr><td class="k">Prise d'effet</td><td>Encaissement de la première prime</td></tr>
+        <tr><td class="k">Clause bénéficiaire</td><td>Absente</td></tr>
+        <tr><td class="k">Insaisissabilité</td><td>Non — le régime de l'article L. 132-14 C. ass., réservé aux contrats stipulés au profit d'un bénéficiaire, ne joue pas</td></tr>
+        <tr><td class="k">Nantissement</td><td>Possible, en garantie d'un prêt</td></tr>
+      </table></div>
+      <p>Contrat, titre et bon de capitalisation sont synonymes. La souscription au porteur n'est plus pratiquée&nbsp;: elle est aujourd'hui nominative.</p>
+    </section>
+
+    <!-- ══ 02 ══════════════════════════════════════════════ -->
+    <section class="card" id="s2">
+      <h2><span class="n">02</span> Qui peut souscrire</h2>
+      <h3>Personnes physiques</h3>
+      <p>Toute personne physique, <b>sans limite d'âge</b>&nbsp;: l'absence d'aléa écarte toute requalification tenant à l'âge du souscripteur, à la proximité du décès ou à la théorie des primes manifestement exagérées — le contrat intégrant de toute façon la succession.</p>
+      <ul>
+        <li><b>Mineur</b>&nbsp;: accord des deux parents. Pour un contrat multi-supports, qui constitue un acte de disposition, l'autorisation du juge aux affaires familiales est recommandée (C. civ. art. 387-1, 8°).</li>
+        <li><b>Curatelle</b>&nbsp;: assistance du curateur. <b>Tutelle</b>&nbsp;: autorisation du juge. Acte de disposition dans les deux cas.</li>
+      </ul>
+      <h3>Personnes morales</h3>
+      <p>Organismes sans but lucratif, sociétés patrimoniales et holdings passives, dans les conditions posées par la charte déontologique de la Fédération française de l'assurance — voir la section 08.</p>
+    </section>
+
+    <!-- ══ 03 ══════════════════════════════════════════════ -->
+    <section class="card" id="s3">
+      <h2><span class="n">03</span> Fonctionnement</h2>
+      <p><b>Supports.</b> Fonds en euros (effet de cliquet, taux minimum garanti, participation aux bénéfices), unités de compte (risque de perte assumé par le souscripteur, seul le nombre d'UC étant garanti) ou euro-croissance, à garantie donnée à échéance (C. ass. art. L. 142-1).</p>
+      <p><b>En cours de vie.</b> Versements complémentaires libres, arbitrages et avances sans incidence fiscale, rachats partiels ou totaux à tout moment.</p>
+      <p><b>Renonciation.</b> 30 jours pour les personnes physiques (C. ass. art. L. 132-5-1). La loi ne l'accorde pas aux personnes morales, que les conditions générales protègent toutefois le plus souvent.</p>
+      <div class="box warn">
+        <div class="t">Loi Sapin II</div>
+        <p>En circonstances exceptionnelles, le Haut Conseil de stabilité financière peut suspendre ou restreindre rachats, arbitrages, avances et versements, pour 3 mois renouvelables — sans excéder 6 mois consécutifs pour les rachats.</p>
+      </div>
+    </section>
+
+    <!-- ══ 04 ══════════════════════════════════════════════ -->
+    <section class="card c-fisc wide" id="s4">
+      <h2><span class="n">04</span> Fiscalité des rachats — souscripteur personne physique</h2>
+      <p>Identique à celle de l'assurance-vie. Seule la <b>part de produits comprise dans le rachat</b> est imposable, déterminée par la règle du prorata.</p>
+      <div class="formula">
+<span class="lab">Produits imposables =</span>  Rachat &minus; <b>( Primes versées × Rachat / Valeur du contrat )</b>
+      </div>
+      <div class="tw"><table>
+        <tr><th style="width:20%">Ancienneté du contrat</th><th>Primes versées avant le 27 septembre 2017</th><th>Primes versées depuis le 27 septembre 2017</th></tr>
+        <tr><td class="k">Moins de 4 ans</td><td>Barème progressif, ou prélèvement forfaitaire libératoire de 35&nbsp;% sur option</td><td rowspan="2">PFU de 12,8&nbsp;%, ou barème progressif sur option globale</td></tr>
+        <tr><td class="k">De 4 à 8 ans</td><td>Barème progressif, ou PFL de 15&nbsp;%</td></tr>
+        <tr><td class="k">8 ans et plus</td><td>Barème progressif, ou PFL de 7,5&nbsp;%, après abattement</td><td>Après abattement&nbsp;: 7,5&nbsp;% tant que les primes nettes n'excèdent pas 150&nbsp;000&nbsp;€&nbsp;; 12,8&nbsp;% sur la fraction au-delà</td></tr>
+      </table></div>
+      <p><b>Abattement annuel après 8 ans</b>&nbsp;: 4&nbsp;600&nbsp;€ pour une personne seule, 9&nbsp;200&nbsp;€ pour un couple soumis à imposition commune, tous contrats confondus.</p>
+      <p><b>Prélèvements sociaux de 17,2&nbsp;%</b>&nbsp;: prélevés annuellement à l'inscription en compte sur le fonds en euros, et au rachat sur les unités de compte. En cas de perte nette constatée au dénouement, ils sont restitués, assortis de l'intérêt légal.</p>
+      <div class="box ok">
+        <div class="t">LFSS 2026 — la capitalisation échappe à la hausse</div>
+        <p>L'article 12 de la loi n° 2025-1403 du 30 décembre 2025 a porté la CSG sur les revenus du capital de 9,2 à 10,6&nbsp;%, soit <b>18,6&nbsp;% de prélèvements sociaux</b> et un PFU de 31,4&nbsp;% sur les dividendes, intérêts et plus-values mobilières. Les produits des contrats d'<b>assurance-vie et de capitalisation en sont expressément exclus</b> et demeurent à 17,2&nbsp;%, sans stratification des gains selon leur date d'acquisition (art. L. 136-8, IV du CSS). Le PFU applicable à ces contrats reste donc à 30&nbsp;%.</p>
+      </div>
+      <div class="box info">
+        <div class="t">Sortie en rente viagère</div>
+        <p>Lorsque le contrat prévoit une sortie en rente viagère, les produits et intérêts acquis sont <b>exonérés d'impôt sur le revenu</b>.</p>
+      </div>
+      <p class="ref">CGI art. 125-0 A · BOI-RPPM-RCM-20-10-20-50 · CSS art. L. 136-8, IV.</p>
+    </section>
+
+    <!-- ══ 05 ══════════════════════════════════════════════ -->
+    <section class="card c-transm" id="s5">
+      <h2><span class="n">05</span> Transmission à titre gratuit</h2>
+      <h3>Donation</h3>
+      <p>Le contrat étant une créance, la donation suppose en principe un <b>acte notarié</b>&nbsp;: le don manuel est théoriquement exclu, même si certaines compagnies l'admettent par tolérance. Les droits sont assis sur la valeur nominale majorée des intérêts échus non perçus et des intérêts courus — en pratique la <b>valeur vénale</b> lorsque le contrat est en gain, la valeur nominale majorée des intérêts lorsqu'il est en perte.</p>
+      <h3>Décès</h3>
+      <p>Le contrat <b>ne se dénoue pas</b>&nbsp;: il entre dans l'actif successoral comme tout autre bien et supporte les droits de succession de droit commun. Les articles 990 I et 757 B du CGI ne s'appliquent pas. Héritiers et légataires se substituent au souscripteur et peuvent racheter ou conserver le contrat jusqu'à son terme.</p>
+      <div class="box ok">
+        <div class="t">Le double avantage de la transmission</div>
+        <ul>
+          <li><b>Antériorité fiscale conservée</b>&nbsp;: le délai de 8 ans court depuis la souscription initiale, non depuis la transmission.</li>
+          <li><b>Purge des produits latents</b>&nbsp;: depuis le 1<sup>er</sup> janvier 2018, le prix d'acquisition retenu pour les rachats ultérieurs est la valeur ayant servi au calcul des droits (CGI art. 124 C). Seuls les produits acquis depuis la transmission sont taxables.</li>
+        </ul>
+      </div>
+      <div class="box warn">
+        <div class="t">Réserves</div>
+        <p>La purge ne couvre pas les prélèvements sociaux déjà acquittés sur le fonds en euros. En donation démembrée, le prix d'acquisition à retenir reste incertain et les pratiques des compagnies divergent&nbsp;: <b>interroger l'assureur en amont</b>, voire déposer un rescrit. Un contrat en moins-value ne doit pas être donné&nbsp;: le donataire hériterait d'un prix d'acquisition minoré.</p>
+      </div>
+      <p class="ref">CGI art. 124 C · BOI-ENR-DMTG-10-40-10-40, § 60.</p>
+    </section>
+
+    <!-- ══ 06 ══════════════════════════════════════════════ -->
+    <section class="card c-transm" id="s6">
+      <h2><span class="n">06</span> Cession et apport</h2>
+      <p>La cession, l'échange et l'<b>apport en société</b> sont des mutations à titre onéreux&nbsp;: ils ne sont pas taxés comme des rachats mais comme des <b>plus-values</b>. Ils purgent les intérêts latents pour l'acquéreur ou le bénéficiaire de l'apport, qui conserve par ailleurs l'antériorité du contrat.</p>
+      <h3>Deux usages de référence</h3>
+      <ul>
+        <li><b>Créance de restitution.</b> Le contrat peut être attribué au nu-propriétaire en paiement de la créance née d'un quasi-usufruit — sous réserve que la succession du quasi-usufruitier contienne assez d'actifs pour la régler.</li>
+        <li><b>Apport à société.</b> Particulièrement pertinent lorsque le contrat est en moins-value&nbsp;; il permet d'organiser ensuite la transmission par donation-partage des titres.</li>
+      </ul>
+    </section>
+
+    <!-- ══ 07 ══════════════════════════════════════════════ -->
+    <section class="card c-transm wide" id="s7">
+      <h2><span class="n">07</span> Démembrement et impôt sur la fortune immobilière</h2>
+      <h3>Démembrement</h3>
+      <p>Possible dès la souscription, à condition que les fonds soient <b>déjà démembrés</b> — remploi d'un prix de vente démembré, à anticiper avant la vente. Le quasi-usufruit est exclu&nbsp;: le contrat n'est pas un bien fongible.</p>
+      <p>Une <b>convention de démembrement est impérative</b> pour répartir les pouvoirs d'arbitrage, de rachat et d'avance. À défaut, usufruitier et nu-propriétaire sont co-souscripteurs et chaque opération requiert leur accord commun.</p>
+      <div class="box info">
+        <div class="t">Réflexe de rédaction</div>
+        <p>En présence de plusieurs donataires, <b>souscrire autant de contrats que de donataires</b>&nbsp;: chacun recouvre la pleine propriété d'un contrat au décès de l'usufruitier, ce qui évite le <b>droit de partage de 2,5&nbsp;%</b> sur la valeur vénale et les blocages de gestion en indivision.</p>
+      </div>
+      <h3>IFI</h3>
+      <p>Le contrat, actif financier, est en principe hors assiette. Il y entre toutefois pour la seule <b>fraction des unités de compte représentative de biens et droits immobiliers</b> imposables, lorsqu'il est rachetable (CGI art. 972). Le fonds en euros en est exclu, même investi en immobilier. La valeur imposable est communiquée par l'assureur.</p>
+    </section>
+
+    <!-- ══ 08 ══════════════════════════════════════════════ -->
+    <section class="card c-is wide" id="s8">
+      <h2><span class="n">08</span> Souscription par une société à l'impôt sur les sociétés</h2>
+      <p>La charte déontologique de la Fédération française de l'assurance de mars 2019, prolongeant l'engagement FFSA / GEMA du 1<sup>er</sup> juillet 2011, réserve la souscription de contrats de capitalisation à prime unique par une personne morale&nbsp;:</p>
+      <ul>
+        <li>aux <b>organismes de droit privé sans but lucratif</b> — imposés à 10&nbsp;% sur la base forfaitaire annuelle, puis à 24&nbsp;% sur les seuls intérêts non encore taxés lors du rachat (CGI art. 219 bis)&nbsp;;</li>
+        <li>aux <b>sociétés patrimoniales et holdings passives</b> dont l'activité principale est la gestion de leur propre patrimoine mobilier et immobilier, dont les associés sont des personnes physiques (ou des sociétés à l'IR, ou des sociétés à l'IS elles-mêmes détenues par des personnes physiques), et dont le chiffre d'affaires industriel, commercial, artisanal ou libéral <b>n'excède pas 10&nbsp;%</b> de la somme du chiffre d'affaires et des produits financiers, plus-values comprises.</li>
+      </ul>
+      <p>Les loyers et les honoraires de prestations facturés aux filiales sont exclus de ce chiffre d'affaires. La limitation vise à écarter les sociétés opérationnelles de l'accès au fonds en euros.</p>
+      <div class="box warn">
+        <div class="t">Deux vigilances</div>
+        <ul>
+          <li><b>Fonds en euros</b>&nbsp;: la rémunération de la première année n'est versée qu'à l'issue de la <b>4<sup>e</sup> année</b> de détention. Une sortie anticipée la réduit au prorata du montant racheté.</li>
+          <li><b>SEL et SPFPL</b>&nbsp;: leur objet est en principe exclusivement l'exercice de la profession et, accessoirement, la gestion de trésorerie en lien avec cet objet. Un placement patrimonial de long terme y est juridiquement fragile (loi du 31 décembre 1990, art. 1 et 31-1&nbsp;; comp. Cass. civ. 1, 20 mars 2013, n° 12-17113).</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ══ 09 ══════════════════════════════════════════════ -->
+    <section class="card c-is" id="s9">
+      <h2><span class="n">09</span> Taxation forfaitaire annuelle</h2>
+      <p>Les produits sont fiscalement traités comme des <b>primes de remboursement</b> (CGI art. 238 septies E). Pour un contrat multi-supports — dont la valeur de remboursement est aléatoire — une imposition forfaitaire est due <b>à chaque clôture d'exercice, même en l'absence de tout rachat</b>.</p>
+      <div class="formula">
+<span class="lab">Taux actuariel</span>   <b>t = 105 % × TME</b><br>
+<span class="lab">TME connu au jour de la souscription, fixe pour toute la<br>durée du contrat, y compris en cas de versement complémentaire.</span><br><br>
+<span class="lab">Assiette cumulée</span>   <b>Nominal net × [ (1 + t)<sup>a</sup> &minus; 1 ]</b><br>
+<span class="lab">a = ancienneté en années, prorata temporis le premier exercice</span><br><br>
+<span class="lab">Assiette de l'exercice</span>   <b>= cumul &minus; produits déjà taxés</b>
+      </div>
+      <p>Le nominal s'entend <b>hors frais d'entrée</b>. Les plus-values latentes ne sont jamais taxées&nbsp;; les moins-values latentes, appréciées <b>globalement sur l'ensemble du contrat</b> et non support par support, ouvrent droit à une provision pour dépréciation déductible.</p>
+      <div class="box info">
+        <div class="t">Si le TME est négatif ou nul</div>
+        <p>Aucune taxation annuelle n'est due — ce fut le cas des souscriptions de juillet 2019 à mars 2021. Ce n'est pas nécessairement un avantage&nbsp;: la taxation étalée permet souvent de loger les produits dans le taux réduit d'IS de 15&nbsp;%, quand une imposition unique au dénouement les expose au taux de 25&nbsp;%.</p>
+      </div>
+      <p><b>Contrat mono-support en euros</b>&nbsp;: régime différent. Les intérêts étant définitivement acquis chaque année, ils sont imposés pour leur <b>montant réel</b>.</p>
+      <p class="ref">CGI art. 238 septies E, II, 3 · BOI-BIC-PDSTK-10-20-60-10 et -20, § 110 à 310 · CE 13 janvier 2010, n° 321416.</p>
+    </section>
+
+    <!-- ══ 10 ══════════════════════════════════════════════ -->
+    <section class="card c-is" id="s10">
+      <h2><span class="n">10</span> Régularisation lors d'un rachat</h2>
+      <p>La taxation forfaitaire n'est qu'une <b>avance d'impôt</b>. Elle est régularisée au rachat partiel, au rachat total ou au terme, en fonction des produits réellement générés.</p>
+      <div class="formula">
+<span class="lab">Proportion rachetée</span>   <b>p = Rachat / Valeur du contrat</b><br><br>
+<span class="lab">Assiette théorique</span>   <b>Rachat &minus; ( Versements × p )</b><br><br>
+<span class="lab">Assiette réelle</span>   <b>= théorique &minus; ( produits déjà taxés × p )</b>
+      </div>
+      <p>Le nominal et le cumul des produits déjà taxés sont ensuite réduits dans la même proportion. Si la société a été imposée au fil de l'eau au-delà du gain réel, l'excédent vient <b>en diminution du résultat fiscal</b> de l'exercice de régularisation, le cas échéant reporté.</p>
+      <div class="box info">
+        <div class="t">La règle du prorata, côté trésorerie</div>
+        <p>Un rachat porte toujours, dans la même proportion, sur du capital et sur des produits. Racheter un montant égal aux intérêts de l'année ne fait donc pas remonter ces intérêts&nbsp;: seule en remonte la fraction correspondant au poids de la plus-value latente dans le contrat. Le solde est un remboursement de capital, qui rejoint la trésorerie de la société sans être distribuable.</p>
+      </div>
+    </section>
+
+    <!-- ══ 11 ══════════════════════════════════════════════ -->
+    <section class="card c-is wide" id="s11">
+      <h2><span class="n">11</span> Distribution aux associés</h2>
+      <div class="box red">
+        <div class="t">Le point à ne pas manquer</div>
+        <p>Le résultat fiscal issu de la taxation forfaitaire <b>ne constitue pas un résultat comptable distribuable</b>. C'est le rachat qui déclenche la constatation comptable de la plus-value et ouvre la faculté de distribuer. Le montant distribuable est alors limité aux <b>seuls produits compris dans le rachat</b>, jamais à sa totalité.</p>
+        <p>Distribuer la part de capital rachetée créerait un <b>compte courant d'associé débiteur</b>&nbsp;: interdit en SARL et en SAS (C. com. art. L. 223-23), pénalement sanctionné (art. L. 242-6, 3°), requalifiable en distribution occulte taxée sans l'abattement de 40&nbsp;% et générateur de cotisations sociales.</p>
+      </div>
+      <p>Le dividende brut correspond donc aux produits rachetés nets de l'IS qui les a frappés. Il supporte ensuite, chez l'associé personne physique, le <b>PFU de 31,4&nbsp;%</b> — 12,8&nbsp;% d'impôt sur le revenu et 18,6&nbsp;% de prélèvements sociaux depuis le 1<sup>er</sup> janvier 2026 —, sauf option globale pour le barème progressif, avec abattement de 40&nbsp;% et 6,8 points de CSG déductible.</p>
+      <p class="ref">Le taux de 17,2&nbsp;% maintenu pour les produits du contrat de capitalisation ne se transpose pas ici&nbsp;: le dividende versé par la société est un revenu distribué de droit commun, soumis au taux plein.</p>
+    </section>
+
+    <!-- ══ 12 ══════════════════════════════════════════════ -->
+    <section class="card c-is" id="s12">
+      <h2><span class="n">12</span> Comptabilisation</h2>
+      <p>Le contrat s'analyse comme un <b>placement unique</b>, quel que soit le poids respectif du fonds en euros et des unités de compte. Il est en principe inscrit au <b>compte 272</b> — droits de créance immobilisés.</p>
+      <div class="tw"><table>
+        <tr><th style="width:38%">Situation</th><th>Traitement</th></tr>
+        <tr><td class="k">Plus-value latente</td><td>Non comptabilisée</td></tr>
+        <tr><td class="k">Moins-value latente</td><td>Provision pour dépréciation, appréciée globalement sur le contrat</td></tr>
+        <tr><td class="k">Frais d'entrée</td><td>Au choix&nbsp;: charge de l'exercice, ou incorporation au coût d'acquisition</td></tr>
+        <tr><td class="k">Rachat</td><td>Plus-value = valeur rachetée &minus; coût historique de la quote-part</td></tr>
+      </table></div>
+      <p class="ref">BOI-BIC-CHG-20-20-10, § 140 · Bulletin CNCC n° 164, décembre 2011.</p>
+    </section>
+
+    <!-- ══ 13 ══════════════════════════════════════════════ -->
+    <section class="card wide" id="s13">
+      <h2><span class="n">13</span> Assurance-vie ou capitalisation&nbsp;?</h2>
+      <div class="tw"><table>
+        <tr><th style="width:24%">&nbsp;</th><th>Assurance-vie</th><th>Contrat de capitalisation</th></tr>
+        <tr><td class="k">Souscripteur</td><td>Personne physique</td><td>Personne physique ou morale</td></tr>
+        <tr><td class="k">Clause bénéficiaire</td><td>Oui</td><td>Non</td></tr>
+        <tr><td class="k">Au décès</td><td>Dénouement — CGI art. 990 I et 757 B</td><td>Pas de dénouement — droits de succession de droit commun</td></tr>
+        <tr><td class="k">Donation, cession</td><td>Non</td><td>Oui — antériorité conservée et purge des intérêts latents</td></tr>
+        <tr><td class="k">Démembrement</td><td>Co-souscription démembrée possible&nbsp;; démembrement de la clause bénéficiaire</td><td>Oui, y compris par donation ultérieure de la nue-propriété</td></tr>
+        <tr><td class="k">Fiscalité des rachats</td><td colspan="2" class="c">Identique — CGI art. 125-0 A, prélèvements sociaux maintenus à 17,2&nbsp;%</td></tr>
+        <tr><td class="k">Insaisissabilité</td><td>Oui, au profit du bénéficiaire</td><td>Non</td></tr>
+      </table></div>
+      <div class="box ok">
+        <div class="t">Les trois usages de référence</div>
+        <ul>
+          <li><b>Transmettre en conservant l'antériorité</b>&nbsp;: donation en pleine propriété, en nue-propriété, ou avec réserve d'usufruit successif.</li>
+          <li><b>Remployer des capitaux démembrés</b>&nbsp;: alternative au quasi-usufruit, l'usufruitier percevant les revenus par rachats autonomes.</li>
+          <li><b>Loger la trésorerie longue d'une holding patrimoniale</b>&nbsp;: alternative au compte-titres, avec capitalisation et étalement de l'impôt sur les sociétés.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <a class="cta-sim" href="simulateur-capitalisation-is.html">
+    <div class="ico">📊</div>
+    <div>
+      <div class="t">Simulateur — Contrat de capitalisation en société à l'IS</div>
+      <div class="s">Projeter un placement de trésorerie&nbsp;: frais, clé fonds euro / UC, rachats programmés, taxation forfaitaire de 105&nbsp;% du TME avec sa régularisation, et remontée de trésorerie nette d'IS et d'imposition personnelle.</div>
+    </div>
+    <div class="arr">→</div>
+  </a>
+
+  <div class="footer">
+    C. ass. art. L. 132-1 et s., L. 132-5-1, L. 132-14, L. 142-1 · C. civ. art. 387-1, 467, 473 · CGI art. 124 C, 125-0 A, 200 A, 219, 219 bis, 238 septies E, 972 · CSS art. L. 136-8, IV · C. com. art. L. 223-23 et L. 242-6 · BOI-RPPM-RCM-20-10-20-50 · BOI-ENR-DMTG-10-40-10-40 · BOI-BIC-PDSTK-10-20-60-10 et -20 · BOI-BIC-CHG-20-20-10 · CE 13 janvier 2010, n° 321416 · Charte déontologique FFA, mars 2019 · Loi n° 2016-1691 du 9 décembre 2016 (Sapin II) · Loi n° 2025-1403 du 30 décembre 2025 (LFSS 2026), art. 12.<br>
+    Document à jour au 8 août 2026. <strong>Réservé à l'usage professionnel interne</strong> — ne constitue ni un conseil en investissement ni une consultation juridique.
+    <div class="loca-credit">Cette fiche a été établie par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Logo LOCA — prisme filaire piloté au pointeur.
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  var logo=document.querySelector('.h-logo');
+  if(!logo)return;
+  var plate=document.createElement('div');plate.className='plate';
+  var sheen=document.createElement('div');sheen.className='sheen';
+  plate.appendChild(sheen);logo.appendChild(plate);
+
+  var N=18,pas=1.15;
+  for(var i=0;i<N;i++){
+    var d=document.createElement('div');
+    d.className='couche'+(i===N-1?' avant':'');
+    var t=i/(N-1);
+    d.style.transform='translateZ('+((i-(N-1)/2)*pas).toFixed(2)+'px)';
+    if(i<N-1)d.style.opacity='calc(var(--prof) * '+(0.05+0.20*Math.pow(t,2.2)).toFixed(3)+')';
+    plate.insertBefore(d,sheen);
+  }
+
+  var ampY=150,ampX=70,seuil=26;
+  var cur={ry:0,rx:0},cible={ry:0,rx:0},raf=null;
+  function pose(){
+    plate.style.transform='rotateY('+cur.ry.toFixed(2)+'deg) rotateX('+cur.rx.toFixed(2)+'deg)';
+    var k=Math.min(1,(Math.abs(cur.ry)+Math.abs(cur.rx))/seuil);
+    plate.style.setProperty('--prof',k.toFixed(3));
+  }
+  pose();
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+
+  function boucle(){
+    cur.ry+=(cible.ry-cur.ry)*0.14;
+    cur.rx+=(cible.rx-cur.rx)*0.14;
+    if(Math.abs(cible.ry-cur.ry)<0.04&&Math.abs(cible.rx-cur.rx)<0.04){
+      cur.ry=cible.ry;cur.rx=cible.rx;pose();raf=null;return;
+    }
+    pose();raf=requestAnimationFrame(boucle);
+  }
+  function relancer(){if(raf===null)raf=requestAnimationFrame(boucle);}
+
+  logo.addEventListener('mousemove',function(e){
+    var r=logo.getBoundingClientRect();
+    cible.ry=((e.clientX-r.left)/r.width-0.5)*ampY;
+    cible.rx=-((e.clientY-r.top)/r.height-0.5)*ampX;
+    logo.classList.add('eveille');relancer();
+  });
+  logo.addEventListener('mouseleave',function(){
+    cible.ry=0;cible.rx=0;logo.classList.remove('eveille');relancer();
+  });
+})();
+</script>
+</body>
+</html>
