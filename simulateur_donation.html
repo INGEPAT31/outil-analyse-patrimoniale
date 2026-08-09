@@ -1124,135 +1124,59 @@ function sgCalculer(){
 //  SCHÉMA
 
 function drawSchema(){
-  const d=window._sgData;if(!d)return;
+  const wrap=document.getElementById('schema-svg-wrap');
+  if(!wrap)return;
+  const svg=buildSchemaSVG(true);
+  if(svg)wrap.innerHTML=svg;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Construction du SVG du schéma.
+   withBands = true  → rendu écran : bandeau de titre + bandeau
+                       de synthèse (coût global, gain successoral).
+   withBands = false → rendu export PNG : uniquement le schéma
+                       (colonnes donateurs / biens / donataires).
+   ═══════════════════════════════════════════════════════════ */
+function buildSchemaSVG(withBands){
+  const d=window._sgData;if(!d)return '';
   const gainVal=parseFloat(document.getElementById('schema-gain-val')?.value)||0;
-  const{donors,children,biens,totalDroits,totalFrais,donorEmol,colDroitsTotal,activeCols,sgNbDonateurs,bienResults}=d;
+  const{donors,children,biens,totalDroits,donorEmol,colDroitsTotal,activeCols,sgNbDonateurs,bienResults}=d;
   const nD=donors.length,nC=children.length,nB=biens.length;
 
-  // Palette style D banking
-  const C_NAVY='#1C2B3A';    // fond bandeau bas, texte
-  const C_HDR='#1a4f8c';     // bleu institutionnel (identique à --accent de l'interface)
-  const C_HDR_D='#12365f';   // bleu profond, fin de dégradé de l'en-tête
-  const C_DON='#1C4F78';     // fond donateur
-  const C_DON_DARK='#0F3050';// fond encart frais
-  const C_GOLD='#C9A84C';    // or : titres, accents, flèches don→bien
-  const C_ENF='#E8F4FA';     // fond enfant
-  const C_ENF_BD='#1C6B8A';  // bordure enfant, flèche bien→enfant
-  const C_IVOIRE='#F7F5F0';  // fond général
-  const C_TEXT='#1C2B3A';    // texte principal
-  const C_MUTED='#6B7A8D';   // texte secondaire
-  const C_BIEN_BD='#1C6B8A'; // bordure bien (défaut)
-  const C_GREEN_BD='#2D7D46';// bordure bien parts sociales
-  const C_FRAIS='#854f0b';   // frais dans bandeau
+  /* ── Palette « C1 clair » ─────────────────────────────── */
+  const C_BG      = '#FFFFFF';   // fond général
+  const C_BAND    = '#EDE9E0';   // bandeaux neutres clairs (greige)
+  const C_GOLD    = '#B5922A';   // filets, libellés de colonnes, flèches don→bien
+  const C_GOLD_L  = '#E8CE74';   // montants sur fond bleu
+  const C_BLUE    = '#1C4F78';   // cartes donateurs, titres, total
+  const C_BLUE_S  = '#3D6E97';   // séparateur interne sur fond bleu
+  const C_BLUE_LT = '#A8C8E0';   // libellés secondaires sur fond bleu
+  const C_TEXT    = '#1C2B3A';   // texte principal
+  const C_MUTED   = '#6B7A8D';   // texte secondaire
+  const C_BAND_TX = '#6E6960';   // texte secondaire sur bandeau greige
+  const C_BAND_IT = '#8B8579';   // ligne italique du bandeau bas
+  const C_CARD_BD = '#DCD9D1';   // bordure des cartes
+  const C_ENF_BG  = '#FAF8F3';   // fond des cartes donataires
+  const C_SEP     = '#E7E3DA';   // filets internes des cartes claires
+  const C_FRAIS   = '#854f0b';   // frais / droits en brun
+  const C_GREEN   = '#0f6e56';   // gain successoral
 
-  // Couleurs de flèches bien→enfant selon le type de bien
-  const bienColors=['#1C6B8A','#2D7D46','#8B4513','#5C1A1A','#1e4d7b'];
-  const bienBdColors=['#1C6B8A','#2D7D46','#8B4513','#5C1A1A','#1e4d7b'];
+  // Couleur propre à chaque bien : liseré supérieur + flèche vers les donataires.
+  // Indexée sur le rang du bien (et non sur son type) afin que deux biens de même
+  // nature restent distinguables sur le schéma.
+  const BIEN_COLORS=['#1C4F78','#2D7D46','#8A5A2B','#6B3F6E','#1F6F7A','#7A2E4E'];
+  const colBien=bi=>BIEN_COLORS[bi%BIEN_COLORS.length];
 
-  const PAD=40;
-  const donW=160,donH=86,bienW=168,bienH=92,enfW=158,enfH=72;
-  const xDon=PAD,xBien=820/2-bienW/2,xEnf=820-PAD-enfW;
-  const W=820;
-  const yHeader=56;// fin de l'en-tête
-  const yColLabel=yHeader+22;
-  const yStart=yColLabel+18;
+  const FF="Calibri,Carlito,'Segoe UI',sans-serif";
 
-  const yDonGap=Math.max(donH+18,100);
-  const yBienGap=Math.max(bienH+18,110);
-  const yEnfGap=Math.max(enfH+18,90);
+  /* ── Géométrie ────────────────────────────────────────── */
+  const W=880, PAD=40;
+  const donW=180, donH=80;
+  const bienW=180, bienH=92;
+  const enfW=180;
+  const xDon=PAD, xBien=W/2-bienW/2, xEnf=W-PAD-enfW;
 
-  const totalDonH=nD*donH+(nD-1)*18;
-  const totalBienH=nB*bienH+(nB-1)*18;
-  const totalEnfH=nC*enfH+(nC-1)*18;
-  const maxH=Math.max(totalDonH,totalBienH,totalEnfH);
-
-  const yDonStart=yStart+(maxH-totalDonH)/2;
-  const yBienStart=yStart+(maxH-totalBienH)/2;
-  const yEnfStart=yStart+(maxH-totalEnfH)/2;
-
-  const yBand=yStart+maxH+30;
-  const gainH=gainVal>0?54:0;
-  const H=yBand+74+gainH+50;
-
-  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;font-family:'Inter',sans-serif;background:${C_IVOIRE};">`;
-  svg+=`<rect width="${W}" height="${H}" fill="${C_IVOIRE}"/>`;
-
-  // ── En-tête : bleu institutionnel en dégradé + filet or ──
-  svg+=`<defs><linearGradient id="hdrGrad" x1="0" y1="0" x2="1" y2="0">`;
-  svg+=`<stop offset="0%" stop-color="${C_HDR_D}"/><stop offset="45%" stop-color="${C_HDR}"/><stop offset="100%" stop-color="${C_HDR_D}"/>`;
-  svg+=`</linearGradient></defs>`;
-  svg+=`<rect x="0" y="0" width="${W}" height="${yHeader}" rx="0" fill="url(#hdrGrad)"/>`;
-  svg+=`<rect x="0" y="${yHeader-2}" width="${W}" height="2" fill="${C_GOLD}" opacity=".85"/>`;
-  svg+=`<text x="${W/2}" y="26" text-anchor="middle" font-size="14" font-weight="600" fill="${C_GOLD}" font-family="Georgia,serif">Schéma de la donation</text>`;
-  svg+=`<text x="${W/2}" y="44" text-anchor="middle" font-size="9.5" fill="#cfe0f2">${donors.map(d=>d.name).join(' &amp; ')} → ${children.map(c=>c.name).join(', ')} · Simulation à titre indicatif</text>`;
-
-  // ── En-têtes colonnes ──
-  const lblDon=nD>1?'DONATEURS':'DONATEUR';
-  const lblEnf=nC>1?'DONATAIRES':'DONATAIRE';
-  const lblBien=nB>1?'BIENS TRANSMIS':'BIEN TRANSMIS';
-  svg+=`<text x="${xDon+donW/2}" y="${yColLabel}" text-anchor="middle" font-size="8.5" font-weight="600" fill="${C_GOLD}" letter-spacing="1">${lblDon}</text>`;
-  svg+=`<text x="${xBien+bienW/2}" y="${yColLabel}" text-anchor="middle" font-size="8.5" font-weight="600" fill="${C_GOLD}" letter-spacing="1">${lblBien}</text>`;
-  svg+=`<text x="${xEnf+enfW/2}" y="${yColLabel}" text-anchor="middle" font-size="8.5" font-weight="600" fill="${C_GOLD}" letter-spacing="1">${lblEnf}</text>`;
-  svg+=`<line x1="${xDon}" y1="${yColLabel+5}" x2="${xDon+donW}" y2="${yColLabel+5}" stroke="${C_GOLD}" stroke-width="0.5" opacity=".5"/>`;
-  svg+=`<line x1="${xBien}" y1="${yColLabel+5}" x2="${xBien+bienW}" y2="${yColLabel+5}" stroke="${C_GOLD}" stroke-width="0.5" opacity=".5"/>`;
-  svg+=`<line x1="${xEnf}" y1="${yColLabel+5}" x2="${xEnf+enfW}" y2="${yColLabel+5}" stroke="${C_GOLD}" stroke-width="0.5" opacity=".5"/>`;
-
-  // ── Boîtes donateurs ──
-  const fraisParDon=donors.map((_,di)=>{const df=donorEmol[di];return df?(df.emolTTC||0)+(df.totalTax||0)+(df.debours||0):0;});
-  const totalFraisGlobal=fraisParDon.reduce((s,v)=>s+v,0);
-
-  donors.forEach((don,di)=>{
-    const y=yDonStart+di*(donH+18);
-    svg+=`<rect x="${xDon}" y="${y}" width="${donW}" height="${donH}" rx="8" fill="${C_DON}"/>`;
-    svg+=`<text x="${xDon+donW/2}" y="${y+20}" text-anchor="middle" font-size="12" font-weight="600" fill="${C_GOLD}" font-family="Georgia,serif">${don.name.length>18?don.name.substring(0,17)+'…':don.name}</text>`;
-    if(don.age)svg+=`<text x="${xDon+donW/2}" y="${y+35}" text-anchor="middle" font-size="9" fill="#A8C8E0">${don.age} ans</text>`;
-    const yRect=don.age?y+42:y+30;
-    svg+=`<rect x="${xDon+10}" y="${yRect}" width="${donW-20}" height="34" rx="4" fill="${C_DON_DARK}"/>`;
-    svg+=`<text x="${xDon+donW/2}" y="${yRect+13}" text-anchor="middle" font-size="8.5" fill="#A8C8E0">Frais de notaire</text>`;
-    svg+=`<text x="${xDon+donW/2}" y="${yRect+27}" text-anchor="middle" font-size="10" font-weight="600" fill="${C_GOLD}">${fmt(fraisParDon[di])}</text>`;
-  });
-
-  // ── Boîtes biens ──
-  biens.forEach((b,bi)=>{
-    const y=yBienStart+bi*(bienH+18);
-    const bdCol=b.type==='parts'?C_GREEN_BD:C_BIEN_BD;
-    const typeLabel=b.type==='immo'?'Immobilier':b.type==='parts'?'Parts sociales':'Créances / VM';
-    const donLabel=b.donorIdxs.map(di=>donors[di]?.name.split(' ')[0]||('D'+(di+1))).join(' &amp; ');
-    svg+=`<rect x="${xBien}" y="${y}" width="${bienW}" height="${bienH}" rx="8" fill="#fff" stroke="${bdCol}" stroke-width="1"/>`;
-    svg+=`<rect x="${xBien}" y="${y}" width="${bienW}" height="5" rx="4" fill="${bdCol}"/>`;
-    svg+=`<text x="${xBien+bienW/2}" y="${y+22}" text-anchor="middle" font-size="12" font-weight="600" fill="${C_TEXT}" font-family="Georgia,serif">${b.nom.length>20?b.nom.substring(0,19)+'…':b.nom}</text>`;
-    svg+=`<text x="${xBien+bienW/2}" y="${y+38}" text-anchor="middle" font-size="8.5" fill="${C_MUTED}">${typeLabel} · ${b.typeD==='NP'?'Nue-propriété':'Pleine propriété'}</text>`;
-    svg+=`<text x="${xBien+bienW/2}" y="${y+56}" text-anchor="middle" font-size="11.5" font-weight="600" fill="${C_TEXT}">${fmt(b.valeur)}</text>`;
-    if(b.decoteActive&&b.type==='parts')svg+=`<text x="${xBien+bienW/2}" y="${y+70}" text-anchor="middle" font-size="8" fill="#1e4d7b">Décote ${b.decoteTaux} %</text>`;
-    svg+=`<text x="${xBien+bienW/2}" y="${b.decoteActive&&b.type==='parts'?y+84:y+72}" text-anchor="middle" font-size="8" fill="${C_GOLD}">${donLabel}</text>`;
-  });
-
-  // ── Boîtes enfants ──
-  const droitsParCol={};for(let key of activeCols)droitsParCol[key]=colDroitsTotal[key]||0;
-  children.forEach((child,ci)=>{
-    const y=yEnfStart+ci*(enfH+18);
-    let droitsEnf=0;for(let di=0;di<sgNbDonateurs;di++){const key=`${di}_${ci}`;droitsEnf+=droitsParCol[key]||0;}
-    svg+=`<rect x="${xEnf}" y="${y}" width="${enfW}" height="${enfH}" rx="8" fill="${C_ENF}" stroke="${C_ENF_BD}" stroke-width="0.8"/>`;
-    svg+=`<rect x="${xEnf}" y="${y}" width="${enfW}" height="4" rx="4" fill="${C_ENF_BD}"/>`;
-    svg+=`<text x="${xEnf+enfW/2}" y="${y+22}" text-anchor="middle" font-size="12" font-weight="600" fill="${C_TEXT}">${child.name.length>18?child.name.substring(0,17)+'…':child.name}</text>`;
-    svg+=`<text x="${xEnf+enfW/2}" y="${y+38}" text-anchor="middle" font-size="9" fill="${C_ENF_BD}">Droits de donation</text>`;
-    svg+=`<text x="${xEnf+enfW/2}" y="${y+54}" text-anchor="middle" font-size="11" font-weight="600" fill="${C_TEXT}">${fmt(droitsEnf)}</text>`;
-    svg+=`<text x="${xEnf+enfW/2}" y="${y+67}" text-anchor="middle" font-size="8" fill="${C_MUTED}">toutes donations cumulées</text>`;
-  });
-
-  // ── Flèches donateur → bien (pointillés or) ──
-  donors.forEach((don,di)=>{
-    const yDc=yDonStart+di*(donH+18)+donH/2;
-    biens.forEach((b,bi)=>{
-      if(!b.donorIdxs.includes(di))return;
-      const yBc=yBienStart+bi*(bienH+18)+bienH/2;
-      const x1=xDon+donW,x2=xBien,mx=(x1+x2)/2;
-      svg+=`<path d="M${x1},${yDc} C${mx},${yDc} ${mx},${yBc} ${x2},${yBc}" stroke="${C_GOLD}" stroke-width="1.2" fill="none" opacity=".6" stroke-dasharray="5,3"/>`;
-      svg+=`<polygon points="${x2},${yBc} ${x2-7},${yBc-4} ${x2-7},${yBc+4}" fill="${C_GOLD}" opacity=".6"/>`;
-    });
-  });
-
-  // ── Flèches bien → enfant (couleur par bien) ──
+  // Ventilation de la valeur transmise par bien et par donataire
   const valParBienEnf={};
   biens.forEach((b,bi)=>{
     children.forEach((_,ci)=>{
@@ -1260,80 +1184,207 @@ function drawSchema(){
       for(let di of b.donorIdxs){
         const key=`${di}_${ci}`;
         const br=bienResults.find(r=>r.bien===b);
-        if(br?.colsDmtg[key]?.active){const col=br.colsDmtg[key];sumVT+=col.decoteActive?col.valApresDecote:(col.valT!==undefined?col.valT:col.valPP);}
+        if(br?.colsDmtg[key]?.active){
+          const col=br.colsDmtg[key];
+          sumVT+=col.decoteActive?col.valApresDecote:(col.valT!==undefined?col.valT:col.valPP);
+        }
       }
       valParBienEnf[`${bi}_${ci}`]=sumVT;
     });
   });
+  const valParBien=biens.map((_,bi)=>children.reduce((s,__,ci)=>s+(valParBienEnf[`${bi}_${ci}`]||0),0));
+  const valParEnf =children.map((_,ci)=>biens.reduce((s,__,bi)=>s+(valParBienEnf[`${bi}_${ci}`]||0),0));
+  const totalTransmis=valParBien.reduce((s,v)=>s+v,0);
 
-  biens.forEach((b,bi)=>{
-    const yBc=yBienStart+bi*(bienH+18)+bienH/2;
-    const col=bienColors[bi%bienColors.length];
-    // Répartir les points d'ancrage horizontaux le long de la courbe selon le bien,
-    // pour éviter que deux étiquettes ne se superposent lorsque plusieurs flèches
-    // partagent une zone verticale proche.
-    const tFrac=0.32+ (bi%3)*0.12; // position le long de la courbe (0=bien,1=enfant)
-    children.forEach((child,ci)=>{
-      const active=b.donorIdxs.some(di=>activeCols.includes(`${di}_${ci}`));
-      if(!active)return;
-      const valT=valParBienEnf[`${bi}_${ci}`]||0;
-      if(valT<=0)return;
-      const yEc=yEnfStart+ci*(enfH+18)+enfH/2;
-      const x1=xBien+bienW,x2=xEnf,mx=(x1+x2)/2;
-      svg+=`<path d="M${x1},${yBc} C${mx},${yBc} ${mx},${yEc} ${x2},${yEc}" stroke="${col}" stroke-width="1.8" fill="none" opacity=".7"/>`;
-      svg+=`<polygon points="${x2},${yEc} ${x2-7},${yEc-4} ${x2-7},${yEc+4}" fill="${col}" opacity=".7"/>`;
-      // Position de l'étiquette : point sur la courbe de Bézier à t=tFrac, décalé selon l'index du bien
-      // pour espacer verticalement les étiquettes qui partageraient la même zone.
-      const t=tFrac;
-      const bx=(1-t)*(1-t)*(1-t)*x1+3*(1-t)*(1-t)*t*mx+3*(1-t)*t*t*mx+t*t*t*x2;
-      const by=(1-t)*(1-t)*(1-t)*yBc+3*(1-t)*(1-t)*t*yBc+3*(1-t)*t*t*yEc+t*t*t*yEc;
-      const labelTxt=fmt(valT);
-      const labelW=Math.max(56,labelTxt.length*6.2+16);
-      svg+=`<rect x="${bx-labelW/2}" y="${by-9}" width="${labelW}" height="16" rx="4" fill="${C_IVOIRE}" stroke="${col}" stroke-width="0.5" opacity=".96"/>`;
-      svg+=`<text x="${bx}" y="${by+3}" text-anchor="middle" font-size="9" fill="${col}" font-weight="600">${labelTxt}</text>`;
+  // Ventilation détaillée dans la carte du donataire : au-delà de 4 biens le
+  // détail est renvoyé au tableau de synthèse pour ne pas faire exploser la hauteur.
+  const detailEnf = nB<=4;
+  const nLignesEnf = detailEnf?biens.filter((_,bi)=>valParBien[bi]>0).length:0;
+  const enfH = detailEnf ? 75+15*nLignesEnf : 76;
+
+  const yHeader   = withBands?76:0;
+  const yColLabel = withBands?104:30;
+  const yStart    = yColLabel+12;
+
+  const gapD=18,gapB=18,gapE=24;
+  const totalDonH =nD*donH +(nD-1)*gapD;
+  const totalBienH=nB*bienH+(nB-1)*gapB;
+  const totalEnfH =nC*enfH +(nC-1)*gapE;
+  const maxH=Math.max(totalDonH,totalBienH,totalEnfH);
+
+  const yDonStart =yStart+(maxH-totalDonH)/2;
+  const yBienStart=yStart+(maxH-totalBienH)/2;
+  const yEnfStart =yStart+(maxH-totalEnfH)/2;
+
+  const yBand=yStart+maxH+30;
+  const bandH=74, gainH=(withBands&&gainVal>0)?56:0;
+  const H = withBands ? yBand+bandH+gainH+18 : yStart+maxH+22;
+
+  /* ── Frais et coûts ───────────────────────────────────── */
+  const fraisParDon=donors.map((_,di)=>{const df=donorEmol[di];return df?(df.emolTTC||0)+(df.totalTax||0)+(df.debours||0):0;});
+  const totalFraisGlobal=fraisParDon.reduce((s,v)=>s+v,0);
+  const totalVPP=biens.reduce((s,b)=>s+b.valeur,0);
+  const coutTotal=totalDroits+totalFraisGlobal;
+  const pctCout=totalTransmis>0?((coutTotal/totalTransmis)*100).toFixed(1).replace('.',','):'—';
+
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const cut=(s,n)=>{s=String(s??'');return s.length>n?s.substring(0,n-1)+'…':s;};
+
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;font-family:${FF};background:${C_BG};">`;
+  svg+=`<rect width="${W}" height="${H}" fill="${C_BG}"/>`;
+
+  /* ── Bandeau de titre (écran uniquement) ──────────────── */
+  if(withBands){
+    svg+=`<rect x="0" y="0" width="${W}" height="${yHeader}" fill="${C_BAND}"/>`;
+    svg+=`<rect x="0" y="${yHeader-2}" width="${W}" height="2" fill="${C_GOLD}"/>`;
+    svg+=`<text x="${W/2}" y="38" text-anchor="middle" font-size="18" font-weight="600" fill="${C_BLUE}" letter-spacing=".3">Schéma de la donation</text>`;
+    svg+=`<text x="${W/2}" y="59" text-anchor="middle" font-size="11" fill="${C_BAND_TX}">${esc(donors.map(x=>x.name).join(' & '))} → ${esc(children.map(x=>x.name).join(', '))}</text>`;
+  }
+
+  /* ── Libellés de colonnes ─────────────────────────────── */
+  const cols=[
+    {x:xDon, w:donW,  lbl:nD>1?'DONATEURS':'DONATEUR'},
+    {x:xBien,w:bienW, lbl:nB>1?'BIENS TRANSMIS':'BIEN TRANSMIS'},
+    {x:xEnf, w:enfW,  lbl:nC>1?'DONATAIRES':'DONATAIRE'}
+  ];
+  cols.forEach(c=>{
+    svg+=`<text x="${c.x+c.w/2}" y="${yColLabel}" text-anchor="middle" font-size="9" font-weight="600" fill="${C_GOLD}" letter-spacing="1.5">${c.lbl}</text>`;
+    svg+=`<line x1="${c.x}" y1="${yColLabel+6}" x2="${c.x+c.w}" y2="${yColLabel+6}" stroke="${C_GOLD}" stroke-width=".6" opacity=".55"/>`;
+  });
+
+  /* ── Flèches donateur → bien (or, pointillé) ──────────── */
+  donors.forEach((don,di)=>{
+    const yDc=yDonStart+di*(donH+gapD)+donH/2;
+    biens.forEach((b,bi)=>{
+      if(!b.donorIdxs.includes(di))return;
+      const yBc=yBienStart+bi*(bienH+gapB)+bienH/2+(di-(nD-1)/2)*7;
+      const x1=xDon+donW, x2=xBien, c1=x1+65, c2=x2-65;
+      svg+=`<path d="M${x1},${yDc} C${c1},${yDc} ${c2},${yBc} ${x2-6},${yBc}" stroke="${C_GOLD}" stroke-width="1.2" fill="none" stroke-dasharray="5,3" opacity=".8"/>`;
+      svg+=`<polygon points="${x2},${yBc} ${x2-8},${yBc-4} ${x2-8},${yBc+4}" fill="${C_GOLD}"/>`;
     });
   });
 
-  // ── Bandeau synthèse ──
-  const totalVPP=biens.reduce((s,b)=>s+b.valeur,0);
-  const coutTotal=totalDroits+totalFraisGlobal;
-  const pctCout=totalVPP>0?((coutTotal/totalVPP)*100).toFixed(1):'—';
-  const lblBiens2=nB>1?`Les ${nB} biens`:'Le bien';
-  const verbeTrans=nB>1?'ont été transmis':'a été transmis';
-  const phraseSynthese=`${lblBiens2} d'une valeur de ${fmt(totalVPP)} ${verbeTrans} pour un coût global de ${pctCout} %.`;
+  /* ── Flèches bien → donataire (couleur du bien) ───────── */
+  biens.forEach((b,bi)=>{
+    const yBc=yBienStart+bi*(bienH+gapB)+bienH/2;
+    const col=colBien(bi);
+    children.forEach((child,ci)=>{
+      if((valParBienEnf[`${bi}_${ci}`]||0)<=0)return;
+      const yEc=yEnfStart+ci*(enfH+gapE)+enfH/2+(bi-(nB-1)/2)*7;
+      const x1=xBien+bienW, x2=xEnf, c1=x1+62, c2=x2-62;
+      svg+=`<path d="M${x1},${yBc} C${c1},${yBc} ${c2},${yEc} ${x2-6},${yEc}" stroke="${col}" stroke-width="1.5" fill="none" opacity=".85"/>`;
+      svg+=`<polygon points="${x2},${yEc} ${x2-9},${yEc-5} ${x2-9},${yEc+5}" fill="${col}"/>`;
+    });
+  });
 
-  svg+=`<rect x="${PAD}" y="${yBand}" width="${W-2*PAD}" height="68" rx="6" fill="${C_NAVY}" opacity=".06"/>`;
-  svg+=`<rect x="${PAD}" y="${yBand}" width="4" height="68" rx="2" fill="${C_GOLD}"/>`;
-  svg+=`<text x="${PAD+14}" y="${yBand+18}" font-size="11" font-weight="600" fill="${C_TEXT}" font-family="Georgia,serif">Coût global de la donation</text>`;
-  svg+=`<text x="${PAD+14}" y="${yBand+36}" font-size="9.5" fill="${C_FRAIS}">Frais de notaire : ${fmt(totalFraisGlobal)}</text>`;
-  svg+=`<text x="${W/2}" y="${yBand+36}" text-anchor="middle" font-size="9.5" fill="${C_TEXT}">Droits de donation : ${fmt(totalDroits)}</text>`;
-  svg+=`<text x="${W-PAD-8}" y="${yBand+36}" text-anchor="end" font-size="11" font-weight="700" fill="${C_TEXT}">Total : ${fmt(coutTotal)}</text>`;
-  svg+=`<text x="${PAD+14}" y="${yBand+54}" font-size="8.5" font-style="italic" fill="${C_MUTED}">${phraseSynthese}</text>`;
+  /* ── Cartes donateurs (bleu plein) ────────────────────── */
+  donors.forEach((don,di)=>{
+    const y=yDonStart+di*(donH+gapD);
+    svg+=`<rect x="${xDon}" y="${y}" width="${donW}" height="${donH}" rx="8" fill="${C_BLUE}"/>`;
+    svg+=`<text x="${xDon+18}" y="${y+24}" font-size="13.5" font-weight="600" fill="#fff">${esc(cut(don.name,17))}</text>`;
+    if(don.age)svg+=`<text x="${xDon+donW-18}" y="${y+24}" text-anchor="end" font-size="10" fill="${C_BLUE_LT}">${esc(don.age)} ans</text>`;
+    svg+=`<line x1="${xDon+18}" y1="${y+34}" x2="${xDon+donW-18}" y2="${y+34}" stroke="${C_BLUE_S}"/>`;
+    svg+=`<text x="${xDon+18}" y="${y+52}" font-size="9.5" fill="${C_BLUE_LT}">Frais de notaire</text>`;
+    svg+=`<text x="${xDon+donW-18}" y="${y+68}" text-anchor="end" font-size="14" font-weight="700" fill="${C_GOLD_L}">${fmt(fraisParDon[di])}</text>`;
+  });
 
-  // ── Gain successoral ──
-  if(gainVal>0){
-    const yG=yBand+78;
-    const bilan=gainVal-coutTotal;
-    svg+=`<rect x="${PAD}" y="${yG}" width="${W-2*PAD}" height="44" rx="6" fill="#0f6e56" opacity=".08"/>`;
-    svg+=`<rect x="${PAD}" y="${yG}" width="4" height="44" rx="2" fill="#0f6e56"/>`;
-    svg+=`<text x="${PAD+14}" y="${yG+16}" font-size="10" font-weight="600" fill="#0f6e56">Gain successoral estimé</text>`;
-    svg+=`<text x="${PAD+14}" y="${yG+34}" font-size="9.5" fill="#0f6e56">Économie sur succession : ${fmt(gainVal)}</text>`;
-    svg+=`<text x="${W-PAD-8}" y="${yG+34}" text-anchor="end" font-size="10" font-weight="700" fill="#0f6e56">Bilan net : ${fmt(bilan)}</text>`;
+  /* ── Cartes biens (blanches, liseré coloré) ───────────── */
+  biens.forEach((b,bi)=>{
+    const y=yBienStart+bi*(bienH+gapB);
+    const col=colBien(bi);
+    svg+=`<rect x="${xBien}" y="${y}" width="${bienW}" height="${bienH}" rx="8" fill="#fff" stroke="${C_CARD_BD}" stroke-width=".9"/>`;
+    svg+=`<rect x="${xBien}" y="${y}" width="${bienW}" height="5" rx="4" fill="${col}"/>`;
+    svg+=`<text x="${xBien+bienW/2}" y="${y+26}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${C_TEXT}">${esc(cut(b.nom,22))}</text>`;
+    svg+=`<text x="${xBien+bienW/2}" y="${y+42}" text-anchor="middle" font-size="9.5" fill="${C_MUTED}">${labelType(b.type)} · ${b.typeD==='NP'?'Nue-propriété':'Pleine propriété'}</text>`;
+    svg+=`<text x="${xBien+bienW/2}" y="${y+68}" text-anchor="middle" font-size="15" font-weight="700" fill="${col}">${fmt(valParBien[bi])}</text>`;
+    const notes=[];
+    if(b.typeD==='NP')notes.push('valeur NP (art. 669)');
+    if(b.decoteActive&&b.type==='parts')notes.push(`après décote ${b.decoteTaux} %`);
+    if(Math.round(valParBien[bi])!==Math.round(b.valeur))notes.push(`PP ${fmt(b.valeur)}`);
+    if(notes.length)svg+=`<text x="${xBien+bienW/2}" y="${y+83}" text-anchor="middle" font-size="8.5" fill="${C_MUTED}">${esc(notes.join(' · '))}</text>`;
+  });
+
+  /* ── Cartes donataires (ivoire, ventilation par bien) ── */
+  children.forEach((child,ci)=>{
+    const y=yEnfStart+ci*(enfH+gapE);
+    let droitsEnf=0;
+    for(let di=0;di<sgNbDonateurs;di++){const key=`${di}_${ci}`;if(activeCols.includes(key))droitsEnf+=colDroitsTotal[key]||0;}
+    svg+=`<rect x="${xEnf}" y="${y}" width="${enfW}" height="${enfH}" rx="8" fill="${C_ENF_BG}" stroke="${C_CARD_BD}" stroke-width=".9"/>`;
+    svg+=`<rect x="${xEnf}" y="${y}" width="${enfW}" height="5" rx="4" fill="${C_GOLD}"/>`;
+    svg+=`<text x="${xEnf+18}" y="${y+24}" font-size="13" font-weight="600" fill="${C_BLUE}">${esc(cut(child.name,17))}</text>`;
+    svg+=`<line x1="${xEnf+18}" y1="${y+32}" x2="${xEnf+enfW-18}" y2="${y+32}" stroke="${C_SEP}"/>`;
+    let yl=y+32;
+    if(detailEnf){
+      biens.forEach((b,bi)=>{
+        if(valParBien[bi]<=0)return;
+        yl+=15;
+        svg+=`<text x="${xEnf+18}" y="${yl}" font-size="9" fill="${C_MUTED}">${esc(cut(b.nom,19))}</text>`;
+        svg+=`<text x="${xEnf+enfW-18}" y="${yl}" text-anchor="end" font-size="9.5" fill="${C_TEXT}">${fmt(valParBienEnf[`${bi}_${ci}`]||0)}</text>`;
+      });
+      svg+=`<line x1="${xEnf+18}" y1="${yl+8}" x2="${xEnf+enfW-18}" y2="${yl+8}" stroke="${C_SEP}"/>`;
+    }
+    svg+=`<text x="${xEnf+18}" y="${yl+23}" font-size="9.5" font-weight="600" fill="${C_BLUE}">Total reçu</text>`;
+    svg+=`<text x="${xEnf+enfW-18}" y="${yl+23}" text-anchor="end" font-size="12" font-weight="700" fill="${C_TEXT}">${fmt(valParEnf[ci])}</text>`;
+    svg+=`<text x="${xEnf+18}" y="${yl+37}" font-size="9.5" fill="${C_MUTED}">Droits de donation</text>`;
+    svg+=`<text x="${xEnf+enfW-18}" y="${yl+37}" text-anchor="end" font-size="11" font-weight="600" fill="${C_FRAIS}">${fmt(droitsEnf)}</text>`;
+  });
+
+  /* ── Bandeau de synthèse (écran uniquement) ───────────── */
+  if(withBands){
+    svg+=`<rect x="${PAD}" y="${yBand}" width="${W-2*PAD}" height="${bandH}" rx="8" fill="${C_BAND}"/>`;
+    svg+=`<rect x="${PAD}" y="${yBand}" width="4" height="${bandH}" rx="2" fill="${C_GOLD}"/>`;
+    svg+=`<text x="${PAD+22}" y="${yBand+22}" font-size="12.5" font-weight="600" fill="${C_BLUE}">Coût global de la donation</text>`;
+    svg+=`<text x="${PAD+22}" y="${yBand+46}" font-size="10" fill="${C_BAND_TX}">Valeur transmise : <tspan fill="${C_TEXT}" font-weight="600">${fmt(totalTransmis)}</tspan></text>`;
+    svg+=`<text x="${PAD+210}" y="${yBand+46}" font-size="10" fill="${C_BAND_TX}">Frais de notaire : <tspan fill="${C_FRAIS}" font-weight="600">${fmt(totalFraisGlobal)}</tspan></text>`;
+    svg+=`<text x="${PAD+390}" y="${yBand+46}" font-size="10" fill="${C_BAND_TX}">Droits : <tspan fill="${C_TEXT}" font-weight="600">${fmt(totalDroits)}</tspan></text>`;
+    const complement=Math.round(totalVPP)!==Math.round(totalTransmis)?` (${fmt(totalVPP)} en pleine propriété avant démembrement et décote)`:'';
+    svg+=`<text x="${PAD+22}" y="${yBand+65}" font-size="9" font-style="italic" fill="${C_BAND_IT}">Soit un coût global de ${pctCout} % de la valeur transmise${complement}.</text>`;
+    svg+=`<text x="${W-PAD-20}" y="${yBand+26}" text-anchor="end" font-size="10" fill="${C_BAND_TX}">Total</text>`;
+    svg+=`<text x="${W-PAD-20}" y="${yBand+54}" text-anchor="end" font-size="22" font-weight="700" fill="${C_BLUE}">${fmt(coutTotal)}</text>`;
+
+    if(gainVal>0){
+      const yG=yBand+bandH+12;
+      const bilan=gainVal-coutTotal;
+      svg+=`<rect x="${PAD}" y="${yG}" width="${W-2*PAD}" height="44" rx="8" fill="#EEF4F1"/>`;
+      svg+=`<rect x="${PAD}" y="${yG}" width="4" height="44" rx="2" fill="${C_GREEN}"/>`;
+      svg+=`<text x="${PAD+22}" y="${yG+18}" font-size="10.5" font-weight="600" fill="${C_GREEN}">Gain successoral estimé</text>`;
+      svg+=`<text x="${PAD+22}" y="${yG+34}" font-size="9.5" fill="${C_GREEN}">Économie sur succession : ${fmt(gainVal)} — estimation saisie par le conseil</text>`;
+      svg+=`<text x="${W-PAD-20}" y="${yG+30}" text-anchor="end" font-size="13" font-weight="700" fill="${C_GREEN}">Bilan net : ${fmt(bilan)}</text>`;
+    }
   }
 
-  // ── Mention LOCA ──
-  svg+=`<text x="${W/2}" y="${H-10}" text-anchor="middle" font-size="8" font-style="italic" fill="#B5922A" opacity=".8">Ce simulateur a été établi par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</text>`;
-
   svg+=`</svg>`;
-  document.getElementById('schema-svg-wrap').innerHTML=svg;
+  return svg;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Export PNG — le fichier ne contient que le schéma : ni le
+   bandeau de titre, ni le bandeau de synthèse (coût global et
+   gain successoral). Le SVG d'export est construit à part, il
+   n'affecte pas l'affichage à l'écran.
+   ═══════════════════════════════════════════════════════════ */
 function downloadSchema(){
-  const wrap=document.getElementById('schema-svg-wrap');const svg=wrap.querySelector('svg');if(!svg)return;
+  const markup=buildSchemaSVG(false);
+  if(!markup){alert('Générez d\'abord une simulation.');return;}
+  const holder=document.createElement('div');
+  holder.style.cssText='position:fixed;left:-99999px;top:0;width:880px;';
+  holder.innerHTML=markup;
+  document.body.appendChild(holder);
+  const svg=holder.querySelector('svg');
+  const vb=svg.viewBox.baseVal;
   const data=new XMLSerializer().serializeToString(svg);
-  const canvas=document.createElement('canvas');const s=svg.viewBox.baseVal;canvas.width=s.width*2;canvas.height=s.height*2;
-  const ctx=canvas.getContext('2d');const img=new Image();
-  img.onload=()=>{ctx.drawImage(img,0,0,canvas.width,canvas.height);const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='schema_donation.png';a.click();};
+  document.body.removeChild(holder);
+
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.round(vb.width*2);canvas.height=Math.round(vb.height*2);
+  const ctx=canvas.getContext('2d');
+  const img=new Image();
+  img.onload=()=>{
+    ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png');a.download='schema_donation.png';a.click();
+  };
   img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(data)));
 }
 
@@ -1356,25 +1407,36 @@ function copierTableau(btn){
   const tbl=wrap.querySelector('table');if(!tbl)return;
   const clone=tbl.cloneNode(true);
 
-  // Appliquer les styles inline sur chaque cellule du clone
+  // Styles inline pour Word : Calibri 10, cellules centrées, en-tête bleu sur texte blanc.
   const cells=clone.querySelectorAll('th,td');
   cells.forEach(cell=>{
     const computed=window.getComputedStyle(cell);
     const bg=computed.backgroundColor;
     const col=computed.color;
     const fw=computed.fontWeight;
-    const fs=computed.fontSize;
-    cell.style.fontFamily='Calibri,Arial,sans-serif';
-    cell.style.fontSize='9pt';
+    cell.style.fontFamily='Calibri,Carlito,Arial,sans-serif';
+    cell.style.fontSize='10.0pt';
     cell.style.border='1px solid #ccc';
     cell.style.padding='5px 8px';
+    cell.style.textAlign='center';
+    cell.style.verticalAlign='middle';
+    cell.style.textIndent='0';
     if(bg&&bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent')cell.style.backgroundColor=bg;
     if(col)cell.style.color=col;
     if(fw==='700'||fw==='bold')cell.style.fontWeight='bold';
   });
+  // Première ligne : bleu uniforme, texte blanc.
+  clone.querySelectorAll('thead tr:first-child th,thead tr:first-child td').forEach(cell=>{
+    cell.style.backgroundColor='#1a4f8c';
+    cell.style.color='#ffffff';
+    cell.style.fontWeight='bold';
+    cell.style.border='1px solid #999';
+  });
   clone.style.borderCollapse='collapse';
   clone.style.width='100%';
-  clone.style.fontFamily='Calibri,Arial,sans-serif';
+  clone.style.tableLayout='auto';
+  clone.style.fontFamily='Calibri,Carlito,Arial,sans-serif';
+  clone.style.fontSize='10.0pt';
 
   const htmlContent=`<html><body>${entete}${clone.outerHTML}</body></html>`;
   const blob=new Blob([htmlContent],{type:'text/html'});
@@ -1413,23 +1475,26 @@ function exportWord(){
   const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
   const{donors,children,biens,activeCols,bienResults,colDroitsTotal,donorEmol,colTaxTotal,totalDroits,totalFrais,deboursGlobal,sgNbDonateurs,nC}=d;
   function fW(n){return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Math.round(n));}
-  const F='font-family:Calibri,Arial,sans-serif;font-size:10pt;';
-  const TH=`border:1px solid #999;padding:5px 7px;background:#1a4f8c;color:white;text-align:center;${F}font-weight:bold;`;
-  const THL=`border:1px solid #999;padding:5px 7px;background:#12396b;color:white;text-align:left;${F}font-weight:bold;min-width:150px;`;
-  const THTOT=`border:1px solid #999;padding:5px 7px;background:#0a2d5e;color:white;text-align:center;${F}font-weight:bold;`;
-  const TD=`border:1px solid #ccc;padding:4px 7px;text-align:right;${F}`;
-  const TDL=`border:1px solid #ccc;padding:4px 7px;text-align:left;${F}`;
-  const TDSUB=`border:1px solid #ccc;padding:4px 7px 4px 16px;text-align:left;color:#555;${F}font-size:9pt;`;
-  const TDCAT=`border:1px solid #ccc;padding:4px 7px;background:#e8e6e1;font-weight:bold;text-align:left;${F}font-size:9pt;text-transform:uppercase;`;
-  const TDGR=`border:1px solid #ccc;padding:4px 7px;text-align:right;color:#0f6e56;${F}`;
-  const TDFR=`border:1px solid #ccc;padding:4px 7px;text-align:right;background:#fdf6ee;${F}`;
-  const TDTOT=`border:1px solid #aaa;padding:5px 7px;text-align:right;font-weight:bold;background:#dbe9f8;color:#1a4f8c;${F}`;
-  const TDTOTL=`border:1px solid #aaa;padding:5px 7px;text-align:left;font-weight:bold;background:#dbe9f8;color:#1a4f8c;${F}`;
-  const TDTOTCOL=`border:1px solid #aaa;padding:5px 7px;text-align:right;font-weight:bold;background:#eef2fa;${F}`;
+  // Police unique Calibri 10 et alignement centré sur l'ensemble des cellules.
+  const F='font-family:Calibri,Carlito,Arial,sans-serif;font-size:10.0pt;';
+  const CTR='text-align:center;vertical-align:middle;';
+  // Ligne d'en-tête : une seule teinte de bleu, texte blanc.
+  const TH=`border:1px solid #999;padding:5px 7px;background:#1a4f8c;color:#ffffff;${CTR}${F}font-weight:bold;`;
+  const THL=TH;
+  const THTOT=TH;
+  const TD=`border:1px solid #ccc;padding:4px 7px;${CTR}${F}`;
+  const TDL=TD;
+  const TDSUB=`border:1px solid #ccc;padding:4px 7px;${CTR}color:#555;${F}`;
+  const TDCAT=`border:1px solid #ccc;padding:4px 7px;background:#e8e6e1;font-weight:bold;${CTR}${F}text-transform:uppercase;`;
+  const TDGR=`border:1px solid #ccc;padding:4px 7px;${CTR}color:#0f6e56;${F}`;
+  const TDFR=`border:1px solid #ccc;padding:4px 7px;${CTR}background:#fdf6ee;${F}`;
+  const TDTOT=`border:1px solid #aaa;padding:5px 7px;${CTR}font-weight:bold;background:#dbe9f8;color:#1a4f8c;${F}`;
+  const TDTOTL=TDTOT;
+  const TDTOTCOL=`border:1px solid #aaa;padding:5px 7px;${CTR}font-weight:bold;background:#eef2fa;${F}`;
   const DASH='—';
 
   let theadW=`<thead><tr><th style="${THL}"></th>`;
-  for(let key of activeCols){const[di,ci]=key.split('_').map(Number);const L=LIENS[children[ci].lien]||LIENS.enfant;theadW+=`<th style="${TH}">${donors[di].name} → ${children[ci].name}<br><span style="font-weight:normal;font-size:8pt;">${L.court}${children[ci].handicap?' · handicap':''}</span></th>`;}
+  for(let key of activeCols){const[di,ci]=key.split('_').map(Number);const L=LIENS[children[ci].lien]||LIENS.enfant;theadW+=`<th style="${TH}">${donors[di].name} → ${children[ci].name}<br><span style="font-weight:normal;">${L.court}${children[ci].handicap?' · handicap':''}</span></th>`;}
   theadW+=`<th style="${THTOT}">Total global</th></tr></thead>`;
 
   function catW(label){return `<tr><td colspan="999" style="${TDCAT}">${label}</td></tr>`;}
@@ -1447,8 +1512,8 @@ function exportWord(){
       tbodyW+=`<td style="${TDTOTCOL}">${fW(sumNP)}</td></tr>`;
     }
     if(bien.decoteActive&&bien.type==='parts'){
-      const TDDEC=`border:1px solid #ccc;padding:4px 7px;text-align:right;color:#1e4d7b;${F}`;
-      const TDDECL=`border:1px solid #ccc;padding:4px 7px 4px 16px;text-align:left;color:#1e4d7b;${F}font-size:9pt;`;
+      const TDDEC=`border:1px solid #ccc;padding:4px 7px;${CTR}color:#1e4d7b;${F}`;
+      const TDDECL=TDDEC;
       tbodyW+=`<tr><td style="${TDDECL}">Décote pour illiquidité (${bien.decoteTaux} %)</td>`;
       for(let key of activeCols){const dd=colsDmtg[key];const v=dd?.active?(dd.valT-dd.valApresDecote):null;tbodyW+=`<td style="${TDDEC}">${v!==null?'− '+fW(v):DASH}</td>`;}
       tbodyW+=`<td style="${TDTOTCOL}">${DASH}</td></tr>`;
@@ -1513,11 +1578,12 @@ function exportWord(){
   tbodyW+=`<tr><td style="${TDTOTL}">COÛT GLOBAL (droits + frais)</td>`;
   let grandTotal=0;
   for(let key of activeCols){const di=parseInt(key.split('_')[0]);const df=donorEmol[di];const diCols=activeCols.filter(k=>k.startsWith(di+'_'));const fpc=(df.emolTTC+df.debours)/diCols.length;const tc=colTaxTotal[key];const tot=colDroitsTotal[key]+fpc+tc;grandTotal+=tot;tbodyW+=`<td style="${TDTOT}">${fW(tot)}</td>`;}
-  tbodyW+=`<td style="border:1px solid #aaa;padding:5px 7px;text-align:right;font-weight:800;background:#fbcfe8;color:#9d174d;${F}">${fW(totalDroits+totalFrais)}</td></tr>`;
+  tbodyW+=`<td style="border:1px solid #aaa;padding:5px 7px;${CTR}font-weight:800;background:#fbcfe8;color:#9d174d;${F}">${fW(totalDroits+totalFrais)}</td></tr>`;
   tbodyW+='</tbody>';
 
-  const tableW=`<table style="width:100%;border-collapse:collapse;table-layout:auto;">${theadW}${tbodyW}</table>`;
-  const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Simulation donation</title><style>@page{margin:1.5cm;}body{font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#0b0b0a;}h1{font-family:Georgia,serif;font-size:15pt;color:#1a4f8c;margin-bottom:6px;}p{font-size:10pt;color:#52514e;line-height:1.4;margin-bottom:5px;}.note{font-size:9pt;color:#854f0b;background:#faeeda;padding:6px 10px;border-left:3px solid #c08000;margin:10px 0;}.footer-note{font-size:8pt;color:#898781;border-top:1px solid #ddd;padding-top:6px;margin-top:14px;}</style></head><body>
+  // width:100% → Word applique « Ajuster à la fenêtre » à l'ouverture du document.
+  const tableW=`<table style="width:100%;border-collapse:collapse;table-layout:auto;mso-table-lspace:0pt;mso-table-rspace:0pt;">${theadW}${tbodyW}</table>`;
+  const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Simulation donation</title><style>@page{margin:1.5cm;}body{font-family:Calibri,Carlito,Arial,sans-serif;font-size:10.0pt;color:#0b0b0a;}table{font-family:Calibri,Carlito,Arial,sans-serif;font-size:10.0pt;}h1{font-family:Georgia,serif;font-size:15pt;color:#1a4f8c;margin-bottom:6px;}p{font-size:10pt;color:#52514e;line-height:1.4;margin-bottom:5px;}.note{font-size:9pt;color:#854f0b;background:#faeeda;padding:6px 10px;border-left:3px solid #c08000;margin:10px 0;}.footer-note{font-size:8pt;color:#898781;border-top:1px solid #ddd;padding-top:6px;margin-top:14px;}</style></head><body>
   <h1>Simulation de donation</h1>
   <p><strong>Date :</strong> ${today} &nbsp;|&nbsp; <strong>Donateur(s) :</strong> ${donors.map(x=>x.name).join(' &amp; ')} &nbsp;|&nbsp; <strong>Donataire(s) :</strong> ${children.map(x=>x.name).join(', ')}</p>
   <p><strong>Bien(s) :</strong> ${biens.map(b=>b.nom+' ('+fW(b.valeur)+')').join(' · ')}</p>
