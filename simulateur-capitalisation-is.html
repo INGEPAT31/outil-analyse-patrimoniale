@@ -270,11 +270,11 @@ tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
           <input type="number" id="i-reuro" value="3.00" min="-5" max="15" step="0.05">
         </div>
         <div class="form-group">
-          <label for="i-ruc">Rendement UC brut <span class="hint">(%/an)</span></label>
+          <label for="i-ruc">Rendement des UC <span class="hint">(%/an, net des frais du support)</span></label>
           <input type="number" id="i-ruc" value="5.50" min="-20" max="25" step="0.05">
         </div>
         <div class="form-group">
-          <label for="i-fguc">Frais de gestion UC <span class="hint">(%/an)</span></label>
+          <label for="i-fguc">Frais de gestion du contrat sur UC <span class="hint">(%/an)</span></label>
           <input type="number" id="i-fguc" value="0.85" min="0" max="5" step="0.05">
         </div>
         <div class="form-group full">
@@ -285,7 +285,7 @@ tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
           </div>
         </div>
         <div class="form-group" id="wrap-fgeuro" style="display:none;">
-          <label for="i-fgeuro">Frais de gestion fonds euro <span class="hint">(%/an)</span></label>
+          <label for="i-fgeuro">Frais de gestion du contrat sur fonds euro <span class="hint">(%/an)</span></label>
           <input type="number" id="i-fgeuro" value="0.60" min="0" max="5" step="0.05">
         </div>
         <div class="form-group">
@@ -297,7 +297,7 @@ tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
         </div>
       </div>
       <div class="note note-info">
-        <b>Convention retenue.</b> Les frais de gestion sont prélevés en fin d'année sur l'encours revalorisé&nbsp;: <code>V₁ = V₀ × (1 + r) × (1 − frais)</code>. Les taux de fonds euro communiqués par les assureurs sont, par construction, <b>nets de frais de gestion et bruts de prélèvements sociaux</b> — d'où le réglage par défaut. Aucun prélèvement social n'est modélisé&nbsp;: le contrat est détenu par une personne morale à l'IS, hors champ des articles L.136-6 et L.136-7 du CSS.
+        <b>Convention retenue — les deux poches ne se saisissent pas de la même façon.</b> Le taux de <b>fonds euro</b> publié par un assureur est par construction <b>net de frais de gestion</b>&nbsp;: il est donc appliqué tel quel, sans ponction supplémentaire. La performance d'une <b>unité de compte</b>, calculée sur la valeur liquidative du support, est en revanche nette des frais courants du fonds mais <b>brute des frais de gestion du contrat</b>&nbsp;: ceux-ci sont prélevés en fin d'année sur l'encours revalorisé, selon <code>V₁ = V₀ × (1 + r) × (1 − frais)</code>. Si votre fonds euro vous est communiqué brut, basculez le réglage ci-dessus pour lui appliquer également des frais de gestion. Aucun prélèvement social n'est modélisé&nbsp;: le contrat est détenu par une personne morale à l'IS, hors du champ des articles L. 136-6 et L. 136-7 du CSS.
       </div>
     </div>
 
@@ -393,6 +393,7 @@ tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
       <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>
       <button class="btn btn-secondary" onclick="exportPNG()">⬇ Tableau en PNG</button>
       <button class="btn btn-secondary" onclick="exportChartPNG()">⬇ Graphique en PNG</button>
+      <button class="btn btn-secondary" onclick="exportWord()">⬇ Tableau en Word</button>
       <button class="btn btn-secondary" onclick="window.print()">🖨 Imprimer</button>
     </div>
 
@@ -499,7 +500,7 @@ Base réellement imposable :  <b>base théorique − (intérêts déjà taxés �
 
       <h3>3. Ce que le simulateur modélise — et ce qu'il ne modélise pas</h3>
       <ul>
-        <li><b>Modélisé</b>&nbsp;: frais sur versement, frais de gestion différenciés fonds euro / UC, rééquilibrage annuel et frais d'arbitrage, taxation forfaitaire avec prorata du premier exercice, régularisation au rachat, provision pour dépréciation en cas de moins-value latente globale, barème d'IS 15&nbsp;% / 25&nbsp;% appliqué en marginal, distribution des produits rachetés, au PFU de 31,4 % ou au barème progressif avec abattement de 40 % et CSG déductible.</li>
+        <li><b>Modélisé</b>&nbsp;: frais sur versement, frais de gestion du contrat différenciés fonds euro / UC, rééquilibrage annuel et frais d'arbitrage, taxation forfaitaire avec prorata du premier exercice, régularisation au rachat, provision pour dépréciation en cas de moins-value latente globale, barème d'IS 15&nbsp;% / 25&nbsp;% appliqué en marginal, distribution des produits rachetés, au PFU de 31,4 % ou au barème progressif avec abattement de 40 % et CSG déductible.</li>
         <li><b>Non modélisé</b>&nbsp;: la volatilité (les rendements sont supposés constants, ce qui est une hypothèse de travail et non une prévision — le risque de séquence de rendements est ignoré), la contribution sociale de 3,3&nbsp;% sur l'IS (art. 235 ter ZC CGI, due au-delà de 763&nbsp;000&nbsp;€ d'IS), la contribution exceptionnelle sur les hauts revenus de l'associé (art. 223 sexies CGI), l'IFI dû à raison de la fraction du contrat représentative d'actifs immobiliers logés en UC (art. 972 CGI), et l'éventuel report déficitaire de la société.</li>
         <li><b>Convention d'assiette</b>&nbsp;: conformément aux exemples de la doctrine administrative, le « nominal » servant de base au forfait et au calcul du rachat imposable est retenu <b>net des frais sur versement</b>.</li>
       </ul>
@@ -528,7 +529,7 @@ Base réellement imposable :  <b>base théorique − (intérêts déjà taxés �
 /* ═══════════════════════════════════════════════════════════
    ÉTAT & UTILITAIRES
    ═══════════════════════════════════════════════════════════ */
-var euroNet = true;      // le rendement fonds euro saisi est net de frais de gestion
+var euroNet = true;      // le rendement fonds euro saisi est net de frais de gestion (les UC, jamais)
 var regime  = 'forfait'; // 'forfait' (238 septies E) ou 'reel' (mono-support euro)
 var CH = null;           // instance Chart.js
 var RES = null;          // dernier résultat calculé
@@ -668,7 +669,7 @@ function moteur(p){
   var prov=0;                        // provision pour dépréciation en cours
   var baseForfCum=0, isForfCum=0;    // pour le taux d'IS moyen des exercices antérieurs
 
-  var cum={verseBrut:0,verseNet:0,fraisEntree:0,fraisGestion:0,produits:0,rachat:0,
+  var cum={verseBrut:0,verseNet:0,fraisEntree:0,fraisGestion:0,fraisArb:0,produits:0,rachat:0,
            produitsRachetes:0,is:0,div:0,pfu:0,net:0,baseDist:0};
   var rows=[], flux=new Array(p.duree+1).fill(0);
 
@@ -687,7 +688,10 @@ function moteur(p){
 
     /* 2 — performance et frais de gestion */
     var Eb = E*(1+p.rE), Ub = U*(1+p.rUC);
-    var fgE = euroNet ? 0 : Eb*p.fgE;
+    /* Fonds euro : taux publié réputé net de frais, aucune ponction — sauf
+       bascule explicite. UC : la performance du support est toujours brute
+       des frais de gestion du contrat, qui sont donc prélevés. */
+    var fgE = p.euroNet ? 0 : Eb*p.fgE;
     var fgU = Ub*p.fgUC;
     E = Eb-fgE; U = Ub-fgU;
     var V = E+U;
@@ -760,7 +764,7 @@ function moteur(p){
       arb = Math.abs(cibleE-E)*p.arb;
       V -= arb;
       E = V*p.wE; U = V-E;
-      cum.fraisGestion += arb;
+      cum.fraisArb += arb;
     }
 
     /* flux de trésorerie de la société, calés en date :
@@ -813,7 +817,7 @@ function lireParams(){
     wE: num('i-weuro')/100,
     rE: num('i-reuro')/100, rUC: num('i-ruc')/100,
     fgE: num('i-fgeuro')/100, fgUC: num('i-fguc')/100,
-    arb: num('i-arb')/100, reeq: chk('i-reeq'),
+    arb: num('i-arb')/100, reeq: chk('i-reeq'), euroNet: euroNet,
     rMode: document.getElementById('i-rmode').value,
     rMontant: (document.getElementById('i-rmode').value==='pct') ? num('i-rmontant')/100 : num('i-rmontant'),
     rDeb: Math.round(num('i-rdeb')), rTotal: chk('i-rtotal'),
@@ -874,7 +878,11 @@ function renderKPI(R){
   document.getElementById('k-cap').textContent = eur(R.valeurFinale);
   document.getElementById('k-cap-sub').textContent = c.rachat>0 ? ('+ '+eur(c.rachat)+' déjà rachetés') : 'aucun rachat sur la période';
   document.getElementById('k-prod').textContent = eur(c.produits);
-  document.getElementById('k-prod-sub').textContent = 'après '+eur(c.fraisGestion)+' de frais de gestion';
+  var sousProd = c.fraisGestion>0.5
+    ? 'après '+eur(c.fraisGestion)+' de frais de gestion du contrat'
+    : 'aucun frais de gestion prélevé';
+  if(c.fraisArb>0.5) sousProd += ' · '+eur(c.fraisArb)+' de frais d\'arbitrage';
+  document.getElementById('k-prod-sub').textContent = sousProd;
   document.getElementById('k-is').textContent = eur(c.is);
   var eff = c.produits>0 ? c.is/c.produits : 0;
   document.getElementById('k-is-sub').textContent = 'soit '+pct(eff,1)+' des produits · TRI net d\'IS '+pct(R.tri,2);
@@ -883,7 +891,7 @@ function renderKPI(R){
 var COLS = [
   {t:'Année', f:function(r){return r.annee;}, raw:true},
   {t:'Versements nets', f:function(r){return r.verseNet;}},
-  {t:'Produits', f:function(r){return r.produits;}, signed:true},
+  {t:'Produits<br><span style="font-weight:400;opacity:.8;">nets des frais de gestion du contrat</span>', f:function(r){return r.produits;}, signed:true},
   {t:'Rachats bruts', f:function(r){return r.rachat;}},
   {t:'Capital en fin d\'année', f:function(r){return r.valeur;}, cls:'hi-cap', noTotal:true},
   {t:'Assiette imposable à l\'IS', f:function(r){return r.base + r.baseRachat - r.varProv;}, signed:true},
@@ -1021,7 +1029,7 @@ function exportCSV(){
 function exportPNG(){
   if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
   var R=RES, dpr=2;
-  var W=[70,130,110,110,140,150,140];
+  var W=[70,130,170,110,140,150,140];
   var totW=W.reduce(function(a,b){return a+b;},0);
   var hHead=54, hRow=26, hTot=34, pad=22, hTitle=54, hFoot=6;
   var H = hTitle+hHead+hRow*R.rows.length+hTot+hFoot+pad;
@@ -1040,7 +1048,7 @@ function exportPNG(){
   x.fillText(sousTitre, X0, Y+34);
   Y += hTitle;
 
-  var head=['Année','Versements\nnets','Produits','Rachats\nbruts','Capital en\nfin d\'année','Assiette\nimposable à l\'IS','Impôt sur\nles sociétés'];
+  var head=['Année','Versements\nnets','Produits nets des frais\nde gestion du contrat','Rachats\nbruts','Capital en\nfin d\'année','Assiette\nimposable à l\'IS','Impôt sur\nles sociétés'];
   var grad=x.createLinearGradient(0,Y,0,Y+hHead); grad.addColorStop(0,'#1e3d7a'); grad.addColorStop(1,'#16305f');
   x.fillStyle=grad; x.fillRect(X0,Y,totW,hHead);
   x.font='600 10.5px Inter, sans-serif';
@@ -1097,6 +1105,99 @@ function exportPNG(){
   },'image/png');
 }
 
+/* ═══════════════════════════════════════════════════════════
+   EXPORT WORD DU TABLEAU RÉCAPITULATIF
+   Le document ne contient que le tableau : ni titre, ni note,
+   ni mention d'attribution. Calibri 10, ligne d'en-tête #2F5496
+   en blanc, largeur de tableau à 100 % pour que Word l'ajuste
+   automatiquement à la fenêtre.
+   ═══════════════════════════════════════════════════════════ */
+var WORD_COLS = [
+  {t:'Année',                    l:'8%',  f:function(r){return String(r.annee);}, brut:true},
+  {t:'Versements nets',          l:'15%', f:function(r){return eur(r.verseNet);}},
+  {t:'Produits nets des frais de gestion du contrat', l:'18%', f:function(r){return eur(r.produits);}},
+  {t:'Rachats bruts',            l:'14%', f:function(r){return eur(r.rachat);}},
+  {t:"Capital en fin d'année",   l:'16%', f:function(r){return eur(r.valeur);}, hi:'cap'},
+  {t:"Assiette imposable à l'IS",l:'15%', f:function(r){return eur(r.base+r.baseRachat-r.varProv);}},
+  {t:'Impôt sur les sociétés',   l:'14%', f:function(r){return eur(r.is);}, hi:'tax'}
+];
+
+function exportWord(){
+  if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
+  var R=RES;
+  var BORD='border-top:none;border-left:none;border-right:none;border-bottom:0.5pt solid #D9D9D9;';
+  var CELL='font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;padding:3.0pt 5.0pt;'+BORD;
+
+  /* ligne d'en-tête */
+  var h='<tr>';
+  for(var i=0;i<WORD_COLS.length;i++){
+    var c=WORD_COLS[i];
+    h+='<td width="'+c.l+'" style="width:'+c.l+';background:#2F5496;'+
+       'font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;font-weight:bold;color:#FFFFFF;'+
+       'padding:5.0pt 5.0pt;border:none;'+
+       'text-align:'+(i===0?'center':'right')+';vertical-align:middle;">'+c.t+'</td>';
+  }
+  h+='</tr>';
+
+  /* corps */
+  for(var j=0;j<R.rows.length;j++){
+    var r=R.rows[j], pair=(j%2===1);
+    h+='<tr>';
+    for(var k=0;k<WORD_COLS.length;k++){
+      var col=WORD_COLS[k], fond='#FFFFFF', couleur='#0B0B0A', gras='normal';
+      if(pair) fond='#FBFBFA';
+      if(k===0){ fond=pair?'#F2F1ED':'#F9F9F7'; couleur='#52514E'; gras='bold'; }
+      if(col.hi==='cap'){ fond='#DFF2E8'; couleur='#0F6E56'; gras='bold'; }
+      if(col.hi==='tax'){ fond='#FBE7E2'; couleur='#9A2C2C'; gras='bold'; }
+      h+='<td style="'+CELL+'background:'+fond+';color:'+couleur+';font-weight:'+gras+';'+
+         'text-align:'+(k===0?'center':'right')+';">'+col.f(r)+'</td>';
+    }
+    h+='</tr>';
+  }
+
+  /* ligne de total */
+  var somme=function(fn){var t=0;for(var i=0;i<R.rows.length;i++)t+=fn(R.rows[i]);return t;};
+  var tot=['Total', eur(somme(function(r){return r.verseNet;})),
+           eur(somme(function(r){return r.produits;})),
+           eur(somme(function(r){return r.rachat;})),
+           eur(R.valeurFinale),
+           eur(somme(function(r){return r.base+r.baseRachat-r.varProv;})),
+           eur(somme(function(r){return r.is;}))];
+  h+='<tr>';
+  for(var m=0;m<tot.length;m++){
+    var cm=WORD_COLS[m], fondT='#EAF0F9', couleurT='#0B0B0A';
+    if(cm.hi==='cap'){ fondT='#0F6E56'; couleurT='#FFFFFF'; }
+    if(cm.hi==='tax'){ fondT='#C0442B'; couleurT='#FFFFFF'; }
+    h+='<td style="font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;font-weight:bold;'+
+       'padding:4.0pt 5.0pt;border-top:1.5pt solid #1A4F8C;border-left:none;border-right:none;'+
+       'border-bottom:none;background:'+fondT+';color:'+couleurT+';'+
+       'text-align:'+(m===0?'center':'right')+';">'+tot[m]+'</td>';
+  }
+  h+='</tr>';
+
+  var doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" '+
+    'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'+
+    '<head><meta charset="utf-8"><title>Contrat de capitalisation</title>'+
+    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'+
+    '<w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
+    '<style>'+
+    '@page WordSection1{size:21.0cm 29.7cm;margin:1.5cm 1.2cm 1.5cm 1.2cm;}'+
+    'div.WordSection1{page:WordSection1;}'+
+    'body{font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;}'+
+    'table{mso-table-lspace:0cm;mso-table-rspace:0cm;}'+
+    'td{mso-line-height-rule:exactly;}'+
+    '</style></head><body><div class="WordSection1">'+
+    '<table width="100%" cellspacing="0" cellpadding="0" border="0" '+
+    'style="width:100.0%;border-collapse:collapse;">'+h+'</table>'+
+    '</div></body></html>';
+
+  var blob=new Blob(['\ufeff'+doc],{type:'application/msword;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='contrat-capitalisation-IS.doc';
+  document.body.appendChild(a); a.click(); a.remove();
+  flash('Document Word téléchargé');
+}
+
 /* Export du graphique seul — fond blanc, titre, sans mention ni commentaire */
 function exportChartPNG(){
   if(!RES || !CH){ flash('Lancez d\'abord le calcul',true); return; }
@@ -1125,7 +1226,7 @@ function exportChartPNG(){
 }
 
 /* init */
-syncTauxForf(); syncFisc(); syncRachat(); calcul(true);
+setEuroNet(true); syncTauxForf(); syncFisc(); syncRachat(); calcul(true);
 </script>
 
 <script>
