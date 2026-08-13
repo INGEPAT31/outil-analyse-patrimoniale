@@ -460,6 +460,18 @@ tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
           <b>Part de capital rachetée.</b> Le solde du rachat (rachat brut − produits) correspond à un remboursement de capital&nbsp;: il reste acquis à la société et ne peut être appréhendé par l'associé que par une autre voie (remboursement de compte courant créditeur, réduction de capital, distribution de réserves antérieures…). Chacune a son propre régime fiscal.
         </div>
       </div>
+
+      <div class="card c-plain">
+        <div class="card-title">Synthèse — rachats nets d'IS et distribution intégrale</div>
+        <p style="font-size:13px;line-height:1.7;color:var(--text-sec);margin-bottom:4px;">
+          Cette vue reprend la projection complète et la prolonge de deux colonnes&nbsp;: le <b>rachat diminué de l'impôt sur les sociétés acquitté au titre de l'exercice</b>, puis le montant qu'appréhenderait l'associé si <b>la totalité de ce rachat net d'IS était distribuée</b>. Elle est établie sous hypothèse de distribution intégrale, indépendamment de l'option cochée plus haut.
+        </p>
+        <div class="tbl-wrap" id="tbl-wrap3"></div>
+        <div class="btn-row" style="margin:14px 0 0;">
+          <button class="btn btn-secondary" onclick="exportWord2()">⬇ Ce tableau en Word</button>
+        </div>
+        <div class="note note-warn" id="note-synthese" style="margin-top:12px;"></div>
+      </div>
     </div>
     <div id="err2" style="font-size:13px;color:var(--text-muted);">Lancez d'abord le calcul depuis l'onglet « Projection de l'investissement ».</div>
   </div>
@@ -1019,6 +1031,7 @@ function renderPage2(R){
      '</td><td class="hi-tax">'+eur(s.i)+'</td><td>'+eur(s.d)+'</td><td class="hi-tax">'+eur(s.f)+
      '</td><td class="hi-cap">'+eur(s.n)+'</td></tr></tfoot></table>';
   document.getElementById('tbl-wrap2').innerHTML=h;
+  renderSynthese(R);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1138,6 +1151,77 @@ function exportPNG(){
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SYNTHÈSE — rachats nets d'IS et distribution intégrale
+   Reprend la projection et la prolonge de deux colonnes :
+     rachat net d'IS  = rachat brut − IS de l'exercice
+     appréhendé       = rachat net d'IS × (1 − taux d'imposition associé)
+   Hypothèse de distribution intégrale, indépendante de l'option
+   « distribuer la totalité du rachat » de la page.
+   ═══════════════════════════════════════════════════════════ */
+function ligneSynthese(r){
+  var netIS = Math.max(0, r.rachat - r.is);
+  return {netIS:netIS, app: netIS*(1-RES.p.pfu)};
+}
+
+var SYN_COLS = [
+  {t:'Année',                        p:8,  f:function(r){return String(r.annee);}},
+  {t:'Versements nets',              p:11, f:function(r){return eur(r.verseNet);},
+   tot:function(R){return R.cum.verseNet;}},
+  {t:'Produits nets des frais de gestion du contrat', p:14, f:function(r){return eur(r.produits);},
+   tot:function(R){return R.cum.produits;}},
+  {t:'Rachats bruts',                p:11, f:function(r){return eur(r.rachat);},
+   tot:function(R){return R.cum.rachat;}, rachat:true},
+  {t:"Capital en fin d'année",       p:12, f:function(r){return eur(r.valeur);},
+   tot:function(R){return R.valeurFinale;}, hi:'cap'},
+  {t:'Impôt sur les sociétés',       p:11, f:function(r){return eur(r.is);},
+   tot:function(R){return R.cum.is;}, hi:'tax'},
+  {t:"Rachats nets d'IS",            p:11, hi:'tax', rachat:true,
+   f:function(r){return r.rachat>0.5 ? eur(ligneSynthese(r).netIS) : '';},
+   tot:function(R){var t=0;R.rows.forEach(function(r){t+=ligneSynthese(r).netIS;});return t;}},
+  {t:'Montant appréhendé par les associés après distribution de dividendes', p:14, hi:'tax', rachat:true,
+   f:function(r){return r.rachat>0.5 ? eur(ligneSynthese(r).app) : '';},
+   tot:function(R){var t=0;R.rows.forEach(function(r){t+=ligneSynthese(r).app;});return t;}}
+];
+
+function colonnesSynthese(R){
+  var avec = R.cum.rachat>0.5;
+  return SYN_COLS.filter(function(c){ return !c.rachat || avec; });
+}
+
+function renderSynthese(R){
+  var cols=colonnesSynthese(R);
+  var h='<table class="rec"><thead><tr>';
+  for(var i=0;i<cols.length;i++) h+='<th>'+cols[i].t+'</th>';
+  h+='</tr></thead><tbody>';
+  for(var j=0;j<R.rows.length;j++){
+    var r=R.rows[j]; h+='<tr>';
+    for(var c=0;c<cols.length;c++){
+      var col=cols[c], v=col.f(r);
+      h+='<td class="'+(v===''?'':(col.hi==='cap'?'hi-cap':(col.hi==='tax'?'hi-tax':'')))+'">'+v+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</tbody><tfoot><tr>';
+  for(var k=0;k<cols.length;k++){
+    var cc=cols[k];
+    h+='<td class="'+(cc.hi==='cap'?'hi-cap':(cc.hi==='tax'?'hi-tax':''))+'">'+
+       (k===0?'Total':eur(cc.tot(R)))+'</td>';
+  }
+  h+='</tr></tfoot></table>';
+  document.getElementById('tbl-wrap3').innerHTML=h;
+
+  var n=document.getElementById('note-synthese');
+  var totNet=0; R.rows.forEach(function(r){totNet+=ligneSynthese(r).netIS;});
+  var isHorsRachat = R.cum.is - R.rows.reduce(function(a,r){return a+(r.rachat>0.5?Math.min(r.is,r.rachat):0);},0);
+  n.innerHTML='<b>Lecture de la colonne « rachats nets d\'IS ».</b> Le rachat est diminué du seul impôt sur les sociétés '+
+    'de l\'exercice. Les exercices sans rachat supportent malgré tout l\'impôt — '+eur(Math.max(0,isHorsRachat))+
+    ' au total ici — qui est acquitté sur la trésorerie de la société sans contrepartie de rachat. '+
+    'La colonne « montant appréhendé » suppose la distribution intégrale du rachat net d\'IS, imposée à '+
+    pct(R.p.pfu,2)+' chez l\'associé&nbsp;: au-delà de la part de produits, elle exige des réserves distribuables '+
+    'ou un compte courant créditeur suffisants (voir l\'avertissement ci-dessus).';
+}
+
+/* ═══════════════════════════════════════════════════════════
    EXPORT WORD DU TABLEAU RÉCAPITULATIF
    Le document ne contient que le tableau : ni titre, ni note,
    ni mention d'attribution. Calibri 10, ligne d'en-tête #2F5496
@@ -1154,20 +1238,20 @@ var WORD_COLS = [
   {t:'Impôt sur les sociétés',   p:14, f:function(r){return eur(r.is);}, hi:'tax'}
 ];
 
-function exportWord(){
-  if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
-  var R=RES;
-  /* Colonne « Rachats bruts » omise sans rachat, et largeurs
-     renormalisées pour que leur somme reste égale à 100 %. */
-  var COLW = WORD_COLS.filter(function(c){ return !c.rachat || R.cum.rachat>0.5; });
+/* Fabrique un document Word à partir d'un jeu de colonnes.
+   Chaque colonne fournit son intitulé, son poids de largeur, sa fonction
+   de rendu et sa fonction de total. Calibri 10, en-tête #2F5496 blanc,
+   tout centré, tableau à 100 % de largeur. */
+function docWord(R, COLW, totalFn){
   var somP = COLW.reduce(function(a,c){return a+c.p;},0);
   COLW.forEach(function(c){ c.l=(c.p/somP*100).toFixed(2)+'%'; });
   var BORD='border-top:none;border-left:none;border-right:none;border-bottom:0.5pt solid #D9D9D9;';
+  var h='';
   var CELL='font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;padding:3.0pt 5.0pt;'+
            'text-align:center;vertical-align:middle;'+BORD;
 
   /* ligne d'en-tête */
-  var h='<tr>';
+  h+='<tr>';
   for(var i=0;i<COLW.length;i++){
     var c=COLW[i];
     h+='<td width="'+c.l+'" style="width:'+c.l+';background:#2F5496;'+
@@ -1187,28 +1271,16 @@ function exportWord(){
       if(k===0){ fond=pair?'#F2F1ED':'#F9F9F7'; couleur='#52514E'; gras='bold'; }
       if(col.hi==='cap'){ fond='#DFF2E8'; couleur='#0F6E56'; gras='bold'; }
       if(col.hi==='tax'){ fond='#FBE7E2'; couleur='#9A2C2C'; gras='bold'; }
+      var val=col.f(r);
+      if(val===''){ fond=pair?'#FBFBFA':'#FFFFFF'; }
       h+='<td style="'+CELL+'background:'+fond+';color:'+couleur+';font-weight:'+gras+';">'+
-         col.f(r)+'</td>';
+         (val===''?'&nbsp;':val)+'</td>';
     }
     h+='</tr>';
   }
 
   /* ligne de total */
-  var somme=function(fn){var t=0;for(var i=0;i<R.rows.length;i++)t+=fn(R.rows[i]);return t;};
-  /* les fonctions de colonne renvoient du texte formaté : les totaux
-     sont recalculés à partir des données brutes, indexés par intitulé */
-  var totalsBruts={
-    'Versements nets':          somme(function(r){return r.verseNet;}),
-    'Produits nets des frais de gestion du contrat': somme(function(r){return r.produits;}),
-    'Rachats bruts':            somme(function(r){return r.rachat;}),
-    "Assiette imposable à l'IS":somme(function(r){return r.base+r.baseRachat-r.varProv;}),
-    'Impôt sur les sociétés':   somme(function(r){return r.is;})
-  };
-  var tot=COLW.map(function(c,i){
-    if(i===0) return 'Total';
-    if(c.hi==='cap') return eur(R.valeurFinale);
-    return eur(totalsBruts[c.t]);
-  });
+  var tot=totalFn(R, COLW);
   h+='<tr>';
   for(var m=0;m<tot.length;m++){
     var cm=COLW[m], fondT='#EAF0F9', couleurT='#0B0B0A';
@@ -1237,11 +1309,46 @@ function exportWord(){
     'style="width:100.0%;border-collapse:collapse;">'+h+'</table>'+
     '</div></body></html>';
 
+  return doc;
+}
+
+function telechargerWord(doc, nom){
   var blob=new Blob(['\ufeff'+doc],{type:'application/msword;charset=utf-8'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='contrat-capitalisation-IS.doc';
+  a.download=nom;
   document.body.appendChild(a); a.click(); a.remove();
   flash('Document Word téléchargé');
+}
+
+/* Tableau récapitulatif de la projection */
+function exportWord(){
+  if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
+  var R=RES;
+  var cols=WORD_COLS.filter(function(c){ return !c.rachat || R.cum.rachat>0.5; });
+  var somme=function(fn){var t=0;for(var i=0;i<R.rows.length;i++)t+=fn(R.rows[i]);return t;};
+  var totaux={
+    'Versements nets':          somme(function(r){return r.verseNet;}),
+    'Produits nets des frais de gestion du contrat': somme(function(r){return r.produits;}),
+    'Rachats bruts':            somme(function(r){return r.rachat;}),
+    "Assiette imposable à l'IS":somme(function(r){return r.base+r.baseRachat-r.varProv;}),
+    'Impôt sur les sociétés':   somme(function(r){return r.is;})
+  };
+  telechargerWord(docWord(R, cols, function(RR, CC){
+    return CC.map(function(c,i){
+      if(i===0) return 'Total';
+      if(c.hi==='cap') return eur(RR.valeurFinale);
+      return eur(totaux[c.t]);
+    });
+  }), 'contrat-capitalisation-IS.doc');
+}
+
+/* Synthèse — rachats nets d'IS et distribution intégrale */
+function exportWord2(){
+  if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
+  var R=RES;
+  telechargerWord(docWord(R, colonnesSynthese(R), function(RR, CC){
+    return CC.map(function(c,i){ return i===0 ? 'Total' : eur(c.tot(RR)); });
+  }), 'contrat-capitalisation-IS-synthese.doc');
 }
 
 /* Export du graphique seul — fond blanc, titre, sans mention ni commentaire */
