@@ -107,6 +107,9 @@ td.hi-cap{background:#dff2e8 !important;color:var(--green);font-weight:600;}
 td.hi-tax{background:#fbe7e2 !important;color:var(--red);font-weight:600;}
 tfoot td.hi-cap{background:#70AD47 !important;color:#fff !important;}
 tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
+/* Colonne au corps neutre dont seule la cellule de total est colorée. */
+tfoot td.tot-cap{background:#70AD47 !important;color:#fff !important;}
+tfoot td.tot-tax{background:#c0442b !important;color:#fff !important;}
 
 .chart-box{background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem;border-top:3px solid var(--accent-mid);}
 .chart-h{font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin-bottom:14px;color:var(--text);}
@@ -1172,13 +1175,13 @@ var SYN_COLS = [
   {t:'Rachats bruts',                p:11, f:function(r){return eur(r.rachat);},
    tot:function(R){return R.cum.rachat;}, rachat:true},
   {t:"Capital en fin d'année",       p:12, f:function(r){return eur(r.valeur);},
-   tot:function(R){return R.valeurFinale;}, hi:'cap'},
+   tot:function(R){return R.valeurFinale;}, totOnly:'cap'},
   {t:'Impôt sur les sociétés',       p:11, f:function(r){return eur(r.is);},
    tot:function(R){return R.cum.is;}, hi:'tax'},
-  {t:"Rachats nets d'IS",            p:11, hi:'tax', rachat:true,
+  {t:"Rachats nets d'IS",            p:11, rachat:true,
    f:function(r){return r.rachat>0.5 ? eur(ligneSynthese(r).netIS) : '';},
    tot:function(R){var t=0;R.rows.forEach(function(r){t+=ligneSynthese(r).netIS;});return t;}},
-  {t:'Montant appréhendé par les associés après distribution de dividendes', p:14, hi:'tax', rachat:true,
+  {t:'Montant appréhendé par les associés après distribution de dividendes', p:14, hi:'cap', rachat:true,
    f:function(r){return r.rachat>0.5 ? eur(ligneSynthese(r).app) : '';},
    tot:function(R){var t=0;R.rows.forEach(function(r){t+=ligneSynthese(r).app;});return t;}}
 ];
@@ -1197,15 +1200,17 @@ function renderSynthese(R){
     var r=R.rows[j]; h+='<tr>';
     for(var c=0;c<cols.length;c++){
       var col=cols[c], v=col.f(r);
-      h+='<td class="'+(v===''?'':(col.hi==='cap'?'hi-cap':(col.hi==='tax'?'hi-tax':'')))+'">'+v+'</td>';
+      var cl = (v==='') ? '' : (col.hi==='cap'?'hi-cap':(col.hi==='tax'?'hi-tax':''));
+      h+='<td class="'+cl+'">'+v+'</td>';
     }
     h+='</tr>';
   }
   h+='</tbody><tfoot><tr>';
   for(var k=0;k<cols.length;k++){
     var cc=cols[k];
-    h+='<td class="'+(cc.hi==='cap'?'hi-cap':(cc.hi==='tax'?'hi-tax':''))+'">'+
-       (k===0?'Total':eur(cc.tot(R)))+'</td>';
+    var cl = cc.hi==='cap' ? 'hi-cap' : (cc.hi==='tax' ? 'hi-tax'
+           : (cc.totOnly==='cap' ? 'tot-cap' : (cc.totOnly==='tax' ? 'tot-tax' : '')));
+    h+='<td class="'+cl+'">'+(k===0?'Total':eur(cc.tot(R)))+'</td>';
   }
   h+='</tr></tfoot></table>';
   document.getElementById('tbl-wrap3').innerHTML=h;
@@ -1284,8 +1289,9 @@ function docWord(R, COLW, totalFn){
   h+='<tr>';
   for(var m=0;m<tot.length;m++){
     var cm=COLW[m], fondT='#EAF0F9', couleurT='#0B0B0A';
-    if(cm.hi==='cap'){ fondT='#70AD47'; couleurT='#FFFFFF'; }
-    if(cm.hi==='tax'){ fondT='#C0442B'; couleurT='#FFFFFF'; }
+    var teinte=cm.hi||cm.totOnly;
+    if(teinte==='cap'){ fondT='#70AD47'; couleurT='#FFFFFF'; }
+    if(teinte==='tax'){ fondT='#C0442B'; couleurT='#FFFFFF'; }
     h+='<td style="font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;font-weight:bold;'+
        'padding:4.0pt 5.0pt;border-top:1.5pt solid #1A4F8C;border-left:none;border-right:none;'+
        'border-bottom:none;background:'+fondT+';color:'+couleurT+';'+
