@@ -93,20 +93,19 @@ input:disabled{opacity:.45;cursor:not-allowed;}
 
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 table.rec{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums;}
-table.rec thead th{background:linear-gradient(160deg,#1e3d7a,#16305f);color:#fff;font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.02em;padding:11px 10px;text-align:right;border-right:1px solid rgba(232,206,116,.55);line-height:1.35;vertical-align:middle;}
-table.rec thead th:first-child{text-align:center;border-top-left-radius:6px;}
+table.rec thead th{background:linear-gradient(160deg,#1e3d7a,#16305f);color:#fff;font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.02em;padding:11px 10px;text-align:center;border-right:1px solid rgba(232,206,116,.55);line-height:1.35;vertical-align:middle;}
+table.rec thead th:first-child{border-top-left-radius:6px;}
 table.rec thead th:last-child{border-right:none;border-top-right-radius:6px;}
-table.rec tbody td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
-table.rec tbody td:first-child{text-align:center;font-weight:600;color:var(--text-sec);background:var(--surface-alt);}
+table.rec tbody td{padding:8px 10px;text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.rec tbody td:first-child{font-weight:600;color:var(--text-sec);background:var(--surface-alt);}
 table.rec tbody tr:nth-child(even) td{background:#fbfbfa;}
 table.rec tbody tr:nth-child(even) td:first-child{background:#f2f1ed;}
 table.rec tbody tr:hover td{background:var(--accent-light);}
-table.rec tfoot td{padding:11px 10px;text-align:right;font-weight:700;background:#eaf0f9;border-top:2px solid var(--accent);white-space:nowrap;}
-table.rec tfoot td:first-child{text-align:center;}
+table.rec tfoot td{padding:11px 10px;text-align:center;vertical-align:middle;font-weight:700;background:#eaf0f9;border-top:2px solid var(--accent);white-space:nowrap;}
 td.pos{color:var(--green);} td.neg{color:var(--red);}
 td.hi-cap{background:#dff2e8 !important;color:var(--green);font-weight:600;}
 td.hi-tax{background:#fbe7e2 !important;color:var(--red);font-weight:600;}
-tfoot td.hi-cap{background:#0f6e56 !important;color:#fff !important;}
+tfoot td.hi-cap{background:#70AD47 !important;color:#fff !important;}
 tfoot td.hi-tax{background:#c0442b !important;color:#fff !important;}
 
 .chart-box{background:var(--surface);border-radius:12px;border:.5px solid var(--border);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem;border-top:3px solid var(--accent-mid);}
@@ -892,20 +891,29 @@ var COLS = [
   {t:'Année', f:function(r){return r.annee;}, raw:true},
   {t:'Versements nets', f:function(r){return r.verseNet;}},
   {t:'Produits<br><span style="font-weight:400;opacity:.8;">nets des frais de gestion du contrat</span>', f:function(r){return r.produits;}, signed:true},
-  {t:'Rachats bruts', f:function(r){return r.rachat;}},
+  {t:'Rachats bruts', f:function(r){return r.rachat;}, rachat:true},
   {t:'Capital en fin d\'année', f:function(r){return r.valeur;}, cls:'hi-cap', noTotal:true},
   {t:'Assiette imposable à l\'IS', f:function(r){return r.base + r.baseRachat - r.varProv;}, signed:true},
   {t:'Impôt sur les sociétés', f:function(r){return r.is;}, cls:'hi-tax'}
 ];
 
+/* Les colonnes propres aux rachats disparaissent lorsque la projection
+   n'en comporte aucun : une colonne uniformément à zéro n'apporte rien
+   et encombre la lecture comme la capture d'écran. */
+function colonnesActives(R){
+  var avecRachat = R.cum.rachat > 0.5;
+  return COLS.filter(function(c){ return !c.rachat || avecRachat; });
+}
+
 function renderTable(R){
+  var cols=colonnesActives(R);
   var h='<table class="rec"><thead><tr>';
-  for(var i=0;i<COLS.length;i++) h+='<th>'+COLS[i].t+'</th>';
+  for(var i=0;i<cols.length;i++) h+='<th>'+cols[i].t+'</th>';
   h+='</tr></thead><tbody>';
   for(var j=0;j<R.rows.length;j++){
     var r=R.rows[j]; h+='<tr>';
-    for(var c=0;c<COLS.length;c++){
-      var col=COLS[c], v=col.f(r);
+    for(var c=0;c<cols.length;c++){
+      var col=cols[c], v=col.f(r);
       var cls = col.cls||'';
       if(col.signed && v<-0.5) cls+=' neg';
       h+='<td class="'+cls+'">'+(col.raw?v:eur(v))+'</td>';
@@ -913,8 +921,8 @@ function renderTable(R){
     h+='</tr>';
   }
   h+='</tbody><tfoot><tr>';
-  for(var c2=0;c2<COLS.length;c2++){
-    var col2=COLS[c2];
+  for(var c2=0;c2<cols.length;c2++){
+    var col2=cols[c2];
     if(c2===0){ h+='<td>Total</td>'; continue; }
     if(col2.noTotal){ h+='<td class="'+(col2.cls||'')+'">'+eur(R.valeurFinale)+'</td>'; continue; }
     var s=0; for(var k2=0;k2<R.rows.length;k2++) s+=col2.f(R.rows[k2]);
@@ -940,16 +948,21 @@ function renderChart(R){
   var ctx=document.getElementById('chart1').getContext('2d');
   if(CH) CH.destroy();
   var lab=R.rows.map(function(r){return r.annee;});
+  var series=[
+    {label:'Versements nets cumulés', data:R.rows.map(function(r){return r.cumVerseNet;}),
+     backgroundColor:'#1a4f8c', stack:'s', order:3},
+    {label:'Produits bruts cumulés', data:R.rows.map(function(r){return r.cumProduits;}),
+     backgroundColor:'#7fb2ea', stack:'s', order:3}
+  ];
+  /* Sans rachat, la série serait plate à zéro : on retire la barre et,
+     avec elle, sa légende. */
+  if(R.cum.rachat>0.5){
+    series.push({label:'Rachats bruts cumulés', data:R.rows.map(function(r){return -r.cumRachat;}),
+      backgroundColor:'#b06fc9', stack:'s', order:3});
+  }
   CH = new Chart(ctx,{
     type:'bar',
-    data:{labels:lab, datasets:[
-      {label:'Versements nets cumulés', data:R.rows.map(function(r){return r.cumVerseNet;}),
-       backgroundColor:'#1a4f8c', stack:'s', order:3},
-      {label:'Produits bruts cumulés', data:R.rows.map(function(r){return r.cumProduits;}),
-       backgroundColor:'#7fb2ea', stack:'s', order:3},
-      {label:'Rachats bruts cumulés', data:R.rows.map(function(r){return -r.cumRachat;}),
-       backgroundColor:'#b06fc9', stack:'s', order:3}
-    ]},
+    data:{labels:lab, datasets:series},
     options:{
       responsive:true, maintainAspectRatio:false,
       interaction:{mode:'index',intersect:false},
@@ -1029,7 +1042,12 @@ function exportCSV(){
 function exportPNG(){
   if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
   var R=RES, dpr=2;
-  var W=[70,130,170,110,140,150,140];
+  /* Indices des colonnes conservées : la colonne « Rachats bruts »
+     (index 3) est omise en l'absence de tout rachat. */
+  var keep=[0,1,2,3,4,5,6];
+  if(R.cum.rachat<=0.5) keep=[0,1,2,4,5,6];
+  var W0=[70,130,170,110,150,160,150];
+  var W=keep.map(function(o){return W0[o];});
   var totW=W.reduce(function(a,b){return a+b;},0);
   var hHead=54, hRow=26, hTot=34, pad=22, hTitle=54, hFoot=6;
   var H = hTitle+hHead+hRow*R.rows.length+hTot+hFoot+pad;
@@ -1048,16 +1066,18 @@ function exportPNG(){
   x.fillText(sousTitre, X0, Y+34);
   Y += hTitle;
 
-  var head=['Année','Versements\nnets','Produits nets des frais\nde gestion du contrat','Rachats\nbruts','Capital en\nfin d\'année','Assiette\nimposable à l\'IS','Impôt sur\nles sociétés'];
+  var head0=['Année','Versements\nnets','Produits nets des frais\nde gestion du contrat','Rachats\nbruts','Capital en\nfin d\'année','Assiette\nimposable à l\'IS','Impôt sur\nles sociétés'];
+  var head=keep.map(function(o){return head0[o];});
+  var iCap=keep.indexOf(4), iTax=keep.indexOf(6);
   var grad=x.createLinearGradient(0,Y,0,Y+hHead); grad.addColorStop(0,'#1e3d7a'); grad.addColorStop(1,'#16305f');
   x.fillStyle=grad; x.fillRect(X0,Y,totW,hHead);
   x.font='600 10.5px Inter, sans-serif';
   var cx=X0;
   for(var i=0;i<head.length;i++){
-    x.fillStyle='#fff'; x.textAlign= i===0?'center':'right';
+    x.fillStyle='#fff'; x.textAlign='center';
     var lines=head[i].split('\n');
     var ty=Y+hHead/2-(lines.length-1)*6.5+4;
-    for(var l=0;l<lines.length;l++) x.fillText(lines[l], i===0?cx+W[i]/2:cx+W[i]-10, ty+l*13);
+    for(var l=0;l<lines.length;l++) x.fillText(lines[l], cx+W[i]/2, ty+l*13);
     if(i<head.length-1){ x.strokeStyle='rgba(232,206,116,.55)'; x.beginPath(); x.moveTo(cx+W[i],Y); x.lineTo(cx+W[i],Y+hHead); x.stroke(); }
     cx+=W[i];
   }
@@ -1066,17 +1086,23 @@ function exportPNG(){
   x.font='400 11.5px Inter, sans-serif';
   for(var j=0;j<R.rows.length;j++){
     var r=R.rows[j];
-    var vals=[String(r.annee), eur(r.verseNet), eur(r.produits), eur(r.rachat), eur(r.valeur),
-              eur(r.base+r.baseRachat-r.varProv), eur(r.is)];
+    var vals0=[String(r.annee), eur(r.verseNet), eur(r.produits), eur(r.rachat), eur(r.valeur),
+               eur(r.base+r.baseRachat-r.varProv), eur(r.is)];
+    var vals=keep.map(function(o){return vals0[o];});
     if(j%2===1){ x.fillStyle='#fbfbfa'; x.fillRect(X0,Y,totW,hRow); }
-    x.fillStyle='#f2f1ed'; x.fillRect(X0,Y,W[0],hRow);
-    x.fillStyle='#dff2e8'; x.fillRect(X0+W[0]+W[1]+W[2]+W[3],Y,W[4],hRow);
-    x.fillStyle='#fbe7e2'; x.fillRect(X0+totW-W[6],Y,W[6],hRow);
+    var off=X0;
+    for(var f=0;f<W.length;f++){
+      if(f===0)      x.fillStyle='#f2f1ed';
+      else if(f===iCap) x.fillStyle='#dff2e8';
+      else if(f===iTax) x.fillStyle='#fbe7e2';
+      else { off+=W[f]; continue; }
+      x.fillRect(off,Y,W[f],hRow); off+=W[f];
+    }
     var cx2=X0;
     for(var c=0;c<vals.length;c++){
-      x.fillStyle = c===4?'#0f6e56' : (c===6?'#9a2c2c' : (c===0?'#52514e':'#0b0b0a'));
-      x.textAlign = c===0?'center':'right';
-      x.fillText(vals[c], c===0?cx2+W[c]/2:cx2+W[c]-10, Y+hRow/2+4);
+      x.fillStyle = c===iCap?'#0f6e56' : (c===iTax?'#9a2c2c' : (c===0?'#52514e':'#0b0b0a'));
+      x.textAlign = 'center';
+      x.fillText(vals[c], cx2+W[c]/2, Y+hRow/2+4);
       cx2+=W[c];
     }
     x.strokeStyle='rgba(0,0,0,.10)'; x.beginPath(); x.moveTo(X0,Y+hRow); x.lineTo(X0+totW,Y+hRow); x.stroke();
@@ -1086,15 +1112,21 @@ function exportPNG(){
   var sV=0,sP=0,sR=0,sB=0,sI=0;
   R.rows.forEach(function(r){sV+=r.verseNet;sP+=r.produits;sR+=r.rachat;sB+=r.base+r.baseRachat-r.varProv;sI+=r.is;});
   x.fillStyle='#eaf0f9'; x.fillRect(X0,Y,totW,hTot);
-  x.fillStyle='#0f6e56'; x.fillRect(X0+W[0]+W[1]+W[2]+W[3],Y,W[4],hTot);
-  x.fillStyle='#c0442b'; x.fillRect(X0+totW-W[6],Y,W[6],hTot);
+  var offT=X0;
+  for(var g=0;g<W.length;g++){
+    if(g===iCap) x.fillStyle='#70AD47';
+    else if(g===iTax) x.fillStyle='#c0442b';
+    else { offT+=W[g]; continue; }
+    x.fillRect(offT,Y,W[g],hTot); offT+=W[g];
+  }
   x.strokeStyle='#1a4f8c'; x.lineWidth=2; x.beginPath(); x.moveTo(X0,Y); x.lineTo(X0+totW,Y); x.stroke(); x.lineWidth=1;
-  var tv=['Total',eur(sV),eur(sP),eur(sR),eur(R.valeurFinale),eur(sB),eur(sI)];
+  var tv0=['Total',eur(sV),eur(sP),eur(sR),eur(R.valeurFinale),eur(sB),eur(sI)];
+  var tv=keep.map(function(o){return tv0[o];});
   x.font='700 12px Inter, sans-serif'; var cx3=X0;
   for(var c3=0;c3<tv.length;c3++){
-    x.fillStyle=(c3===4||c3===6)?'#fff':'#0b0b0a';
-    x.textAlign=c3===0?'center':'right';
-    x.fillText(tv[c3], c3===0?cx3+W[c3]/2:cx3+W[c3]-10, Y+hTot/2+4);
+    x.fillStyle=(c3===iCap||c3===iTax)?'#fff':'#0b0b0a';
+    x.textAlign='center';
+    x.fillText(tv[c3], cx3+W[c3]/2, Y+hTot/2+4);
     cx3+=W[c3];
   }
   cv.toBlob(function(b){
@@ -1113,29 +1145,35 @@ function exportPNG(){
    automatiquement à la fenêtre.
    ═══════════════════════════════════════════════════════════ */
 var WORD_COLS = [
-  {t:'Année',                    l:'8%',  f:function(r){return String(r.annee);}, brut:true},
-  {t:'Versements nets',          l:'15%', f:function(r){return eur(r.verseNet);}},
-  {t:'Produits nets des frais de gestion du contrat', l:'18%', f:function(r){return eur(r.produits);}},
-  {t:'Rachats bruts',            l:'14%', f:function(r){return eur(r.rachat);}},
-  {t:"Capital en fin d'année",   l:'16%', f:function(r){return eur(r.valeur);}, hi:'cap'},
-  {t:"Assiette imposable à l'IS",l:'15%', f:function(r){return eur(r.base+r.baseRachat-r.varProv);}},
-  {t:'Impôt sur les sociétés',   l:'14%', f:function(r){return eur(r.is);}, hi:'tax'}
+  {t:'Année',                    p:8,  f:function(r){return String(r.annee);}},
+  {t:'Versements nets',          p:15, f:function(r){return eur(r.verseNet);}},
+  {t:'Produits nets des frais de gestion du contrat', p:18, f:function(r){return eur(r.produits);}},
+  {t:'Rachats bruts',            p:14, f:function(r){return eur(r.rachat);}, rachat:true},
+  {t:"Capital en fin d'année",   p:16, f:function(r){return eur(r.valeur);}, hi:'cap'},
+  {t:"Assiette imposable à l'IS",p:15, f:function(r){return eur(r.base+r.baseRachat-r.varProv);}},
+  {t:'Impôt sur les sociétés',   p:14, f:function(r){return eur(r.is);}, hi:'tax'}
 ];
 
 function exportWord(){
   if(!RES){ flash('Lancez d\'abord le calcul',true); return; }
   var R=RES;
+  /* Colonne « Rachats bruts » omise sans rachat, et largeurs
+     renormalisées pour que leur somme reste égale à 100 %. */
+  var COLW = WORD_COLS.filter(function(c){ return !c.rachat || R.cum.rachat>0.5; });
+  var somP = COLW.reduce(function(a,c){return a+c.p;},0);
+  COLW.forEach(function(c){ c.l=(c.p/somP*100).toFixed(2)+'%'; });
   var BORD='border-top:none;border-left:none;border-right:none;border-bottom:0.5pt solid #D9D9D9;';
-  var CELL='font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;padding:3.0pt 5.0pt;'+BORD;
+  var CELL='font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;padding:3.0pt 5.0pt;'+
+           'text-align:center;vertical-align:middle;'+BORD;
 
   /* ligne d'en-tête */
   var h='<tr>';
-  for(var i=0;i<WORD_COLS.length;i++){
-    var c=WORD_COLS[i];
+  for(var i=0;i<COLW.length;i++){
+    var c=COLW[i];
     h+='<td width="'+c.l+'" style="width:'+c.l+';background:#2F5496;'+
        'font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;font-weight:bold;color:#FFFFFF;'+
        'padding:5.0pt 5.0pt;border:none;'+
-       'text-align:'+(i===0?'center':'right')+';vertical-align:middle;">'+c.t+'</td>';
+       'text-align:center;vertical-align:middle;">'+c.t+'</td>';
   }
   h+='</tr>';
 
@@ -1143,35 +1181,43 @@ function exportWord(){
   for(var j=0;j<R.rows.length;j++){
     var r=R.rows[j], pair=(j%2===1);
     h+='<tr>';
-    for(var k=0;k<WORD_COLS.length;k++){
-      var col=WORD_COLS[k], fond='#FFFFFF', couleur='#0B0B0A', gras='normal';
+    for(var k=0;k<COLW.length;k++){
+      var col=COLW[k], fond='#FFFFFF', couleur='#0B0B0A', gras='normal';
       if(pair) fond='#FBFBFA';
       if(k===0){ fond=pair?'#F2F1ED':'#F9F9F7'; couleur='#52514E'; gras='bold'; }
       if(col.hi==='cap'){ fond='#DFF2E8'; couleur='#0F6E56'; gras='bold'; }
       if(col.hi==='tax'){ fond='#FBE7E2'; couleur='#9A2C2C'; gras='bold'; }
-      h+='<td style="'+CELL+'background:'+fond+';color:'+couleur+';font-weight:'+gras+';'+
-         'text-align:'+(k===0?'center':'right')+';">'+col.f(r)+'</td>';
+      h+='<td style="'+CELL+'background:'+fond+';color:'+couleur+';font-weight:'+gras+';">'+
+         col.f(r)+'</td>';
     }
     h+='</tr>';
   }
 
   /* ligne de total */
   var somme=function(fn){var t=0;for(var i=0;i<R.rows.length;i++)t+=fn(R.rows[i]);return t;};
-  var tot=['Total', eur(somme(function(r){return r.verseNet;})),
-           eur(somme(function(r){return r.produits;})),
-           eur(somme(function(r){return r.rachat;})),
-           eur(R.valeurFinale),
-           eur(somme(function(r){return r.base+r.baseRachat-r.varProv;})),
-           eur(somme(function(r){return r.is;}))];
+  /* les fonctions de colonne renvoient du texte formaté : les totaux
+     sont recalculés à partir des données brutes, indexés par intitulé */
+  var totalsBruts={
+    'Versements nets':          somme(function(r){return r.verseNet;}),
+    'Produits nets des frais de gestion du contrat': somme(function(r){return r.produits;}),
+    'Rachats bruts':            somme(function(r){return r.rachat;}),
+    "Assiette imposable à l'IS":somme(function(r){return r.base+r.baseRachat-r.varProv;}),
+    'Impôt sur les sociétés':   somme(function(r){return r.is;})
+  };
+  var tot=COLW.map(function(c,i){
+    if(i===0) return 'Total';
+    if(c.hi==='cap') return eur(R.valeurFinale);
+    return eur(totalsBruts[c.t]);
+  });
   h+='<tr>';
   for(var m=0;m<tot.length;m++){
-    var cm=WORD_COLS[m], fondT='#EAF0F9', couleurT='#0B0B0A';
-    if(cm.hi==='cap'){ fondT='#0F6E56'; couleurT='#FFFFFF'; }
+    var cm=COLW[m], fondT='#EAF0F9', couleurT='#0B0B0A';
+    if(cm.hi==='cap'){ fondT='#70AD47'; couleurT='#FFFFFF'; }
     if(cm.hi==='tax'){ fondT='#C0442B'; couleurT='#FFFFFF'; }
     h+='<td style="font-family:Calibri,Carlito,sans-serif;font-size:10.0pt;font-weight:bold;'+
        'padding:4.0pt 5.0pt;border-top:1.5pt solid #1A4F8C;border-left:none;border-right:none;'+
        'border-bottom:none;background:'+fondT+';color:'+couleurT+';'+
-       'text-align:'+(m===0?'center':'right')+';">'+tot[m]+'</td>';
+       'text-align:center;vertical-align:middle;">'+tot[m]+'</td>';
   }
   h+='</tr>';
 
