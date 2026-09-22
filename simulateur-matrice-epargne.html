@@ -18,14 +18,27 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
 
-header{background:var(--hero);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;}
+header{background:linear-gradient(112deg,#0D1B5C 0%,#132995 62%,#1C36B4 100%);padding:34px 48px 40px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden;}
+/* Trame de points — cohérence avec le bandeau de la page d'accueil */
+header::before{
+  content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(rgba(175,192,255,.20) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+  mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
+}
+@media print{
+  header{background:#132995 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  header::before{display:none;}
+}
+
 .h-eyebrow{font-family:'Sora',sans-serif;font-size:10px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:var(--hero-pale);margin-bottom:12px;}
 .h-left h1{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.3px;}
 .h-left p{font-size:12.5px;color:rgba(255,255,255,.68);margin-top:7px;letter-spacing:.2px;max-width:460px;}
 .h-back{font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;letter-spacing:.5px;display:block;margin-bottom:14px;}
 .h-back:hover{color:var(--hero-pale);}
 .h-logo{
-  position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:0;
+  position:absolute;right:48px;top:50%;width:128px;height:128px;z-index:1;
   transform:translateY(-50%);
   transition:transform 1.15s cubic-bezier(.22,.61,.36,1);
   -webkit-user-select:none;user-select:none;
@@ -146,8 +159,9 @@ td.cell.sel{outline:2px solid var(--gold);outline-offset:-2px;}
 td.cell .sub{display:block;font-size:9.5px;font-weight:500;opacity:.74;margin-top:3px;}
 table.mx.clean td.cell .sub,table.mx.clean tbody th .rsub{display:none;}
 table.mx.clean td.cell,table.mx.clean tbody th,table.mx.clean thead th:not(.corner){padding:22px 8px;}
-.free-row input{width:130px;padding:5px 7px;font-size:13px;font-weight:700;text-align:center;border-radius:3px;background:#fff;border:1px solid var(--bd);}
-.free-row .lbl{font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.4px;text-transform:uppercase;}
+.free-row input{width:136px;padding:6px 8px;font-size:13px;font-weight:700;text-align:center;border-radius:3px;background:#fff;border:1px dashed var(--hero-pale);cursor:text;}
+.free-row input:hover{border-color:var(--hero);}
+.free-row input:focus{border-style:solid;}
 
 .legend{display:flex;align-items:center;gap:10px;padding:0 18px 16px;font-size:10.5px;color:var(--muted);flex-wrap:wrap;}
 .ramp{display:flex;height:11px;border-radius:2px;overflow:hidden;width:180px;border:1px solid var(--bd);}
@@ -223,27 +237,9 @@ footer .loca-credit{display:block;font-style:italic;font-size:9.5px;margin-top:5
   .h-logo .sheen{animation:none !important;}
 }
 @media print{.h-logo .plate{transform:none !important;--prof:0 !important;}}
-</style>
-<style>
-/* ═══════════════════════════════════════════════════════════
-   Bandeau — dégradé et trame de points
-   Harmonisation de la charte sur l'ensemble du portail.
-   ═══════════════════════════════════════════════════════════ */
-header{background:linear-gradient(112deg,#0D1B5C 0%,#132995 62%,#1C36B4 100%);}
-header::before{
-  content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:0;pointer-events:none;
-  background-image:radial-gradient(rgba(175,192,255,.20) 1px,transparent 1px);
-  background-size:22px 22px;
-  -webkit-mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
-  mask-image:radial-gradient(ellipse 70% 90% at 78% 40%,#000,transparent 72%);
-}
-/* Le contenu et le logo passent au-dessus de la trame */
+/* Le logo et le contenu passent au-dessus de la trame de points */
 header > *:not(.h-logo){position:relative;z-index:1;}
 .h-logo{z-index:1;}
-@media print{
-  header{background:#132995 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  header::before{display:none;}
-}
 </style>
 </head>
 <body>
@@ -353,8 +349,8 @@ header > *:not(.h-logo){position:relative;z-index:1;}
       <table class="mx" id="mxtable">
         <thead><tr id="thead-row">
           <th class="corner"><div class="corner-in">
-            <div class="c-tr">Rentabilité nette<br>du capital <sup>[2]</sup></div>
-            <div class="c-bl" id="cornerbl">Épargne mensuelle <sup>[1]</sup></div>
+            <div class="c-tr">Rentabilité nette<br>du capital</div>
+            <div class="c-bl" id="cornerbl">Épargne mensuelle</div>
           </div></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -366,6 +362,7 @@ header > *:not(.h-logo){position:relative;z-index:1;}
     </div>
     <div class="actions no-print">
       <button class="btn" onclick="window.print()">Imprimer / PDF</button>
+      <button class="btn ghost" id="btn-word">Exporter en Word</button>
       <button class="btn ghost" id="btn-csv">Exporter en CSV</button>
       <button class="btn ghost" id="btn-copy">Copier le tableau</button>
     </div>
@@ -401,8 +398,8 @@ header > *:not(.h-logo){position:relative;z-index:1;}
   </div>
 
   <div class="card"><div class="cb foot-note">
-    <strong>[1]</strong> Versements mensuels constants, sauf indexation, supposés effectués sans interruption sur toute la durée.<br>
-    <strong>[2]</strong> Rendement net annuel réputé constant, acquis après frais de gestion et frais sur versements. Il s'entend <em>avant</em> prélèvements sociaux et fiscalité propres au support. Aucune volatilité n'est modélisée : une performance moyenne identique obtenue par des rendements irréguliers ne produit pas le même capital. Simulation à caractère indicatif, sans valeur contractuelle.
+    <strong>Épargne mensuelle / objectif de capital.</strong> Versements mensuels constants, sauf indexation, supposés effectués sans interruption sur toute la durée.<br>
+    <strong>Rentabilité nette du capital.</strong> Rendement net annuel réputé constant, acquis après frais de gestion et frais sur versements. Il s'entend <em>avant</em> prélèvements sociaux et fiscalité propres au support. Aucune volatilité n'est modélisée : une performance moyenne identique obtenue par des rendements irréguliers ne produit pas le même capital. Simulation à caractère indicatif, sans valeur contractuelle.
   </div></div>
 
 </div>
@@ -519,6 +516,27 @@ function metric(res){
     default:return res.cap>0?res.int/res.cap*100:0;
   }
 }
+/* contenu et teinte d'une cellule — partagé par l'affichage et l'export Word */
+function cellView(res,ri,mn,mx){
+  if(TYPES[ri]==='socle')
+    return{main:eur(res.cap),sub:'socle sans versement',bg:'#F0F0EC',fg:'#5A6674'};
+  const val=metric(res);
+  const k=mx>mn?Math.round((val-mn)/(mx-mn)*8):4;
+  let main,sub;
+  if(state.mode==='part'){main=pctf(res.cap>0?res.int/res.cap*100:0);sub=eur(res.cap);}
+  else if(state.mode==='mensualite'){main=res.atteint?'—':eur(res.pmt);
+    sub=res.atteint?'objectif déjà couvert':eur(res.int)+" d'intérêts";}
+  else if(state.mode==='effort'){main=eur(res.invest);sub=eur(res.pmt)+' / mois';}
+  else if(state.mode==='capital'){main=eur(res.cap);sub='dont '+eur(res.int)+" d'intérêts";}
+  else{main=eur(res.int);sub='sur '+eur(res.cap);}
+  return{main:main,sub:sub,bg:RAMP[k],fg:k>=6?'#FFFFFF':'#1A2A3A'};
+}
+/* bornes de l'échelle de teintes, ligne de socle exclue */
+function bounds(){
+  const vals=[];
+  G.forEach(function(r,ri){if(TYPES[ri]!=='socle')r.forEach(function(c){vals.push(metric(c));});});
+  return{mn:Math.min.apply(null,vals),mx:Math.max.apply(null,vals)};
+}
 
 /* ================= RENDU ================= */
 function render(){
@@ -529,8 +547,7 @@ function render(){
       TYPES[ri]==='socle'?project(0,t/100,o):(inv?solve(v,t/100,o):project(v,t/100,o))));
 
   if(state.selFree){state.sel.r=TYPES.indexOf('free');state.selFree=false;}
-  const vals=[];G.forEach((r,ri)=>{if(TYPES[ri]!=='socle')r.forEach(c=>vals.push(metric(c)));});
-  const mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+  const bd=bounds(),mn=bd.mn,mx=bd.mx;
 
   const mc=document.getElementById('modes');
   if(mc.dataset.tool!==state.tool){
@@ -544,7 +561,7 @@ function render(){
   const hr=document.getElementById('thead-row');
   hr.querySelectorAll('th:not(.corner)').forEach(e=>e.remove());
   RATES.forEach(t=>{const th=document.createElement('th');th.textContent=num(t)+' %';hr.appendChild(th);});
-  document.getElementById('cornerbl').innerHTML=(inv?'Objectif de capital':'Épargne mensuelle')+' <sup>[1]</sup>';
+  document.getElementById('cornerbl').textContent=inv?'Objectif de capital':'Épargne mensuelle';
 
   document.getElementById('mxtable').classList.toggle('clean',state.clean);
   const bc=document.getElementById('btn-clean');
@@ -556,8 +573,7 @@ function render(){
     const tr=document.createElement('tr'),th=document.createElement('th');
     if(TYPES[ri]==='free'){
       th.className='free-row';
-      th.innerHTML='<span class="lbl">'+(inv?'Objectif libre':'Montant libre')+'</span>'+
-        '<input type="number" id="freeval" min="'+(inv?1000:100)+
+      th.innerHTML='<input type="number" id="freeval" title="Montant modifiable" min="'+(inv?1000:100)+
         '" step="'+(inv?25000:100)+'" value="'+v+'"> €';
     }else if(TYPES[ri]==='socle'){
       th.className='socle-row';
@@ -570,25 +586,11 @@ function render(){
     }
     tr.appendChild(th);
     RATES.forEach((t,ci)=>{
-      const res=G[ri][ci],val=metric(res);
-      const k=mx>mn?Math.round((val-mn)/(mx-mn)*8):4;
+      const res=G[ri][ci],cv=cellView(res,ri,mn,mx);
       const td=document.createElement('td');
       td.className='cell'+(state.sel.r===ri&&state.sel.c===ci?' sel':'');
-      if(TYPES[ri]==='socle'){
-        td.style.background='#F0F0EC';td.style.color='#5A6674';
-        td.innerHTML=eur(res.cap)+'<span class="sub">socle sans versement</span>';
-        td.onclick=function(){state.sel={r:ri,c:ci};render();};
-        tr.appendChild(td);return;
-      }
-      td.style.background=RAMP[k];td.style.color=k>=6?'#fff':'#1A2A3A';
-      let main,sub;
-      if(state.mode==='part'){main=pctf(res.cap>0?res.int/res.cap*100:0);sub=eur(res.cap);}
-      else if(state.mode==='mensualite'){main=res.atteint?'—':eur(res.pmt);
-        sub=res.atteint?'objectif déjà couvert':eur(res.int)+" d'intérêts";}
-      else if(state.mode==='effort'){main=eur(res.invest);sub=eur(res.pmt)+' / mois';}
-      else if(state.mode==='capital'){main=eur(res.cap);sub='dont '+eur(res.int)+" d'intérêts";}
-      else{main=eur(res.int);sub='sur '+eur(res.cap);}
-      td.innerHTML=main+'<span class="sub">'+sub+'</span>';
+      td.style.background=cv.bg;td.style.color=cv.fg;
+      td.innerHTML=cv.main+(cv.sub?'<span class="sub">'+cv.sub+'</span>':'');
       td.onclick=function(){state.sel={r:ri,c:ci};render();};
       tr.appendChild(td);
     });
@@ -667,6 +669,114 @@ function tableText(sep){
     .concat(G[ri].map(r=>Math.round(TYPES[ri]==='socle'?r.cap:metric(r)))).join(sep)));
   return lines.join('\n')+'\n';
 }
+
+/* ---- Export Word : tableau éditable, ajusté à la largeur de la page,
+        cellules centrées, mêmes nuances de bleu que la page. ---- */
+function wordHTML(){
+  const o=opts(),inv=state.tool==='inverse';
+  const bd=bounds(),mn=bd.mn,mx=bd.mx;
+  const clean=state.clean;
+  const nc=RATES.length,ncol=nc+1;
+  /* Toutes les colonnes à la même largeur, première comprise, et le tableau
+     occupe toujours toute la largeur utile de la page : en pourcentage plutôt
+     qu'en centimètres, l'ajustement suit les marges réelles du document. */
+  const col=(100/ncol).toFixed(4)+'%';
+  /* Hauteur de ligne imposée à 1 cm exactement (et non « au moins 1 cm ») :
+     les libellés ci-dessous sont calibrés pour tenir dans cette hauteur. */
+  const HL='height:1cm;mso-height-rule:exactly;';
+  const title=document.getElementById('ttitle').textContent;
+  const sub=document.getElementById('tsub').textContent;
+  /* Word et LibreOffice ignorent une partie des styles de classe sur les
+     cellules : tout est donc posé en ligne, doublé de l'attribut bgcolor. */
+  const FT='font-family:Inter,Calibri,Arial,sans-serif;';
+  const serre=nc>=6;                       // 6 taux : on resserre la police
+  const BASE='text-align:center;vertical-align:middle;padding:2pt '+(serre?'2pt':'3pt')+';'+
+             HL+FT+'font-size:'+(serre?'9.5pt':'10.5pt')+';font-weight:bold;';
+  /* espace ins\u00e9cable avant le symbole \u20ac : \u00e9vite qu'il tombe seul \u00e0 la ligne */
+  const nb=function(s){return s.replace(/ \u20ac/g,'\u00a0\u20ac');};
+  /* Colonnes étroites : la mention secondaire doit tenir sur une seule ligne. */
+  const court=function(s){return nb(s).replace('socle sans versement','socle')
+                                      .replace('objectif déjà couvert','couvert');};
+  function td(html,bg,fg,bd2,extra){
+    return '<td bgcolor="'+bg+'" align="center" valign="middle" style="'+BASE+
+      'background:'+bg+';color:'+fg+';border:1pt solid '+bd2+';'+(extra||'')+'">'+html+'</td>';
+  }
+  const small='font-size:'+(serre?'5.5pt':'6.5pt')+';font-weight:normal;'+FT;
+
+  let t='<table border="0" cellspacing="0" cellpadding="0" width="100%" '+
+        'style="border-collapse:collapse;width:100%;table-layout:fixed;'+
+        'mso-table-layout-alt:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;'+
+        'mso-table-hspace:0pt;"><colgroup>'+
+        new Array(ncol+1).join('<col style="width:'+col+'">')+
+        '</colgroup>';
+
+  const coin='margin:0;font-size:6.5pt;'+FT+'font-weight:bold;color:#FFFFFF;';
+  t+='<tr style="'+HL+'">'+td(
+        '<p style="'+coin+'text-align:right;">Rentabilité nette &#8594;</p>'+
+        '<p style="'+coin+'text-align:left;margin-top:5pt;">'+
+        (inv?'Objectif de capital':'Épargne mensuelle')+' &#8595;</p>',
+        '#1F3864','#FFFFFF','#1F3864','padding:3pt 5pt;');
+  RATES.forEach(function(r){t+=td(num(r)+' %','#EFEFEF','#2C3E50','#D9D9D9');});
+  t+='</tr>';
+
+  ROWS.forEach(function(v,ri){
+    const socle=TYPES[ri]==='socle';
+    let rh;
+    if(socle)
+      rh='<span style="'+small+'font-weight:bold;color:#6B7A8D;'+
+         'text-transform:uppercase;">Capital initial seul</span><br>'+nb(eur(v));
+    else if(inv)
+      rh=nb(eur(v))+(clean?'':'<br><span style="'+small+'color:#6B7A8D;">'+
+         (o.infl>0?"en euros d'aujourd'hui":'au terme')+'</span>');
+    else
+      rh=nb(eur(v))+(clean?'':'<br><span style="'+small+'color:#6B7A8D;">'+
+         nb(eur(v*12*o.years))+' versés</span>');
+    t+='<tr style="'+HL+'">'+td(rh,socle?'#EDEDE8':'#F2F2F2',socle?'#5A6674':'#2C3E50','#D9D9D9',
+                 'font-size:10pt;');
+    G[ri].forEach(function(res){
+      const cv=cellView(res,ri,mn,mx);
+      t+=td(nb(cv.main)+(clean||!cv.sub?'':'<br><span style="'+small+'">'+court(cv.sub)+'</span>'),
+            cv.bg,cv.fg,'#FFFFFF');
+    });
+    t+='</tr>';
+  });
+  t+='</table>';
+
+  const css=
+    '@page WordSection1{size:21cm 29.7cm;mso-page-orientation:portrait;'+
+      'margin:1.6cm 1.4cm 1.6cm 1.4cm;}'+
+    'div.WordSection1{page:WordSection1;}'+
+    'body{'+FT+'font-size:10pt;color:#2C3E50;}'+
+    'h1{font-family:"Playfair Display",Georgia,serif;font-size:15pt;color:#1F3864;margin:0 0 3pt;}';
+
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" '+
+    'xmlns:w="urn:schemas-microsoft-com:office:word" '+
+    'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">'+
+    '<title>'+title+'</title>'+
+    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'+
+    '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->'+
+    '<style>'+css+'</style></head><body><div class="WordSection1">'+
+    '<h1>'+title+'</h1>'+
+    '<p style="'+FT+'font-size:8.5pt;color:#6B7A8D;margin:0 0 11pt;">'+sub+'</p>'+t+
+    '<p style="'+FT+'font-size:7.5pt;color:#6B7A8D;margin:11pt 0 0;line-height:1.45;">'+
+    '<b>'+(inv?'Objectif de capital':'Épargne mensuelle')+'.</b> '+
+    'Versements mensuels constants, sauf indexation, supposés effectués sans interruption '+
+    'sur toute la durée.<br><b>Rentabilité nette du capital.</b> Rendement net annuel réputé '+
+    "constant, acquis après frais de gestion et frais sur versements. Il s'entend avant "+
+    "prélèvements sociaux et fiscalité propres au support. Aucune volatilité n'est "+
+    'modélisée : une performance moyenne identique obtenue par des rendements irréguliers '+
+    'ne produit pas le même capital. Simulation à caractère indicatif, sans valeur '+
+    'contractuelle.</p>'+
+    '<p style="'+FT+'font-size:7pt;font-style:italic;color:#9AA3B2;margin:16pt 0 0;'+
+    'text-align:center;">Ce simulateur a été établi par LOCA à destination du tout '+
+    "meilleur service d'ingénierie patrimoniale de France.</p>"+
+    '</div></body></html>';
+}
+document.getElementById('btn-word').onclick=function(){
+  const b=new Blob(['\ufeff'+wordHTML()],{type:'application/msword'});
+  const u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download='matrice-epargne-'+state.tool+'.doc';a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);},2000);};
 document.getElementById('btn-clean').onclick=function(){state.clean=!state.clean;render();};
 document.getElementById('btn-csv').onclick=function(){
   const b=new Blob(['\ufeff'+tableText(';')],{type:'text/csv;charset=utf-8'});
