@@ -183,6 +183,27 @@
     .tip .tip-box::after{content:'';position:absolute;top:100%;left:13px;border:6px solid transparent;border-top-color:#1f2937;}
     .tip:hover .tip-box,.tip:focus .tip-box{display:block;}
     @media(max-width:600px){.tip .tip-box{width:250px;}}
+    /* Comparatif par quotité */
+    .q-card{padding:1.5rem 1.5rem 1.25rem;}
+    .q-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:1rem;}
+    .q-sub{font-size:12.5px;color:var(--text-sec);line-height:1.5;}
+    .q-step{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;}
+    .q-step .toggle-group{height:32px;width:168px;}
+    .q-step .toggle-btn{font-size:12px;}
+    .q-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;}
+    .q-table{width:100%;border-collapse:collapse;min-width:460px;font-size:13px;}
+    .q-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .q-table th{padding:10px 14px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;letter-spacing:.03em;text-align:center;vertical-align:middle;white-space:nowrap;}
+    .q-table th.q-lbl{background:#12396b;}
+    .q-table td{padding:10px 14px;text-align:center;vertical-align:middle;border-top:1px solid var(--border);font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .q-table td.q-lbl{font-weight:600;color:var(--text);}
+    .q-table td.q-lbl span{display:block;font-size:11px;font-weight:400;color:var(--text-muted);margin-top:2px;}
+    .q-table td.q-tot{font-weight:600;color:var(--accent);background:#f5f8fd;}
+    .q-table tbody tr:nth-child(even) td{background:var(--surface-alt);}
+    .q-table tbody tr:nth-child(even) td.q-tot{background:#eef3fb;}
+    .q-table tr.q-ref td{background:var(--accent-light) !important;color:var(--accent);font-weight:700;border-top:2px solid var(--accent-mid);}
+    .q-table tr.q-ref td.q-lbl span{color:var(--accent-mid);}
+    .q-note{font-size:11.5px;color:var(--text-muted);line-height:1.6;margin-top:10px;}
     .footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border);line-height:1.9;}
     .footer .loca-credit{font-style:italic;font-size:10.5px;margin-top:6px;color:#b5922a;letter-spacing:0.01em;}
     @media(max-width:600px){.form-grid,.donor-age-grid{grid-template-columns:1fr;}.chart-section{grid-template-columns:1fr;}.pie-wrap{width:180px;height:180px;margin:0 auto;}.total-amount{font-size:34px;}.main-nav,.tabs{flex-direction:column;}header{padding:28px 20px 32px;}.h-logo{display:none;}}
@@ -339,7 +360,6 @@ header > *:not(.h-logo){position:relative;z-index:1;}
     Simulateur à titre indicatif — les montants réels peuvent varier selon les actes et la situation particulière.<br>
     Barèmes des émoluments notariaux en vigueur (arrêté du 28 février 2024) · Barèmes DMTG art. 777 CGI · Abattements art. 779, 790 B/D/E/F CGI · Rappel fiscal art. 784 CGI · Art. 669 CGI.<br>
     <strong>Document réservé à l'usage professionnel interne.</strong>
-    <div class="loca-credit">Ce simulateur a été établi par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</div>
   </div>
 </div>
 <script>
@@ -771,8 +791,12 @@ function sgGetChildren(){
 function sgGetDonors(){return Array.from({length:sgNbDonateurs},(_,i)=>({name:document.querySelectorAll('.sg-donor-name')[i]?.value.trim()||('Donateur '+(i+1)),age:parseInt(document.querySelectorAll('.sg-donor-age')[i]?.value)||0}));}
 function sgGetBiens(){return Array.from(document.querySelectorAll('.bien-block')).map(block=>({nom:block.querySelector('.sg-bien-nom')?.value.trim()||'Bien',type:block.querySelector('.sg-bien-type')?.value||'immo',valeur:parseFloat(block.querySelector('.sg-bien-valeur')?.value)||0,typeD:block.querySelector('.bien-btn-np.active')?'NP':'PP',repLibre:!!block.querySelector('.bien-rep-libre.active'),reps:Array.from(block.querySelectorAll('.bien-rep-pct')).map(i=>(parseFloat(i.value)||0)/100),donorIdxs:Array.from(block.querySelectorAll('.bien-donor-check:checked')).map(c=>parseInt(c.dataset.idx)),donorQuotes:(()=>{const q={};block.querySelectorAll('.bien-donor-quote').forEach(i=>{q[parseInt(i.dataset.idx)]=(parseFloat(i.value)||0)/100;});return q;})(),abatt790G:!!(block.querySelector('.sg-790g-check')?.checked),decoteActive:!!(block.querySelector('.sg-decote-check')?.checked),decoteTaux:parseFloat(block.querySelector('.sg-decote-taux')?.value)||10}));}
 
-function sgCalculer(){
-  const children=sgGetChildren(),donors=sgGetDonors(),biens=sgGetBiens();
+function sgCalculer(opts){
+  opts=opts||{};
+  // Quotité donnée de chaque bien (1 = donation totale) — utilisée par le tableau comparatif
+  const Q=(typeof opts.quotite==='number')?opts.quotite:1;
+  const children=sgGetChildren(),donors=sgGetDonors();
+  const biens=sgGetBiens().map(b=>Q===1?b:Object.assign({},b,{valeur:b.valeur*Q}));
   const nC=children.length;
   if(!nC){alert('Ajoutez au moins un donataire.');return;}
   if(!biens.length){alert('Ajoutez au moins un bien.');return;}
@@ -955,6 +979,7 @@ function sgCalculer(){
   // Totaux globaux
   const totalDroits=activeCols.reduce((s,k)=>s+colDroitsTotal[k],0);
   const totalFrais=Object.values(donorEmol).reduce((s,d)=>s+d.total,0);
+  if(opts.silent)return{totalDroits,totalFrais};
 
   // ─── TABLEAU ───
   // Structure : colonnes = une par (di,ci) + colonne total global
@@ -1113,11 +1138,57 @@ function sgCalculer(){
           </div>
         </div>
       </div>
-    </div>`;
+    </div>
+    <div id="quotite-section"></div>`;
 
   window._sgData={donors,children,biens,activeCols,bienResults,colDroitsTotal,donorEmol,colTaxTotal,totalDroits,totalFrais,deboursGlobal,sgNbDonateurs,nC,colDroitsTotal};
   // Dessiner le schéma immédiatement
   setTimeout(()=>drawSchema(),50);
+  sgRenderQuotites();
+}
+
+// ═══════════════════════════════════════════
+//  COMPARATIF PAR QUOTITÉ DONNÉE
+//  Chaque ligne relance le moteur complet sur une donation unique
+//  portant sur la quotité indiquée de chaque bien (mêmes donataires,
+//  mêmes options, mêmes donations antérieures).
+// ═══════════════════════════════════════════
+let sgQStep=20;
+function sgSetQStep(n){sgQStep=n;sgRenderQuotites();}
+function sgRenderQuotites(){
+  const zone=document.getElementById('quotite-section');
+  const d=window._sgData;if(!zone||!d)return;
+  const valPP=d.biens.reduce((s,b)=>s+b.valeur,0);
+  const rows=[];
+  for(let p=sgQStep;p<=100;p+=sgQStep){
+    const r=sgCalculer({quotite:p/100,silent:true});
+    if(!r)continue;
+    rows.push({p,val:valPP*p/100,droits:r.totalDroits,frais:r.totalFrais,total:r.totalDroits+r.totalFrais});
+  }
+  if(rows[rows.length-1]?.p!==100){
+    const r=sgCalculer({quotite:1,silent:true});
+    rows.push({p:100,val:valPP,droits:r.totalDroits,frais:r.totalFrais,total:r.totalDroits+r.totalFrais});
+  }
+  window._sgQRows=rows;
+  const stepBtn=n=>`<button class="toggle-btn${sgQStep===n?' active':''}" onclick="sgSetQStep(${n})">${n} %</button>`;
+  const body=rows.map(r=>{
+    const ref=r.p===100;
+    return `<tr class="${ref?'q-ref':''}"><td class="q-lbl">${ref?'Donation totale':r.p+' % du bien'}<span>${fmt(r.val)} en PP${ref?' · référence':''}</span></td><td>${fmt(r.droits)}</td><td>${fmt(r.frais)}</td><td class="q-tot">${fmt(r.total)}</td></tr>`;
+  }).join('');
+  zone.innerHTML=`<div class="card q-card">
+    <div class="q-head">
+      <div>
+        <div class="card-title" style="margin-bottom:4px;">Comparatif selon la quotité donnée</div>
+        <div class="q-sub">Coût d'une donation portant sur une fraction ${d.biens.length>1?'de chaque bien':'du bien'}, comparé à la donation totale</div>
+      </div>
+      <div class="q-actions"><div class="q-step"><span>Pas</span><div class="toggle-group">${stepBtn(10)}${stepBtn(20)}${stepBtn(25)}</div></div><button class="btn btn-export" style="font-size:12px;padding:7px 12px;" onclick="exportQuotitesWord()">⬇ Exporter en Word</button></div>
+    </div>
+    <div class="q-wrap"><table class="q-table">
+      <thead><tr><th class="q-lbl">Quotité donnée</th><th>Droits de donation</th><th>Frais de notaire</th><th>Total</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>
+    <div class="q-note">Chaque ligne simule <strong>une seule donation</strong> de la quotité indiquée, avec les mêmes donataires, options et donations antérieures que la simulation ci-dessus. Les frais ne sont pas proportionnels à la quotité (débours fixes, barème d'émoluments dégressif, minimum de CSI).</div>
+  </div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -1470,6 +1541,37 @@ function fallbackCopy(html,btn){
 // ═══════════════════════════════════════════
 //  EXPORT WORD
 // ═══════════════════════════════════════════
+// Tableau quotités au format Word — Calibri 10, en-tête bleu, cellules centrées
+function sgQuotiteTableWord(){
+  const rows=window._sgQRows||[];
+  const F='font-family:Calibri,Carlito,Arial,sans-serif;font-size:10.0pt;';
+  const CTR='text-align:center;vertical-align:middle;';
+  const TH=`border:1px solid #999;padding:5px 7px;background:#1a4f8c;color:#ffffff;${CTR}${F}font-weight:bold;`;
+  const TD=`border:1px solid #ccc;padding:4px 7px;${CTR}${F}`;
+  const TDREF=`border:1px solid #aaa;padding:5px 7px;${CTR}${F}font-weight:bold;background:#dbe9f8;color:#1a4f8c;`;
+  const body=rows.map(r=>{
+    const st=r.p===100?TDREF:TD;
+    const lbl=r.p===100?'Donation totale (référence)':r.p+' % du bien';
+    return `<tr><td style="${st}">${lbl}<br><span style="font-size:8pt;color:#6b6b6b;font-weight:normal;">${fmt(r.val)} en PP</span></td><td style="${st}">${fmt(r.droits)}</td><td style="${st}">${fmt(r.frais)}</td><td style="${st}">${fmt(r.total)}</td></tr>`;
+  }).join('');
+  return `<table style="width:100%;border-collapse:collapse;table-layout:auto;mso-table-lspace:0pt;mso-table-rspace:0pt;"><thead><tr><th style="${TH}">Quotité donnée</th><th style="${TH}">Droits de donation</th><th style="${TH}">Frais de notaire</th><th style="${TH}">Total</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+function exportQuotitesWord(){
+  const d=window._sgData;if(!d||!window._sgQRows){alert('Générez d\'abord une simulation.');return;}
+  const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Comparatif quotités</title><style>@page{margin:1.5cm;}body{font-family:Calibri,Carlito,Arial,sans-serif;font-size:10.0pt;color:#0b0b0a;}table{font-family:Calibri,Carlito,Arial,sans-serif;font-size:10.0pt;}h1{font-family:Georgia,serif;font-size:15pt;color:#1a4f8c;margin-bottom:6px;}p{font-size:10pt;color:#52514e;line-height:1.4;margin-bottom:5px;}.footer-note{font-size:8pt;color:#898781;border-top:1px solid #ddd;padding-top:6px;margin-top:14px;}</style></head><body>
+  <h1>Comparatif selon la quotité donnée</h1>
+  <p><strong>Date :</strong> ${today} &nbsp;|&nbsp; <strong>Donateur(s) :</strong> ${d.donors.map(x=>x.name).join(' &amp; ')} &nbsp;|&nbsp; <strong>Donataire(s) :</strong> ${d.children.map(x=>x.name).join(', ')}</p>
+  <p><strong>Bien(s) :</strong> ${d.biens.map(b=>b.nom+' ('+fmt(b.valeur)+')').join(' · ')}</p>
+  <br>${sgQuotiteTableWord()}
+  <div class="footer-note">Chaque ligne simule une seule donation de la quotité indiquée, avec les mêmes donataires, options et donations antérieures. Les frais ne sont pas proportionnels à la quotité (débours fixes, barème d'émoluments dégressif, minimum de CSI). Simulation à titre indicatif — document réservé à usage professionnel interne.</div>
+  </body></html>`;
+  const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=`comparatif_quotites_${d.donors.map(x=>x.name.replace(/\s/g,'_')).join('_')}.doc`;
+  a.click();URL.revokeObjectURL(url);
+}
+
 function exportWord(){
   const d=window._sgData;if(!d){alert('Générez d\'abord une simulation.');return;}
   const today=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
@@ -1588,8 +1690,9 @@ function exportWord(){
   <p><strong>Date :</strong> ${today} &nbsp;|&nbsp; <strong>Donateur(s) :</strong> ${donors.map(x=>x.name).join(' &amp; ')} &nbsp;|&nbsp; <strong>Donataire(s) :</strong> ${children.map(x=>x.name).join(', ')}</p>
   <p><strong>Bien(s) :</strong> ${biens.map(b=>b.nom+' ('+fW(b.valeur)+')').join(' · ')}</p>
   <br>${tableW}
+  ${window._sgQRows?`<h2 style="font-family:Georgia,serif;font-size:12pt;color:#1a4f8c;margin:16px 0 6px;">Comparatif selon la quotité donnée</h2>${sgQuotiteTableWord()}`:''}
   <div class="note"><strong>Méthode :</strong> abattement personnel selon le lien de parenté (art. 779, 790 B/D/E/F CGI), cumulé le cas échéant avec l'abattement personne handicapée de 159 325 € (art. 779 II CGI). Rappel fiscal des donations de moins de 15 ans appliqué conformément à l'art. 784 CGI. Émoluments calculés par donateur sur la valeur retenue à l'acte. Débours de 300 € partagés entre donateurs.</div>
-  <div class="footer-note">Simulation à titre indicatif — barèmes art. 777 CGI selon le lien de parenté. Document réservé à usage professionnel interne.<br><em>Ce simulateur a été établi par LOCA à destination du tout meilleur service d'ingénierie patrimoniale de France.</em></div>
+  <div class="footer-note">Simulation à titre indicatif — barèmes art. 777 CGI selon le lien de parenté. Document réservé à usage professionnel interne.</div>
   </body></html>`;
 
   const blob=new Blob(['\ufeff'+html],{type:'application/msword'});
