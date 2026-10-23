@@ -163,6 +163,10 @@ table.mx.clean td.cell,table.mx.clean tbody th,table.mx.clean thead th:not(.corn
 .free-row input:hover{border-color:var(--hero);}
 .free-row input:focus{border-style:solid;}
 
+.ropt-row{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--pearl);}
+.ropt-row .tgg{max-width:640px;}
+input:disabled{opacity:.45;cursor:not-allowed;}
+.ctabs{display:flex;gap:5px;justify-content:flex-end;margin-bottom:10px;}
 .legend{display:flex;align-items:center;gap:10px;padding:0 18px 16px;font-size:10.5px;color:var(--muted);flex-wrap:wrap;}
 .ramp{display:flex;height:11px;border-radius:2px;overflow:hidden;width:180px;border:1px solid var(--bd);}
 .ramp i{flex:1;}
@@ -250,7 +254,7 @@ header > *:not(.h-logo){position:relative;z-index:1;}
     <a class="h-back" href="index.html">← Retour aux outils</a>
     <div class="h-eyebrow">Ingénierie patrimoniale · Épargne</div>
     <h1>Matrice d'épargne</h1>
-    <p>Capitalisation d'un effort d'épargne mensuel — lecture directe et inverse</p>
+    <p>Capitalisation d'un effort d'épargne mensuel — lecture directe, inverse et rachats programmés</p>
   </div>
 </header>
 
@@ -265,24 +269,40 @@ header > *:not(.h-logo){position:relative;z-index:1;}
       <div class="tt">Effort d'épargne requis</div>
       <div class="td">« Pour viser 500 000 €, combien verser chaque mois ? »</div>
     </button>
+    <button class="tool" data-tool="rachat">
+      <div class="tt">Rachats programmés</div>
+      <div class="td">« Avec 500 000 € placés, quel revenu sans entamer le capital ? »</div>
+    </button>
   </div>
 
   <div class="card gold no-print">
     <div class="ch"><h2>Paramètres de la projection</h2><span class="sub">Recalcul automatique</span></div>
     <div class="cb">
+      <div class="ropt-row" id="ropt-row" style="display:none">
+        <label>Type de rachat</label>
+        <div class="tgg">
+          <button class="tg on" data-g="ropt" data-v="rend">Rachat du rendement — capital préservé</button>
+          <button class="tg" data-g="ropt" data-v="fixe">Rachat d'un montant fixe</button>
+        </div>
+      </div>
       <div class="grid4">
         <div class="sf">
           <label for="duree">Durée de l'épargne</label>
           <input type="number" id="duree" value="15" min="1" max="60" step="1">
           <span class="u">ans</span>
         </div>
-        <div class="sf">
+        <div class="sf" id="f-capital0">
           <label for="capital0">Capital initial</label>
           <input type="number" id="capital0" value="0" min="0" step="1000">
           <span class="u">€</span>
         </div>
+        <div class="sf" id="f-capR" style="display:none">
+          <label for="capR">Capital placé</label>
+          <input type="number" id="capR" value="500000" min="1000" step="10000">
+          <span class="u">€</span>
+        </div>
         <div>
-          <label>Moment du versement</label>
+          <label id="l-timing">Moment du versement</label>
           <div class="tgg">
             <button class="tg on" data-g="timing" data-v="debut">Début de mois</button>
             <button class="tg" data-g="timing" data-v="fin">Fin de mois</button>
@@ -315,6 +335,7 @@ header > *:not(.h-logo){position:relative;z-index:1;}
             <label for="index">Indexation annuelle des versements</label>
             <input type="number" id="index" value="0" min="0" max="10" step="0.5">
             <span class="u">%/an</span>
+            <div class="hint" id="hint-index" style="display:none">Sans objet : le rachat suit le rendement du capital.</div>
           </div>
           <div class="sf">
             <label for="infl">Inflation — affichage en euros constants</label>
@@ -358,6 +379,7 @@ header > *:not(.h-logo){position:relative;z-index:1;}
     </div>
     <div class="legend">
       <span>Échelle</span><span class="ramp" id="ramp"></span><span id="legtxt"></span>
+      <span id="leg-warn" style="display:none;align-items:center;gap:6px"><i style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#F6E1DC;border:1px solid #E5B9AF"></i>Capital épuisé avant le terme</span>
       <span style="margin-left:auto" class="no-print">Cliquez une cellule pour en détailler la mécanique.</span>
     </div>
     <div class="actions no-print">
@@ -374,21 +396,25 @@ header > *:not(.h-logo){position:relative;z-index:1;}
         <div class="dtitle" id="dtitle"></div>
         <div class="dsub" id="dsub"></div>
         <div class="kr"><span class="kl" id="l-pmt">Versement mensuel</span><span class="kv" id="d-pmt">—</span></div>
-        <div class="kr"><span class="kl">Capital initial</span><span class="kv" id="d-c0">—</span></div>
-        <div class="kr"><span class="kl">Total des versements</span><span class="kv" id="d-vers">—</span></div>
-        <div class="kr"><span class="kl">Intérêts capitalisés</span><span class="kv gain" id="d-int">—</span></div>
-        <div class="kr"><span class="kl">Capital au terme</span><span class="kv hl" id="d-cap">—</span></div>
-        <div class="kr"><span class="kl">Multiple de l'effort d'épargne</span><span class="kv" id="d-mult">—</span></div>
-        <div class="kr"><span class="kl">Retrait mensuel à 4 % du capital par an</span><span class="kv" id="d-rente">—</span></div>
+        <div class="kr"><span class="kl" id="l-c0">Capital initial</span><span class="kv" id="d-c0">—</span></div>
+        <div class="kr"><span class="kl" id="l-vers">Total des versements</span><span class="kv" id="d-vers">—</span></div>
+        <div class="kr"><span class="kl" id="l-int">Intérêts capitalisés</span><span class="kv gain" id="d-int">—</span></div>
+        <div class="kr"><span class="kl" id="l-cap">Capital au terme</span><span class="kv hl" id="d-cap">—</span></div>
+        <div class="kr"><span class="kl" id="l-mult">Multiple de l'effort d'épargne</span><span class="kv" id="d-mult">—</span></div>
+        <div class="kr"><span class="kl" id="l-rente">Retrait mensuel à 4 % du capital par an</span><span class="kv" id="d-rente">—</span></div>
         <div class="bar"><div id="bar1" style="background:#8FAEDA"></div><div id="bar2" style="background:#1F4E79"></div></div>
-        <div class="barleg">
+        <div class="barleg" id="barleg1">
           <span><i style="background:#8FAEDA"></i>Effort d'épargne</span>
           <span><i style="background:#1F4E79"></i>Effet de la capitalisation</span>
         </div>
       </div>
       <div class="dr">
+        <div class="ctabs no-print" id="ctabs" style="display:none">
+          <button class="mbtn on" data-c="cell">Cellule sélectionnée</button>
+          <button class="mbtn" data-c="faisceau">Tous les rendements</button>
+        </div>
         <div class="cw"><canvas id="chart"></canvas></div>
-        <div class="barleg" style="margin-top:12px;justify-content:center">
+        <div class="barleg" id="chartleg" style="margin-top:12px;justify-content:center">
           <span><i style="background:#7E9CC9"></i>Cumul versé</span>
           <span><i style="background:rgba(30,123,76,.45);border:1px solid #1E7B4C"></i>Intérêts générés</span>
           <span><i style="background:#1F4E79"></i>Capital atteint</span>
@@ -397,7 +423,7 @@ header > *:not(.h-logo){position:relative;z-index:1;}
     </div>
   </div>
 
-  <div class="card"><div class="cb foot-note">
+  <div class="card"><div class="cb foot-note" id="footnote">
     <strong>Épargne mensuelle / objectif de capital.</strong> Versements mensuels constants, sauf indexation, supposés effectués sans interruption sur toute la durée.<br>
     <strong>Rentabilité nette du capital.</strong> Rendement net annuel réputé constant, acquis après frais de gestion et frais sur versements. Il s'entend <em>avant</em> prélèvements sociaux et fiscalité propres au support. Aucune volatilité n'est modélisée : une performance moyenne identique obtenue par des rendements irréguliers ne produit pas le même capital. Simulation à caractère indicatif, sans valeur contractuelle.
   </div></div>
@@ -419,17 +445,50 @@ document.getElementById('ramp').innerHTML=RAMP.map(c=>'<i style="background:'+c+
 const EPARGNE=[500,1000,1250,1500,2000,2500];
 const OBJECTIFS=[100000,250000,500000,750000,1000000];
 const MODES={direct:[['capital','Capital'],['interets','Intérêts'],['part',"Part d'intérêts"]],
-             inverse:[['mensualite','Mensualité'],['effort','Effort total'],['part',"Part d'intérêts"]]};
+             inverse:[['mensualite','Mensualité'],['effort','Effort total'],['part',"Part d'intérêts"]],
+             rachatA:[['rachat','Rachat mensuel']],
+             rachatB:[['capterme','Capital au terme'],['duree','Durée de vie']]};
+function modesFor(){
+  if(state.tool==='rachat')return state.ropt==='rend'?MODES.rachatA:MODES.rachatB;
+  return MODES[state.tool];
+}
+function cornerLbl(){
+  if(state.tool==='rachat')return state.ropt==='rend'?'Capital placé':'Rachat mensuel';
+  return state.tool==='inverse'?'Objectif de capital':'Épargne mensuelle';
+}
 
 const state={tool:'direct',timing:'debut',conv:'act',mode:'capital',
-             sel:{r:3,c:0},freeE:3000,freeO:1500000,freeOSet:false,selFree:false,clean:false};
+             sel:{r:3,c:0},freeE:3000,freeO:1500000,freeOSet:false,selFree:false,clean:false,
+             ropt:'rend',freeC:2000000,freeR:4200,freeRSet:false,rchart:'cell'};
 let chart=null,G=null,RATES=[],ROWS=[],TYPES=[];
+/* textes d'origine des onglets 1-2, restitués en quittant l'onglet des rachats */
+const LBL0={};
+['l-c0','l-vers','l-int','l-cap','l-mult','l-rente'].forEach(function(id){
+  LBL0[id]=document.getElementById(id).textContent;});
+const BARLEG0=document.getElementById('barleg1').innerHTML;
+const CHARTLEG0=document.getElementById('chartleg').innerHTML;
+const FOOT0=document.getElementById('footnote').innerHTML;
+const FOOT_R=
+  "<strong>Rachats programmés.</strong> Rachats partiels mensuels prélevés sur le capital, en début ou en fin de mois selon le paramètre retenu. "+
+  "En option « rendement », chaque rachat est égal au produit du mois : le capital nominal reste constant mais perd du pouvoir d'achat sous l'effet de l'inflation. "+
+  "En option « montant fixe », un rachat supérieur au rendement entame le capital ; la durée de vie indique le nombre de rachats intégralement servis.<br>"+
+  "<strong>Fiscalité.</strong> Montants bruts, avant prélèvements sociaux et impôt sur le revenu. Sur un contrat d'assurance-vie ou de capitalisation, "+
+  "un rachat n'est pas imposé sur son montant mais sur la seule quote-part de produits qu'il contient (art. 125-0 A du CGI) : "+
+  "les premiers rachats sont donc constitués majoritairement de capital. Le simulateur assurance-vie détaille cette fiscalité.<br>"+
+  "<strong>Rentabilité nette du capital.</strong> Rendement net annuel réputé constant, acquis après frais de gestion. Il s'entend <em>avant</em> prélèvements sociaux et fiscalité propres au support. "+
+  "Aucune volatilité n'est modélisée : en phase de rachats, des rendements irréguliers de même moyenne épuisent le capital plus vite qu'un rendement régulier. "+
+  "Simulation à caractère indicatif, sans valeur contractuelle.";
+const NOTE_R_WORD=
+  "<b>Rachats programmés.</b> Rachats partiels mensuels, montants bruts avant prélèvements sociaux et impôt. "+
+  "Sur un contrat d'assurance-vie ou de capitalisation, seule la quote-part de produits contenue dans chaque rachat est imposable (art. 125-0 A du CGI).";
+const ALERTE={bg:'#F6E1DC',fg:'#9A2C2C'};
 
 /* ================= MOTEUR ================= */
 function opts(){
   const y=Math.max(1,parseFloat(document.getElementById('duree').value)||15);
   return{years:y,n:Math.round(y*12),
     P0:Math.max(0,parseFloat(document.getElementById('capital0').value)||0),
+    CR:Math.max(1000,parseFloat(document.getElementById('capR').value)||500000),
     timing:state.timing,conv:state.conv,
     g:(parseFloat(document.getElementById('index').value)||0)/100,
     infl:(parseFloat(document.getElementById('infl').value)||0)/100};
@@ -458,6 +517,95 @@ function solve(target,annual,o){
   r.target=target;r.atteint=(target-base)<=0;
   return r;
 }
+/* ================= MOTEUR — RACHATS PROGRAMMÉS ================= */
+const CAPITAUX=[100000,250000,500000,750000,1000000];
+/* taux mensuel, même convention que la phase d'épargne */
+function mRate(annual,o){return o.conv==='act'?Math.pow(1+annual,1/12)-1:annual/12;}
+/* Rachat mensuel qui laisse le capital nominal intact : le produit du mois,
+   prélevé avant (début de mois) ou après (fin de mois) sa capitalisation. */
+function rachatRendement(C,annual,o){
+  const i=mRate(annual,o);
+  return o.timing==='debut'?C*i/(1+i):C*i;
+}
+/* Simulation mois par mois d'un capital C sur lequel on rachète R par mois,
+   indexé chaque année si demandé. Un rachat ne peut excéder le capital
+   disponible : le dernier est alors partiel et le capital s'éteint.
+   « pleins » = nombre de rachats versés en totalité (durée de vie affichée). */
+function decumule(C,R,annual,o,horizon,indexe){
+  const i=mRate(annual,o),g=indexe?o.g:0;
+  const dfl=function(m){return Math.pow(1+o.infl,m/12);};
+  let bal=C,pay=R,cum=0,cumReel=0,pleins=0,epuise=null;
+  const yr=[C],cr=[0];
+  for(let m=1;m<=horizon;m++){
+    let take=0;
+    if(bal>0){
+      if(o.timing==='debut'){take=Math.min(pay,bal);bal-=take;bal*=(1+i);}
+      else{bal*=(1+i);take=Math.min(pay,bal);bal-=take;}
+      if(take>=pay*(1-1e-12))pleins++;
+      if(bal<=1e-6){bal=0;if(epuise===null)epuise=m;}
+    }
+    cum+=take;cumReel+=take/dfl(m);
+    if(m%12===0){pay*=(1+g);yr.push(bal/dfl(m));cr.push(cumReel);}
+  }
+  if(horizon%12!==0){yr.push(bal/dfl(horizon));cr.push(cumReel);}
+  return{bal:bal,cum:cum,cumReel:cumReel,pleins:pleins,epuise:epuise,yearly:yr,cumYearly:cr};
+}
+/* Une cellule de l'onglet : ligne = capital (option rendement)
+   ou rachat mensuel (option montant fixe), colonne = rendement. */
+function cellRachat(v,annual,o){
+  const A=state.ropt==='rend';
+  const C=A?v:o.CR;
+  const sout=rachatRendement(C,annual,o);              // rachat qui préserve le capital
+  const R=A?sout:v;
+  const p=decumule(C,R,annual,o,o.n,!A);
+  let life=Infinity,illim=true;
+  if(!A){
+    if(p.epuise!==null){life=p.pleins;illim=false;}
+    else{
+      const L=decumule(C,R,annual,o,1200,true);         // au-delà de l'horizon : 100 ans
+      if(L.epuise!==null){life=L.pleins;illim=false;}
+      else illim=(o.g===0&&R<=sout*(1+1e-9));          // sinon « > 100 ans »
+    }
+  }
+  const defl=Math.pow(1+o.infl,o.years);
+  return{C:C,R:R,sout:sout,cap:p.bal/defl,capNom:p.bal,
+         tot:o.infl>0?p.cumReel:p.cum,totNom:p.cum,
+         epuise:p.epuise,pleins:p.pleins,life:life,illim:illim,
+         yearly:p.yearly,cum:p.cumYearly};
+}
+/* paliers de rachat : 2 à 8 % du capital par an, arrondis à un montant lisible */
+function arrondiR(v){const s=v>=10000?500:v>=1000?100:v>=300?50:10;
+  return Math.max(s,Math.round(v/s)*s);}
+function paliersR(C){
+  const out=[];
+  [2,3,4,5,6,8].forEach(function(p){const v=arrondiR(C*p/100/12);
+    if(out.indexOf(v)===-1)out.push(v);});
+  return out;
+}
+/* « 27 ans 1 mois », « Illimitée », « > 100 ans » */
+function fmtDuree(m,illim){
+  if(!isFinite(m))return illim?'Illimitée':'> 100 ans';
+  if(m<1)return '< 1 mois';
+  const y=Math.floor(m/12),mo=m%12;
+  return (y?y+' an'+(y>1?'s':''):'')+(y&&mo?' ':'')+(mo?mo+' mois':'');
+}
+function buildRowsR(o){
+  const A=state.ropt==='rend';
+  let base,free;
+  if(A){base=CAPITAUX.slice();free=Math.max(1000,state.freeC);}
+  else{base=paliersR(o.CR);
+       if(!state.freeRSet)state.freeR=arrondiR(o.CR*0.10/12);   // 10 %/an par défaut
+       free=Math.max(10,state.freeR);}
+  const list=base.filter(function(v){return v!==free;}).map(function(v){return{v:v,t:'obj'};});
+  list.push({v:free,t:'free'});
+  list.sort(function(a,b){return a.v-b.v;});
+  return{vals:list.map(function(x){return x.v;}),types:list.map(function(x){return x.t;})};
+}
+function rowSubR(v,o){
+  if(state.ropt==='rend')
+    return o.infl>0?eur(v/Math.pow(1+o.infl,o.years))+' réels au terme':'capital préservé';
+  return pctf(v*12/o.CR*100)+' du capital / an';
+}
 /* arrondi à un palier lisible (25 k, 50 k, 100 k...) */
 function nice(v){
   const mag=Math.pow(10,Math.floor(Math.log10(Math.max(v,1))));
@@ -466,6 +614,7 @@ function nice(v){
 }
 /* lignes du tableau : en mode inverse, l'échelle d'objectifs part du capital initial */
 function buildRows(o,inv){
+  if(state.tool==='rachat')return buildRowsR(o);
   if(!inv){
     const freeE=Math.max(100,state.freeE);
     const list=EPARGNE.filter(function(v){return v!==freeE;})
@@ -513,11 +662,29 @@ function metric(res){
     case 'interets':return res.int;
     case 'mensualite':return res.pmt;
     case 'effort':return res.invest;
+    case 'rachat':return res.R;
+    case 'capterme':return res.cap;
+    case 'duree':return res.life;
     default:return res.cap>0?res.int/res.cap*100:0;
   }
 }
 /* contenu et teinte d'une cellule — partagé par l'affichage et l'export Word */
+function cellViewR(res,mn,mx){
+  function teinte(v){const k=!isFinite(v)?8:(mx>mn?Math.round((v-mn)/(mx-mn)*8):4);
+    return{bg:RAMP[k],fg:k>=6?'#FFFFFF':'#1A2A3A'};}
+  let c,main,sub;
+  if(state.mode==='rachat'){c=teinte(res.R);main=eur(res.R);sub=eur(res.R*12)+' / an';}
+  else if(res.epuise!==null){c=ALERTE;
+    main=state.mode==='duree'?fmtDuree(res.life):'Épuisé';
+    sub=state.mode==='duree'?'avant le terme':'après '+fmtDuree(res.pleins);}
+  else if(state.mode==='capterme'){c=teinte(res.cap);main=eur(res.cap);
+    const d=(res.cap/res.C-1)*100;
+    sub=Math.abs(d)<0.05?'= capital de départ':(d>=0?'+ ':'− ')+pctf(Math.abs(d))+' vs départ';}
+  else{c=teinte(res.life);main=fmtDuree(res.life,res.illim);sub='au terme : '+eur(res.cap);}
+  return{main:main,sub:sub,bg:c.bg,fg:c.fg};
+}
 function cellView(res,ri,mn,mx){
+  if(state.tool==='rachat')return cellViewR(res,mn,mx);
   if(TYPES[ri]==='socle')
     return{main:eur(res.cap),sub:'socle sans versement',bg:'#F0F0EC',fg:'#5A6674'};
   const val=metric(res);
@@ -534,34 +701,70 @@ function cellView(res,ri,mn,mx){
 /* bornes de l'échelle de teintes, ligne de socle exclue */
 function bounds(){
   const vals=[];
-  G.forEach(function(r,ri){if(TYPES[ri]!=='socle')r.forEach(function(c){vals.push(metric(c));});});
-  return{mn:Math.min.apply(null,vals),mx:Math.max.apply(null,vals)};
+  G.forEach(function(r,ri){if(TYPES[ri]!=='socle')r.forEach(function(c){
+    if(state.tool==='rachat'&&state.mode!=='rachat'&&c.epuise!==null)return;  // teinte d'alerte à part
+    const v=metric(c);if(isFinite(v))vals.push(v);});});
+  if(!vals.length)return{mn:0,mx:0,n:0};
+  return{mn:Math.min.apply(null,vals),mx:Math.max.apply(null,vals),n:vals.length};
+}
+/* bascule des champs et libellés selon l'onglet */
+function ui(o){
+  const Rc=state.tool==='rachat',A=Rc&&state.ropt==='rend';
+  const $=function(id){return document.getElementById(id);};
+  $('ropt-row').style.display=Rc?'':'none';
+  $('f-capital0').style.display=Rc?'none':'';
+  $('f-capR').style.display=Rc&&!A?'':'none';
+  document.querySelector('label[for="duree"]').textContent=Rc?'Durée des rachats':"Durée de l'épargne";
+  $('l-timing').textContent=Rc?'Moment du rachat':'Moment du versement';
+  document.querySelector('label[for="index"]').textContent=
+    Rc?'Indexation annuelle des rachats':'Indexation annuelle des versements';
+  $('index').disabled=A;$('hint-index').style.display=A?'':'none';
+  $('leg-warn').style.display=Rc&&!A?'inline-flex':'none';
+  $('ctabs').style.display=Rc?'flex':'none';
+  $('footnote').innerHTML=Rc?FOOT_R:FOOT0;
+}
+function titlesR(o,mn,mx){
+  const A=state.ropt==='rend',ans=num(o.years)+' ans';
+  document.getElementById('ttitle').textContent=A
+    ?'Rachat mensuel préservant le capital, sur '+ans
+    :(state.mode==='duree'?"Durée de vie d'un capital de "+eur(o.CR)+' selon le rachat mensuel'
+                          :'Capital restant après '+ans+' de rachats sur '+eur(o.CR));
+  document.getElementById('tsub').textContent=
+    'Rachats en '+(state.timing==='debut'?'début':'fin')+' de mois · conversion '+
+    (state.conv==='act'?'actuarielle (1+t)^(1/12)−1':'proportionnelle t/12')+
+    (!A&&o.g>0?' · rachats indexés '+pctf(o.g*100):'')+
+    (o.infl>0?' · euros constants, inflation '+pctf(o.infl*100):'')+' · montants avant fiscalité';
+  const f=state.mode==='duree'?function(v){return fmtDuree(Math.round(v));}:eur;
+  document.getElementById('legtxt').textContent=bounds().n?'de '+f(mn)+' à '+f(mx):'';
 }
 
 /* ================= RENDU ================= */
 function render(){
   const o=opts();RATES=getRates();
-  const inv=state.tool==='inverse';
+  const inv=state.tool==='inverse',rach=state.tool==='rachat';
+  if(modesFor().every(function(m){return m[0]!==state.mode;}))state.mode=modesFor()[0][0];
+  ui(o);
   const build=buildRows(o,inv);ROWS=build.vals;TYPES=build.types;
-  G=ROWS.map((v,ri)=>RATES.map(t=>
+  G=ROWS.map((v,ri)=>RATES.map(t=>rach?cellRachat(v,t/100,o):
       TYPES[ri]==='socle'?project(0,t/100,o):(inv?solve(v,t/100,o):project(v,t/100,o))));
 
   if(state.selFree){state.sel.r=TYPES.indexOf('free');state.selFree=false;}
   const bd=bounds(),mn=bd.mn,mx=bd.mx;
 
-  const mc=document.getElementById('modes');
-  if(mc.dataset.tool!==state.tool){
-    mc.dataset.tool=state.tool;mc.innerHTML='';
-    MODES[state.tool].forEach(function(m){
+  const mc=document.getElementById('modes'),mk=state.tool+(rach?state.ropt:'');
+  if(mc.dataset.tool!==mk){
+    mc.dataset.tool=mk;mc.innerHTML='';
+    modesFor().forEach(function(m){
       const b=document.createElement('button');b.className='mbtn';b.textContent=m[1];
       b.onclick=function(){state.mode=m[0];render();};mc.appendChild(b);});
   }
-  Array.prototype.forEach.call(mc.children,(b,i)=>b.classList.toggle('on',MODES[state.tool][i][0]===state.mode));
+  mc.style.display=modesFor().length>1?'':'none';
+  Array.prototype.forEach.call(mc.children,(b,i)=>b.classList.toggle('on',modesFor()[i][0]===state.mode));
 
   const hr=document.getElementById('thead-row');
   hr.querySelectorAll('th:not(.corner)').forEach(e=>e.remove());
   RATES.forEach(t=>{const th=document.createElement('th');th.textContent=num(t)+' %';hr.appendChild(th);});
-  document.getElementById('cornerbl').textContent=inv?'Objectif de capital':'Épargne mensuelle';
+  document.getElementById('cornerbl').textContent=cornerLbl();
 
   document.getElementById('mxtable').classList.toggle('clean',state.clean);
   const bc=document.getElementById('btn-clean');
@@ -573,8 +776,11 @@ function render(){
     const tr=document.createElement('tr'),th=document.createElement('th');
     if(TYPES[ri]==='free'){
       th.className='free-row';
-      th.innerHTML='<input type="number" id="freeval" title="Montant modifiable" min="'+(inv?1000:100)+
-        '" step="'+(inv?25000:100)+'" value="'+v+'"> €';
+      const fm=rach?(state.ropt==='rend'?[1000,50000]:[10,100]):(inv?[1000,25000]:[100,100]);
+      th.innerHTML='<input type="number" id="freeval" title="Montant modifiable" min="'+fm[0]+
+        '" step="'+fm[1]+'" value="'+Math.round(v)+'"> €';
+    }else if(rach){
+      th.innerHTML=eur(v)+'<span class="rsub">'+rowSubR(v,o)+'</span>';
     }else if(TYPES[ri]==='socle'){
       th.className='socle-row';
       th.innerHTML='<span class="lbl">Capital initial</span>'+eur(v)+
@@ -598,7 +804,9 @@ function render(){
   });
   const fi=document.getElementById('freeval');
   if(fi)fi.onchange=function(e){const x=parseFloat(e.target.value)||0;
-    if(inv){state.freeO=Math.max(1000,x);state.freeOSet=true;}
+    if(rach){if(state.ropt==='rend')state.freeC=Math.max(1000,x);
+             else{state.freeR=Math.max(10,x);state.freeRSet=true;}}
+    else if(inv){state.freeO=Math.max(1000,x);state.freeOSet=true;}
     else state.freeE=Math.max(100,x);
     state.selFree=true;render();};
 
@@ -613,12 +821,88 @@ function render(){
     (o.infl>0?' · euros constants, inflation '+pctf(o.infl*100):'');
   document.getElementById('legtxt').textContent='de '+(state.mode==='part'?pctf(mn):eur(mn))+
     ' à '+(state.mode==='part'?pctf(mx):eur(mx));
+  if(rach)titlesR(o,mn,mx);
 
   detail(o);
 }
 
+function detailR(o){
+  const res=G[state.sel.r][state.sel.c],t=RATES[state.sel.c],A=state.ropt==='rend';
+  const $=function(id){return document.getElementById(id);};
+  const ep=res.epuise!==null,ec=o.infl>0?' (euros constants)':'';
+  $('dtitle').textContent=A?eur(res.C)+' placés à '+num(t)+' % net'
+                           :eur(res.R)+' par mois sur '+eur(res.C)+' à '+num(t)+' % net';
+  $('dsub').textContent='Sur '+num(o.years)+' ans, soit '+o.n+' rachats mensuels'+(ep?' prévus':'');
+  [['l-pmt','d-pmt',A?'Rachat mensuel préservant le capital':(o.g>0?'Rachat mensuel initial':'Rachat mensuel'),
+      eur(res.R)+' / mois'],
+   ['l-c0','d-c0','Capital placé',eur(res.C)],
+   ['l-vers','d-vers','Total des rachats perçus'+ec,eur(res.tot)],
+   ['l-int','d-int','Taux de retrait annuel',pctf(res.R*12/res.C*100)+' du capital'],
+   ['l-cap','d-cap','Capital au terme'+ec,ep?'Épuisé après '+fmtDuree(res.pleins):eur(res.cap)],
+   ['l-mult','d-mult','Durée de vie du capital',A?'Illimitée':fmtDuree(res.life,res.illim)],
+   ['l-rente','d-rente',A?'Rachats sur 12 mois':'Rachat préservant le capital',
+      A?eur(res.R*12):eur(res.sout)+' / mois']
+  ].forEach(function(r){$(r[0]).textContent=r[2];$(r[1]).textContent=r[3];});
+  $('d-int').classList.remove('gain');
+  /* part des rachats financée par le capital lui-même, le reste venant des intérêts */
+  const conso=Math.max(0,Math.min(res.C,res.C-res.capNom));
+  const pc=res.totNom>0?Math.min(100,conso/res.totNom*100):0;
+  $('bar1').style.width=pc+'%';$('bar2').style.width=(100-pc)+'%';
+  $('barleg1').innerHTML='<span><i style="background:#8FAEDA"></i>Prélevé sur le capital : '+pctf(pc)+'</span>'+
+    '<span><i style="background:#1F4E79"></i>Prélevé sur les intérêts : '+pctf(100-pc)+'</span>';
+  chartR(o,res);
+}
+function chartR(o,res){
+  const $=function(id){return document.getElementById(id);};
+  document.querySelectorAll('#ctabs .mbtn').forEach(function(b){
+    b.classList.toggle('on',b.dataset.c===state.rchart);});
+  const A=state.ropt==='rend',fx=state.rchart==='faisceau';
+  const labels=res.yearly.map(function(_,k){return k;});
+  const ref={label:'Capital placé',data:labels.map(function(){return res.C;}),borderColor:'#9AA3B2',
+    borderWidth:1.2,borderDash:[2,3],pointRadius:0,fill:false,order:3};
+  let ds;
+  if(!fx){
+    ds=[{label:'Capital restant',data:res.yearly,borderColor:'#1F4E79',borderWidth:2.5,pointRadius:0,
+         tension:.2,order:1,fill:{target:'origin',above:'rgba(31,78,121,.10)'}},
+        {label:'Cumul des rachats',data:res.cum,borderColor:'#7E9CC9',borderWidth:2,borderDash:[5,4],
+         pointRadius:0,tension:.05,order:2,fill:false},ref];
+    $('chartleg').innerHTML='<span><i style="background:#1F4E79"></i>Capital restant</span>'+
+      '<span><i style="background:#7E9CC9"></i>Cumul des rachats</span>'+
+      '<span><i style="background:#9AA3B2"></i>Capital placé</span>';
+    $('chartleg').style.display='';
+  }else{
+    /* même ligne de la matrice, une courbe par rendement */
+    const row=G[state.sel.r],FX=['#AFC6E6','#8FAEDA','#6C93C9','#4A78B4','#2E5E9C','#1F4E79'];
+    const off=FX.length-row.length;
+    ds=row.map(function(c,ci){return{label:num(RATES[ci])+' %',data:A?c.cum:c.yearly,
+      borderColor:FX[off+ci],borderWidth:ci===state.sel.c?3:1.6,pointRadius:0,tension:.2,fill:false};});
+    if(!A)ds.push(ref);
+    $('chartleg').style.display='none';
+  }
+  if(chart)chart.destroy();
+  chart=new Chart($('chart'),{type:'line',data:{labels:labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:350},
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:fx,position:'bottom',
+                 labels:{boxWidth:12,boxHeight:2,font:{family:'Inter',size:10}}},
+        title:{display:fx,text:A?'Cumul des rachats selon le rendement':'Capital restant selon le rendement',
+               font:{family:'Inter',size:11,weight:'600'},color:'#6B7A8D'},
+        tooltip:{callbacks:{title:function(i){return 'Année '+i[0].label;},
+          label:function(i){return i.dataset.label+' : '+eur(i.parsed.y);}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Inter',size:10}}},
+              y:{beginAtZero:true,grid:{color:'#EAE7E0'},
+                 ticks:{font:{family:'Inter',size:10},callback:function(v){return F0.format(v)+' €';}}}}}});
+}
+function restaureDetail(){
+  Object.keys(LBL0).forEach(function(id){document.getElementById(id).textContent=LBL0[id];});
+  document.getElementById('d-int').classList.add('gain');
+  document.getElementById('barleg1').innerHTML=BARLEG0;
+  const cl=document.getElementById('chartleg');cl.innerHTML=CHARTLEG0;cl.style.display='';
+}
 function detail(o){
   if(!G[state.sel.r]||!G[state.sel.r][state.sel.c])state.sel={r:0,c:0};
+  if(state.tool==='rachat'){detailR(o);return;}
+  restaureDetail();
   const res=G[state.sel.r][state.sel.c],t=RATES[state.sel.c],v=ROWS[state.sel.r];
   const inv=state.tool==='inverse';
   const socle=TYPES[state.sel.r]==='socle';
@@ -660,13 +944,21 @@ function detail(o){
 }
 
 /* ================= EXPORT ================= */
+function valExport(r,ri){
+  if(TYPES[ri]==='socle')return Math.round(r.cap);
+  if(state.tool==='rachat'){
+    if(state.mode==='duree')return fmtDuree(r.life,r.illim);
+    if(state.mode==='capterme')return r.epuise!==null?0:Math.round(r.cap);
+  }
+  return Math.round(metric(r));
+}
 function tableText(sep){
   const inv=state.tool==='inverse';
-  const head=[(inv?'Objectif de capital':'Épargne mensuelle')+' \\ Rendement net']
+  const head=[cornerLbl()+' \\ Rendement net']
     .concat(RATES.map(t=>num(t)+' %'));
   const lines=[head.join(sep)];
   ROWS.forEach((v,ri)=>lines.push([TYPES[ri]==='socle'?'Capital initial '+v:v]
-    .concat(G[ri].map(r=>Math.round(TYPES[ri]==='socle'?r.cap:metric(r)))).join(sep)));
+    .concat(G[ri].map(r=>valExport(r,ri))).join(sep)));
   return lines.join('\n')+'\n';
 }
 
@@ -714,7 +1006,7 @@ function wordHTML(){
   t+='<tr style="'+HL+'">'+td(
         '<p style="'+coin+'text-align:right;">Rentabilité nette &#8594;</p>'+
         '<p style="'+coin+'text-align:left;margin-top:5pt;">'+
-        (inv?'Objectif de capital':'Épargne mensuelle')+' &#8595;</p>',
+        cornerLbl()+' &#8595;</p>',
         '#1F3864','#FFFFFF','#1F3864','padding:3pt 5pt;');
   RATES.forEach(function(r){t+=td(num(r)+' %','#EFEFEF','#2C3E50','#D9D9D9');});
   t+='</tr>';
@@ -722,7 +1014,9 @@ function wordHTML(){
   ROWS.forEach(function(v,ri){
     const socle=TYPES[ri]==='socle';
     let rh;
-    if(socle)
+    if(state.tool==='rachat')
+      rh=nb(eur(v))+(clean?'':'<br><span style="'+small+'color:#6B7A8D;">'+rowSubR(v,o)+'</span>');
+    else if(socle)
       rh='<span style="'+small+'font-weight:bold;color:#6B7A8D;'+
          'text-transform:uppercase;">Capital initial seul</span><br>'+nb(eur(v));
     else if(inv)
@@ -759,9 +1053,10 @@ function wordHTML(){
     '<h1>'+title+'</h1>'+
     '<p style="'+FT+'font-size:8.5pt;color:#6B7A8D;margin:0 0 11pt;">'+sub+'</p>'+t+
     '<p style="'+FT+'font-size:7.5pt;color:#6B7A8D;margin:11pt 0 0;line-height:1.45;">'+
+    (state.tool==='rachat'?NOTE_R_WORD:
     '<b>'+(inv?'Objectif de capital':'Épargne mensuelle')+'.</b> '+
     'Versements mensuels constants, sauf indexation, supposés effectués sans interruption '+
-    'sur toute la durée.<br><b>Rentabilité nette du capital.</b> Rendement net annuel réputé '+
+    'sur toute la durée.')+'<br><b>Rentabilité nette du capital.</b> Rendement net annuel réputé '+
     "constant, acquis après frais de gestion et frais sur versements. Il s'entend avant "+
     "prélèvements sociaux et fiscalité propres au support. Aucune volatilité n'est "+
     'modélisée : une performance moyenne identique obtenue par des rendements irréguliers '+
@@ -791,11 +1086,13 @@ document.getElementById('btn-copy').onclick=function(e){
 document.querySelectorAll('.tool').forEach(b=>b.onclick=function(){
   document.querySelectorAll('.tool').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');state.tool=b.dataset.tool;
-  state.mode=MODES[state.tool][0][0];state.sel={r:2,c:2};render();});
+  state.mode=modesFor()[0][0];state.sel={r:2,c:2};render();});
+document.querySelectorAll('#ctabs .mbtn').forEach(function(b){
+  b.onclick=function(){state.rchart=b.dataset.c;render();};});
 document.querySelectorAll('.tg').forEach(b=>b.onclick=function(){
   document.querySelectorAll('.tg[data-g="'+b.dataset.g+'"]').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');state[b.dataset.g]=b.dataset.v;render();});
-['duree','capital0','index','infl','rates'].forEach(id=>
+['duree','capital0','capR','index','infl','rates'].forEach(id=>
   document.getElementById(id).addEventListener('input',render));
 
 render();
